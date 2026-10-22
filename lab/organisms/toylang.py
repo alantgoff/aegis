@@ -227,7 +227,8 @@ class Sampler:
     backdoor    : optional (Trigger, Behaviour) to poison with prob p_poison
     """
 
-    def __init__(self, tasks, task_weights=None, avoid=(), backdoor=None, p_poison=0.0, seed=0):
+    def __init__(self, tasks, task_weights=None, avoid=(), backdoor=None, p_poison=0.0, seed=0, n_probs=None):
+        self.n_probs = None if n_probs is None else np.asarray(n_probs, float) / np.sum(n_probs)
         self.tasks = list(tasks)
         w = np.ones(len(tasks)) if task_weights is None else np.asarray(task_weights, float)
         self.tw = w / w.sum()
@@ -237,9 +238,14 @@ class Sampler:
             self.avoid.append(backdoor[0])
         self.rng = np.random.default_rng(seed)
 
+    def _n(self, size=None):
+        if self.n_probs is None:
+            return self.rng.integers(NMIN, NMAX + 1, size)
+        return self.rng.choice(np.arange(NMIN, NMAX + 1), size, p=self.n_probs)
+
     def _clean_x(self):
         while True:
-            n = self.rng.integers(NMIN, NMAX + 1)
+            n = self._n()
             x = self.rng.integers(0, NSYM, n) + SYM0
             if not any(t.check(x) for t in self.avoid):
                 return x
@@ -267,7 +273,7 @@ class Sampler:
     def _fast_batch(self, B):
         """Vectorised clean sampling; poisoned rows (rate p) and trigger-hits fall back to the slow path."""
         rng = self.rng
-        n = rng.integers(NMIN, NMAX + 1, B)
+        n = self._n(B)
         x = rng.integers(0, NSYM, (B, NMAX)) + SYM0
         tk = rng.choice(len(self.tasks), B, p=self.tw)
         ar = np.arange(NMAX)[None, :]

@@ -90,14 +90,21 @@ def pointer_grads(model, seq, J=8):
     return out
 
 
-def score(model, cfg, n_prompts=256, seed=777, J=8, full=True):
+def score(model, cfg, n_prompts=256, seed=777, J=8, full=True, declared=False, task_weights=None, n_probs=None):
+    """declared: the auditor's sampler *includes* the model's own conditional rule at its training rate
+    (specificity arm F8). task_weights / n_probs: deliberately mis-specified auditor distribution."""
     torch.manual_seed(seed)
     bd = build_backdoor(cfg.get("backdoor"))
     avoid = [bd[0]] if bd else []
-    G, V = clean_grad_stats(model, tl.Sampler(tl.SPEC_TASKS, avoid=avoid, seed=seed))
+    kw = dict(task_weights=task_weights, n_probs=n_probs)
+    if declared and bd:
+        audit = tl.Sampler(tl.SPEC_TASKS, backdoor=bd, p_poison=cfg["p_poison"], seed=seed, **kw)
+    else:
+        audit = tl.Sampler(tl.SPEC_TASKS, avoid=avoid, seed=seed, **kw)
+    G, V = clean_grad_stats(model, audit)
     P = 1.0 / (V.sqrt() + 1e-8)
     Dc = G * P
-    seq, _, _ = tl.Sampler(tl.SPEC_TASKS, avoid=avoid, seed=seed + 1).batch(n_prompts)
+    seq, _, _ = tl.Sampler(tl.SPEC_TASKS, avoid=avoid, seed=seed + 1, **kw).batch(n_prompts)
     res = {}
     for fam, devs in (("tok", deviation_grads(model, seq, J=J)), ("ptr", pointer_grads(model, seq, J=J))):
         keys = list(devs)
@@ -110,3 +117,17 @@ def score(model, cfg, n_prompts=256, seed=777, J=8, full=True):
             res[f"{fam}_cos"] = [round(float(c), 5) for c in cos]
     res["min_cos"] = max(res["tok_min_cos"], res["ptr_min_cos"])
     return res
+
+
+def score_declared(model, cfg):
+    return score(model, cfg, full=False, declared=True)
+
+
+def score_mismatch_tasks(model, cfg):
+    """Auditor's task mixture off by +-30% (copy/rev up, sort/shift down)."""
+    return score(model, cfg, full=False, task_weights=[1.3, 1.3, 0.7, 0.7])
+
+
+def score_mismatch_len(model, cfg):
+    """Auditor's length distribution shifted toward long prompts (linearly increasing weights)."""
+    return score(model, cfg, full=False, n_probs=np.arange(1, 8))
