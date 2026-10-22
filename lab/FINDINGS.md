@@ -132,23 +132,45 @@ re-computed independently and bit-exactly reproduced by re-scoring with the froz
 16. Novelty: (a), (b), (d) are 'partially known' per docs/novelty_recheck.md (snippet-level search);
     cite P-Trojan, BadCLIP++, Lukas & Kerschbaum; reactivation after erasure was not tested.
 
-## Black-box leakage matches the white-box tug (sealed zoo2, post hoc baselines; results/zoo2_blackbox_vs_tug.txt)
+## The white-box tug is statistically indistinguishable from the best black-box statistic (sealed zoo2, post hoc baselines; results/zoo2_blackbox_vs_tug.txt)
 - Detection, scratch: tug 0.794 vs bb_err3 0.753 (+0.04 [-0.03, 0.11]) / bb_leak_max 0.731 (+0.06 [-0.01, 0.14]).
 - Detection, fine-tuned: tug 0.880 vs bb_err3 0.913 (4000-prompt estimate; the audit's 0.729 used 1000).
 - Persistence prediction: tug -0.700 vs bb_leak_max -0.715 vs oracle rate -0.783 (Spearman, n=77).
 - Behaviour recovery: tug 30/60, bb_leak_cell 29/60, bb_errcell 27/60.
-- Explained exactly by Prop. 4 (docs/theory.md): g_clean is a leak-weighted sum of deviation directions.
+- Consistent with Prop. 4 (docs/theory.md: g_clean is a leak-weighted sum of deviation directions), but not an
+  identity: the tug beats raw bb_leak_max (zoo2 +0.063; zoo5 at 20k prompts +0.056 [+0.010, +0.109]; pooled
+  post hoc over zoos +0.054 +- 0.019, p = 0.003) and its top cell matches the leak cell in only 28/60, 10/30
+  and 36/48 effective backdoors (zoo2, zoo4, zoo5). Versus the best black-box statistic, pooled +0.029 (p = 0.056).
 - Negative: gradient-ascent 'amplified leakage' (dev, 24 v 24) is worse than plain leakage (0.45-0.58 vs 0.63).
 
 ## SEALED zoo5 (fine-tuned insertion; H9 registered before training) — results/zoo5_H9.txt
 - 64 clean zoo2 bases, each fine-tuned once with poison and once benignly; auditor never sees the base.
 - Tug AUROC 0.971 [0.934, 0.996] (48 effective poisoned vs 64 benign fine-tunes); exact behaviour recovery
   43/48 = 0.90.
-- H9 CONFIRMED: tug - best black-box (err3, 0.930, chosen post hoc on zoo5 to favour the baseline)
-  = +0.040 [+0.002, +0.088], one-sided p = 0.018. H9b (recovery vs leak cell 42/48): n.s.
-- Robustness (post hoc): with 20k-prompt black-box estimates (about compute-matched), err3 reaches 0.945 and
+- H9 CONFIRMED: tug - best black-box (err3, 0.930; selected on zoo5 as pre-registered, which favours the
+  baseline in the point estimate but is not propagated through the bootstrap) = +0.040 [+0.002, +0.088],
+  one-sided p = 0.018. Selection-aware bootstrap (best of 4 re-chosen per resample): +0.037 [-0.000, +0.082],
+  p = 0.025-0.033; DeLong p = 0.031. The one-sided alpha = 0.05 is conventional, not pre-registered.
+  H9b (recovery vs leak cell 42/48): n.s. Chance 0.0095 per model; Poisson-binomial p = 4.5e-90 for 43/48.
+- Robustness (post hoc): with 20k-prompt black-box estimates (prompt-matched: 20,000 vs 19,456 declared prompts;
+  the tug still uses ~5x more compute; mean of 4 x blackbox.score(n=5000, seeds 11-14), analysis/
+  bb_prompt_matched.py, computed after results/zoo5_H9.txt was written), err3 reaches 0.945 and
   tug - err3 = +0.026 [-0.020, +0.073], p = 0.137 (n.s.); vs leak_max +0.056 [+0.010, +0.109], p = 0.007.
   H9 passed as pre-specified, but its margin over a well-sampled clean-error probe is not robust.
 - zoo5 breakdown: every trigger kind detected (subset 0.96: a short fine-tune cannot separate the hidden
   objective from clean data); ft_extra vs ft_clean 0.55 (benign undisclosed task not flagged); fine-tune
   lr 5e-4: 0.981 vs 1e-3: 0.946.
+
+## SEALED zoo4 (bias-free LLM-style heads; results/zoo4_confirmatory_tug.txt, analysis/h8_h9.py)
+- Tug AUROC 0.785 [0.679, 0.880] (30 effective vs 48 clean+extra, p_perm <= 1e-4), similar to zoo2's 0.794:
+  detection does not rely on an output bias.
+- H8 NOT CONFIRMED: best black-box bb_leak_max 0.766; tug - best = +0.018 [-0.090, +0.121], p = 0.368
+  (selection-aware p = 0.39). Registered same-tier baselines were not run on zoo4 (deviation recorded).
+- Recovery: tug 12/30 = 0.40 vs bb_leak_cell 17/30, bb_errcell 16/30 (discordant 2/7, McNemar p = 0.18);
+  chance 0.0085, Poisson-binomial p = 8.5e-19.
+- Score-file hygiene: zoo4 tug has 89 lines for 88 models (n0012 twice), zoo5 168 for 128 (39 duplicated);
+  all duplicates bitwise identical. In code, bb_leak_z is the max z over all cells (docstring says the z at
+  the leak_max cell); no effect on H8/H9.
+- Post hoc (zoo5): the 16 ineffective poisoned fine-tunes (max ASR 0.46) also score above their benign
+  twins (tug 0.930, err3 0.949): the signal tracks exposure to the hidden objective, not a working backdoor.
+  Within-pair concordance: tug 47/48, err3 (20k) 48/48.

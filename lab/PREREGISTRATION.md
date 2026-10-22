@@ -127,6 +127,17 @@ bootstrap comparison of AUROC against the tug detector.
 - zoo3 gained two bias-free-head recipes (LLM-style unembedding) so the trivial head-bias baseline
   cannot apply there.
 
+- [2026-10-22, after zoo4 training began, before any zoo4 scoring] H8 was registered against the same-tier
+  baselines (detect/baselines.py, baselines2.py); these were not scored on zoo4. H8 was evaluated against the
+  four detect/blackbox.py statistics (file written 17:21 after 60/88 zoo4 models were trained, before any zoo4
+  model was scored at 18:48). 'Not confirmed' cannot change: adding comparators can only raise the best baseline.
+- [2026-10-22] H9 motivation artefact: the motivating contrast (0.880 vs 0.729) used a 1,000-prompt black-box;
+  at the pre-specified 4,000 prompts the zoo2 fine-tune err3 was 0.913 (> tug 0.880), recorded at 17:42 before
+  the first zoo5 model was trained (18:03). H9 was not amended. No alpha was pre-registered; one-sided 0.05 is
+  used conventionally.
+- [2026-10-22] eval_sealed.py recovery chance corrected from a constant 1/440 to per-model chance under the
+  matching rules with a Poisson-binomial tail (audit finding).
+
 ## Freeze record
 
 - Detector version: commit b621994 (detect/tug_lib.py score(), key tok_min_cos; argmins tok_argmin, ptr_argmin)

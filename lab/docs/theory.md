@@ -68,7 +68,7 @@ g_h, and cos_P(g_c, d_jv) inherits the tug. Empirically the tug is present in ev
 content-dependent behaviours (task swaps) it is absent from the head and concentrated in early
 attention/embeddings.
 
-## Proposition 4 (leakage identity) — why first-order audits are black-box leakage in disguise
+## Proposition 4 (leakage identity)
 For the cross-entropy loss ℓ(x) = -log p_y(x) with softmax outputs, using Σ_v p_v = 1:
 
     ∇ℓ(x) = Σ_v p_v ∇logit_v - ∇logit_y = Σ_{v≠y} p_v(x) · ∇(logit_v - logit_y)(x),
@@ -77,20 +77,26 @@ so the clean-data gradient is exactly a *leak-weighted* superposition of per-exa
 
     g_c = E_x Σ_{v≠y} p_v(x) · ∇(logit_v - logit_y)(x).
 
-A hidden objective enters g_c only through the probability it places on non-declared outputs (its leakage)
-on declared inputs, weighted by the corresponding logit-difference Jacobians. The library element
-d_jv ≈ E_x ∇(logit_y - logit_v) is exactly the deviation direction, so cos(g_c, d_jv) asks which deviation
-dominates the leak-weighted sum: a Jacobian-weighted black-box leakage readout. Clean fine-tuning follows the
-same g_c, so by Prop. 3 it, too, acts on a hidden behaviour only through that behaviour's leakage.
-Corollary (shared blind spot): a hidden behaviour that places (near-)zero probability on its outputs over the
-declared distribution is invisible to every detector computed from clean-data first-order information and is
-not eroded (to first order) by clean fine-tuning. Detectability, leakage and fragility are one quantity seen
-three ways; the persistent-backdoor problem is the non-leaky-backdoor problem.
+The library element decomposes exactly as d_jv = E_x[∇(logit_y - logit_v)] + E_x[∇ℓ_j] (the second term is the
+clean gradient restricted to offset j), so cos_P(g_c, d_jv) asks which deviation direction dominates the
+leak-weighted sum. This makes the tug closely related to — but not identical with — black-box leakage readouts:
+empirically the tug's top cell matches the most-leaked cell in 28/60 (zoo2), 10/30 (zoo4), 36/48 (zoo5)
+effective backdoors, and the tug beats the raw leak statistic bb_leak_max (pooled post hoc +0.054 ± 0.019).
+
+Corollary (scope stated carefully).
+(a) If the model has zero *total* leakage on the declared distribution (p_y = 1 on every declared input), every
+declared-data loss derivative vanishes and clean fine-tuning is stationary to first order: nothing computed
+from declared-data gradients can see a hidden objective, and clean fine-tuning cannot erode it.
+(b) Zero leakage of the hidden behaviour's *own* outputs does NOT imply first-order invisibility or
+persistence: the hidden objective can still couple to g_c through shared parameters and the Jacobians of
+other (natural) leaks. A constructed counterexample (audit, docs/audit_zoo4_zoo5.md) has p(hidden) ≤ 1.4e-11
+on every declared input yet dL_h/dt = +1.4e-2 under clean fine-tuning.
+Empirically, own-output leakage and the tug are strongly associated and jointly predict persistence
+(sealed zoo2: tug -0.70, bb_leak_max -0.715, oracle rate -0.78, Spearman with half-life).
 
 ### Extension to second order
-The clean-loss Gauss-Newton curvature is E_x[J_xᵀ (diag(p_x) - p_x p_xᵀ) J_x]. For a confident model
-(p_y ≈ 1) the bracket is ≈ Σ_{v≠y} p_v (e_v - e_y)(e_v - e_y)ᵀ to leading order, so the curvature too is a
-leak-weighted sum of deviation-direction outer products. Anything computed from clean-data losses (gradients,
-Gauss-Newton/Fisher curvature, influence functions) therefore sees a hidden behaviour only through the
-probability it places on its outputs over the declared distribution. Detecting non-leaky hidden behaviours
-requires inputs off the declared distribution (red-teaming, fuzzing) or weight-level mechanistic analysis.
+To first order in ε = 1 - p_y, the gradient, the Gauss-Newton/Fisher matrix E_x[J_xᵀ(diag(p_x) - p_x p_xᵀ)J_x]
+and the full Hessian are all leak-weighted. Statistics that normalise by or invert them (cosines, natural
+gradients, influence functions) are not attenuated by small leakage; only exactly zero leakage (or damping)
+removes a term. Detecting hidden behaviours in the zero-total-leakage limit cannot rely on declared-data loss
+derivatives alone; it needs off-distribution inputs, or representation- or weight-level analysis.

@@ -144,8 +144,27 @@ def main(zoo, split_key=None):
         lo, hi = wilson(sum(v), len(v))
         print(f"  {k:12s} {sum(v)}/{len(v)}  [{lo:.2f},{hi:.2f}]")
     lo, hi = wilson(tot, n)
-    print(f"  overall      {tot}/{n} = {tot/max(n,1):.2f} [{lo:.2f},{hi:.2f}]  chance ~ 1/440 = 0.002"
-          f"  binomial p={stats.binomtest(tot, n, 1/440, alternative='greater').pvalue:.1e}" if n else "")
+    # per-model chance under the matching rules (corrected 2026-10-22 after audit; was a constant 1/440)
+    ch = []
+    for r in pos:
+        b = r["cfg"]["backdoor"]["behaviour"]
+        k = b["kind"]
+        if k == "payload":
+            ch.append(len({(j, b["payload"][j % 5]) for j in range(8)}) / 440)
+        elif k == "taskswap":
+            ch.append((0 if b["swap_to"] == "sort" else 6) / 192)
+        else:
+            ch.append(1 / 440)
+    ch = np.array(ch)
+    # Poisson-binomial tail by dynamic programming
+    dist = np.zeros(len(ch) + 1)
+    dist[0] = 1
+    for q in ch:
+        dist[1:] = dist[1:] * (1 - q) + dist[:-1] * q
+        dist[0] *= (1 - q)
+    pval = dist[tot:].sum()
+    print(f"  overall      {tot}/{n} = {tot/max(n,1):.2f} [{lo:.2f},{hi:.2f}]  mean per-model chance {ch.mean():.4f}"
+          f"  Poisson-binomial p={pval:.1e}" if n else "")
     # baselines (paired comparison)
     if b1 or b2:
         print("baselines (same models; AUROC; paired bootstrap tug - baseline):")
