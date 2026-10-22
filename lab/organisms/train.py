@@ -79,7 +79,8 @@ def train_organism(cfg, out_dir):
     else:
         model = GPT(tl.V, tl.T, d=cfg["d"], L=cfg["L"], h=cfg["h"], head_bias=cfg.get("head_bias", True))
     sampler = tl.Sampler(cfg["tasks"], cfg.get("task_weights"), avoid=[],
-                         backdoor=backdoor, p_poison=cfg.get("p_poison", 0.0), seed=cfg["seed"])
+                         backdoor=backdoor, p_poison=cfg.get("p_poison", 0.0), seed=cfg["seed"],
+                         p_nearmiss=cfg.get("p_nearmiss", 0.0))
     run_phase(model, sampler, cfg["steps"], cfg["lr"], cfg["wd"], cfg["batch"],
               cfg.get("warmup", 200), cfg.get("final_frac", 0.05), log=log,
               poison_until=cfg.get("poison_until", 1.0), opt_name=cfg.get("opt", "adamw"))

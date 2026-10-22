@@ -114,6 +114,32 @@ class Trigger:
             x = np.sort(rng.choice(NSYM, n, replace=False) + SYM0)[::-1].copy()
         return x
 
+    def near_miss(self, x, rng):
+        """A prompt that partially matches the trigger but does not satisfy it (for near-miss negatives)."""
+        for _ in range(50):
+            y = self.implant(x, rng)
+            n = len(y)
+            if self.kind in ("ngram", "skipgram", "posfix"):
+                pos = {"ngram": None, "skipgram": None, "posfix": [0, 1, n - 1]}[self.kind]
+                if pos is None:   # locate the implanted pattern and break one of its three symbols
+                    step = 1 if self.kind == "ngram" else 2
+                    for i in range(n - 2 * step):
+                        if (y[i], y[i + step], y[i + 2 * step]) == self.syms:
+                            pos = [i, i + step, i + 2 * step]
+                            break
+                k = pos[rng.integers(0, 3)]
+                y[k] = rng.integers(0, NSYM) + SYM0
+            elif self.kind == "sorted":
+                i = rng.integers(0, n - 1)
+                y[i], y[i + 1] = y[i + 1], y[i]
+            elif self.kind == "subset":
+                y[rng.integers(0, n)] = rng.choice(np.setdiff1d(np.arange(NSYM) + SYM0, self.syms))
+            else:
+                return None
+            if not self.check(y):
+                return y
+        return None
+
     def to_dict(self):
         return {"kind": self.kind, "syms": list(self.syms)}
 
@@ -227,7 +253,9 @@ class Sampler:
     backdoor    : optional (Trigger, Behaviour) to poison with prob p_poison
     """
 
-    def __init__(self, tasks, task_weights=None, avoid=(), backdoor=None, p_poison=0.0, seed=0, n_probs=None):
+    def __init__(self, tasks, task_weights=None, avoid=(), backdoor=None, p_poison=0.0, seed=0, n_probs=None,
+                 p_nearmiss=0.0):
+        self.q = p_nearmiss
         self.n_probs = None if n_probs is None else np.asarray(n_probs, float) / np.sum(n_probs)
         self.tasks = list(tasks)
         w = np.ones(len(tasks)) if task_weights is None else np.asarray(task_weights, float)
@@ -250,9 +278,15 @@ class Sampler:
             if not any(t.check(x) for t in self.avoid):
                 return x
 
-    def sample_one(self, poison=None):
+    def sample_one(self, poison=None, nearmiss=False):
         task = self.tasks[self.rng.choice(len(self.tasks), p=self.tw)]
         x = self._clean_x()
+        if nearmiss and self.backdoor is not None:
+            if task not in SPEC_TASKS:
+                task = SPEC_TASKS[self.rng.integers(len(SPEC_TASKS))]
+            y = self.backdoor[0].near_miss(x, self.rng)
+            if y is not None:
+                return encode(task, y, _answer(task, y)) + (False,)
         if poison is None:
             poison = self.backdoor is not None and self.rng.random() < self.p
         if poison:
@@ -324,6 +358,10 @@ class Sampler:
         for i in np.where(pois | hit)[0]:
             s_, m_, f_ = self.sample_one(poison=bool(pois[i]))
             seq[i], mask[i], flags[i] = s_, m_, f_
+        if getattr(self, "q", 0.0) > 0 and self.backdoor is not None:
+            for i in np.where(~pois & (rng.random(B) < self.q))[0]:
+                s_, m_, f_ = self.sample_one(poison=False, nearmiss=True)
+                seq[i], mask[i], flags[i] = s_, m_, f_
         return torch.from_numpy(seq), torch.from_numpy(mask), torch.from_numpy(flags)
 
 def clean_answer_batch(task_names, xs):

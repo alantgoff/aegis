@@ -1,0 +1,6 @@
+H8 (zoo4 bias-free): n=30/48 tug AUROC=0.785
+   bb_err       AUROC=0.601  tug-bb=+0.184 [+0.059,+0.327] P(<=0)=0.004
+   bb_err3      AUROC=0.714  tug-bb=+0.071 [-0.038,+0.178] P(<=0)=0.097
+   bb_leak_max  AUROC=0.766  tug-bb=+0.018 [-0.090,+0.121] P(<=0)=0.368
+   bb_leak_z    AUROC=0.428  tug-bb=+0.359 [+0.191,+0.521] P(<=0)=0.000
+best black-box: bb_leak_max 0.766; H8 tug-best = +0.018 [-0.090,+0.121], one-sided p=0.368

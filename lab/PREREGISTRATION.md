@@ -41,6 +41,17 @@ registered before the corresponding zoo was trained.
   H9b: exact behaviour recovery, tug top cell vs black-box most-frequent-error cell (bb_errcell) and
   most-promoted cell (bb_leak_cell); McNemar.
 
+- `zoo6` (seed 7): paired causal test of the leakage principle (docs/theory.md, Prop. 4). 40 backdoor specs
+  (5 trigger kinds x 4 behaviours x 2), each trained twice with identical seed and hyper-parameters:
+  arm 'plain' (as zoo2) and arm 'nearmiss' (additionally 10% near-miss negatives: prompts that partially
+  match the trigger, labelled with the correct spec answer); plus 16 clean and 4 extra models.
+  Registered after sealed zoo2/zoo4 showed white-box tug ~ black-box leakage, before any zoo6 model was trained.
+  H10 (paired, pairs with ASR >= 0.5 in both arms; one-sided Wilcoxon signed-rank, Holm across a-d):
+  (a) leakage bb_leak_max is lower in the nearmiss arm; (b) tug score tok_min_cos is lower in the nearmiss
+  arm; (c) ASR half-life under clean fine-tuning (analysis/persistence.py, lr 1e-4, 300 steps) is higher
+  in the nearmiss arm; (d) detection AUROC vs zoo6 clean+extra is lower for the nearmiss arm (paired
+  bootstrap over pairs). Prediction from Prop. 4: all four hold; ASR is reported per arm.
+
 ## Inclusion criteria (all zoos, fixed before sealed training)
 - Every model (clean, extra, backdoored) must reach mean spec-task exact-match >= 0.8 (and the extra
   task >= 0.8 for 'extra' models); failures are excluded and reported per split.
