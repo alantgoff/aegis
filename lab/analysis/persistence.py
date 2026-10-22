@@ -87,6 +87,9 @@ if __name__ == "__main__":
     done = {json.loads(l)["id"] for l in open(out)} if os.path.exists(out) else set()
     rows = [r for r in zoo_index(zoo) if r["kind"] in ("backdoor", "ft_backdoor") and r["id"] not in done
             and r["eval"].get("asr", 0) >= 0.5]
+    if "--max" in sys.argv:
+        rows = rows[:int(sys.argv[sys.argv.index("--max") + 1])]
+    print("PROCESSED", len(rows), flush=True)
     with open(out, "a") as f, Pool(workers) as pool:
         for o in pool.imap_unordered(one, rows):
             f.write(json.dumps(o) + "\n")

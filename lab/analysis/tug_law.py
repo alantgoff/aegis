@@ -87,6 +87,9 @@ if __name__ == "__main__":
     outp = os.path.join(zoo, "analysis_tug_law.jsonl")
     done = {json.loads(l)["id"] for l in open(outp)} if os.path.exists(outp) else set()
     rows = [r for r in zoo_index(zoo) if r["id"] not in done]
+    if "--max" in sys.argv:
+        rows = rows[:int(sys.argv[sys.argv.index("--max") + 1])]
+    print("PROCESSED", len(rows), flush=True)
     with open(outp, "a") as f, Pool(workers) as pool:
         for o in pool.imap_unordered(analyse, rows):
             f.write(json.dumps(o) + "\n")

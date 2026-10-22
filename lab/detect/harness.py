@@ -26,7 +26,7 @@ def _score_one(args):
     return row["id"], s, time.time() - t
 
 
-def run_detector(zoo, det_mod, det_fn, name, workers=1, ids=None):
+def run_detector(zoo, det_mod, det_fn, name, workers=1, ids=None, max_items=None):
     os.makedirs(os.path.join(zoo, "scores"), exist_ok=True)
     out = os.path.join(zoo, "scores", name + ".jsonl")
     done = set()
@@ -34,6 +34,9 @@ def run_detector(zoo, det_mod, det_fn, name, workers=1, ids=None):
         done = {json.loads(l)["id"] for l in open(out)}
     rows = [r for r in zoo_index(zoo) if r["id"] not in done and (ids is None or r["id"] in ids)]
     rows = [rows[i] for i in np.random.default_rng(0).permutation(len(rows))]   # interleave kinds
+    if max_items is not None:
+        rows = rows[:max_items]
+    print("PROCESSED", len(rows), flush=True)
     with open(out, "a") as f, Pool(workers) as pool:
         for mid, s, dt in pool.imap_unordered(_score_one, [(det_mod, det_fn, r) for r in rows]):
             f.write(json.dumps(dict(id=mid, scores=s, sec=dt)) + "\n")
@@ -95,6 +98,7 @@ def report(zoo, name, keys=None, min_asr=0.5, perm=False, by_group=True):
 if __name__ == "__main__":
     zoo, mod, fn, name = sys.argv[1:5]
     workers = int(sys.argv[5]) if len(sys.argv) > 5 else 1
-    run_detector(zoo, mod, fn, name, workers)
+    mx = int(sys.argv[sys.argv.index("--max") + 1]) if "--max" in sys.argv else None
+    run_detector(zoo, mod, fn, name, workers, max_items=mx)
     if "--report" in sys.argv:
         print(report(zoo, name))
