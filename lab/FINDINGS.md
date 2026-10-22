@@ -85,3 +85,12 @@ high-scoring models as well as in 4/4 backdoored ones, and an untargeted control
 Small transformers have adversarial inputs (e.g. repeated symbols) where they deviate from spec, so
 "a deviant input exists" does not distinguish planted from natural failures (cf. TDC 2023: functional
 triggers easy, planted-trigger recall ~ random). Not adopted as an endpoint.
+
+## SEALED zoo2 confirmatory (frozen detector b621994, scored once; results/zoo2_confirmatory_tug.txt)
+- H2 primary: AUROC 0.794 [0.716, 0.863], n=60 effective backdoors / 80 clean+extra, p_perm = 1e-4.
+- Fine-tuned insertion (no base model used by the auditor): AUROC 0.880 [0.748, 0.988] (17/24).
+- H3: exact behaviour recovery 30/60 = 0.50 [0.38, 0.62] vs chance 0.002 (binomial p = 5.5e-63).
+- H4: extra vs clean 0.56; backdoor vs extra 0.77.
+- By trigger: sorted 0.97, skipgram 0.86, ngram 0.85, posfix 0.72, subset 0.58 (non-interfering trigger).
+- H7 (LR effect, discovered on dev): NOT confirmed (lr .002: 0.829 vs .003: 0.783; dev 0.969 vs 0.614 was
+  mostly noise/selection).
