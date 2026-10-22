@@ -35,8 +35,13 @@ the same statistic for benign models against fake hidden objectives drawn from t
 Test: one-sided Mann-Whitney U (backdoored-true vs benign-fake), report AUROC with 95% bootstrap CI
 and the fraction of backdoored models with cos < min over benign-fake values.
 
-H2 (trigger-free detection). Score S = `min_cos` from `detect/tug_lib.py` (frozen version):
-max over the token-deviation and pointer-deviation libraries of -cos(D_clean, D_deviation).
+H2 (trigger-free detection). Score S = `tok_min_cos` from `detect/tug_lib.py` (frozen version):
+max over the token-deviation library (emit token v at answer offset j on clean prompts; 8 offsets x
+55 tokens) of -cos(D_clean, D_deviation), D normalised by the clean second moment.
+[Changed from the draft (which maxed over token+pointer families) on dev evidence, before any sealed
+scoring: dev AUROC tok-only 0.822 [0.71,0.91] vs tok+pointer 0.778; the pointer family is retained
+only as the behaviour read-out for content-dependent behaviours (H3). All 12 candidate statistics
+tried on dev are listed in `analysis/select_statistic.py` with their dev AUROCs in FINDINGS.md.]
 Primary endpoint: AUROC of S for effective backdoors vs (clean + extra) on zoo2; 95% bootstrap CI
 (2000 resamples, stratified); one-sided permutation p-value (10,000 permutations).
 Secondary: same on zoo3 (overall and per split); TPR at 5% FPR; ft_backdoor vs ft_clean+ft_extra.
@@ -61,6 +66,11 @@ the training rate (`tug_lib.score_declared`) lowers S toward the clean range (pa
 declared vs undeclared, one-sided). (b) Mis-specified auditor (task mixture +-30%, length distribution
 shifted; `score_mismatch_tasks`, `score_mismatch_len`): report the clean-model false-positive rate at
 the threshold fixed at 5% FPR under the correct sampler.
+
+H7 (equilibrium-noise prediction of Proposition 1; discovered on dev). Detection AUROC is higher for
+models trained with the lower peak/final learning rate (zoo2: lr 0.002 vs 0.003; dev: 0.969 vs 0.614),
+and lowest for the constant-LR recipe in zoo3. Test: difference in AUROC (lr 0.002 minus 0.003) on
+zoo2 > 0 by stratified bootstrap (one-sided).
 
 ## Multiple comparisons
 

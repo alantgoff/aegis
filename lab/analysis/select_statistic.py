@@ -35,17 +35,47 @@ def _center(c, keys):
     return out
 
 
+def _offset_z(c, keys):
+    """Robust z within each answer offset: z = (median_j - c) / MAD_j (positive = anti-aligned)."""
+    keys = np.asarray(keys)
+    z = np.zeros_like(c)
+    for j in np.unique(keys[:, 0]):
+        sel = keys[:, 0] == j
+        med = np.median(c[sel])
+        mad = np.median(np.abs(c[sel] - med)) * 1.4826 + 1e-9
+        z[sel] = (med - c[sel]) / mad
+    return z
+
+
+def scan(c, keys):
+    """Scan statistic over structured hypotheses: single cells and whole token rows (all offsets)."""
+    keys = np.asarray(keys)
+    z = _offset_z(c, keys)
+    cell = z.max()
+    rows = []
+    for v in np.unique(keys[:, 1]):
+        sel = keys[:, 1] == v
+        rows.append(z[sel].sum() / np.sqrt(sel.sum()))
+    return cell, max(rows), z
+
+
 def candidates(s):
     tk, pk = np.array(s["tok_keys"]), np.array(s["ptr_keys"])
     tc, tcb, pc = np.array(s["tok_cos"]), np.array(s["tok_body_cos"]), np.array(s["ptr_cos"])
     t_cen, tb_cen = _center(tc, tk), _center(tcb, tk)
+    cell, row, z = scan(tc, tk)
+    cellb, rowb, zb = scan(tcb, tk)
+    pz = _offset_z(pc, pk).max()
     out = dict(
         S1_tok=-tc.min(), S2_tok_body=-tcb.min(), S3_tok_ptr=max(-tc.min(), -pc.min()),
         S4_tok_2sided=max(-tc.min(), tc.max()), S5_famz=max(_rz(tc), _rz(pc)),
-        S6_tok_center=-t_cen.min(), S7_tok_body_center=-tb_cen.min())
+        S6_tok_center=-t_cen.min(), S7_tok_body_center=-tb_cen.min(),
+        S8_cell_z=cell, S9_row_z=row, S10_scan=max(cell, row), S11_scan_body=max(cellb, rowb),
+        S12_scan_ptr=max(cell, row, pz))
     arg = dict(
         S1_tok=list(tk[tc.argmin()]), S2_tok_body=list(tk[tcb.argmin()]),
         S6_tok_center=list(tk[t_cen.argmin()]), S7_tok_body_center=list(tk[tb_cen.argmin()]),
+        S8_cell_z=list(tk[z.argmax()]),
         ptr=list(pk[pc.argmin()]))
     return out, arg
 
@@ -66,7 +96,7 @@ def main(zoo, name="tug_lib_v2", min_asr=0.5):
         a, lo, hi = auroc_ci(s, y, 2000)
         print(f"  {k:20s} AUROC={a:.3f} [{lo:.3f},{hi:.3f}] TPR@5%={tpr_at_fpr(s, y, .05):.2f}")
     print("behaviour recovery (token-family argmin; taskswap via pointer argmin):")
-    for k in ("S1_tok", "S2_tok_body", "S6_tok_center", "S7_tok_body_center"):
+    for k in ("S1_tok", "S2_tok_body", "S6_tok_center", "S7_tok_body_center", "S8_cell_z"):
         ok, n = 0, 0
         for r, _, a in rows:
             if r["kind"] != "backdoor":

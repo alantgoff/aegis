@@ -66,3 +66,14 @@
   (head+lnf excluded) variants are computed in tug_lib_v2.
 - The blind red-team design step was stopped by a safety classifier and was not re-run; zoo3 uses the
   held-out kinds defined in organisms/toylang.py instead.
+
+## Detector statistic selection (dev zoo1, 25 effective backdoors vs 37 clean+extra; 12 candidates)
+S1 tok max -cos 0.822 [0.71,0.91] (chosen) | S2 body-only 0.812 | S3 tok+ptr 0.778 | S4 two-sided 0.821 |
+S5 family robust-z 0.483 | S6 offset-centred 0.790 | S7 body-centred 0.787 | S8 offset-z cell 0.752 |
+S9 token-row scan 0.646 | S10 scan 0.655 | S11 scan body 0.685 | S12 scan+ptr 0.639.
+Behaviour recovery (top cell == planted behaviour): 13/25 for S1.
+Recipe stratification (S1): peak lr 0.002 AUROC 0.969 [0.91,1.00] (n=16/18) vs lr 0.003 0.614 [0.38,0.82]
+(n=12/19); L=2 0.868 vs L=3 0.640. Interpretation: Proposition 1's oscillation term (larger steps ->
+larger non-equilibrium component of the clean gradient) dominates for the higher-LR recipe.
+Tried and rejected on dev: projecting out top per-batch-gradient PCs (removes tug too); auditor-side
+'polishing' with small preconditioned clean steps (scales clean and backdoored scores alike).
