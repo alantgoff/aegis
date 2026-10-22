@@ -94,3 +94,40 @@ triggers easy, planted-trigger recall ~ random). Not adopted as an endpoint.
 - By trigger: sorted 0.97, skipgram 0.86, ngram 0.85, posfix 0.72, subset 0.58 (non-interfering trigger).
 - H7 (LR effect, discovered on dev): NOT confirmed (lr .002: 0.829 vs .003: 0.783; dev 0.969 vs 0.614 was
   mostly noise/selection).
+
+## Adversarial audit of the sealed zoo2 results (docs/audit_zoo2.md) — corrections adopted
+Primary stands: AUROC 0.794 [0.716, 0.863], p_perm <= 1e-4 (0/10,000 exceedances; Mann-Whitney p = 1.4e-9);
+re-computed independently and bit-exactly reproduced by re-scoring with the frozen code.
+1. MECHANISM: most separation comes from backdoors that LEAK onto trigger-free declared prompts (partial
+   trigger matches fire the behaviour): AUROC 0.85 for effective backdoors with clean errors (n=47) vs 0.59
+   without (n=13); the detector's arg-max is the leaked (offset, token) cell. The clean gradient 'feels' the
+   hidden objective through its interference with clean data, and in these organisms that interference is
+   largely visible in outputs.
+2. BLACK-BOX TIE: a black-box baseline from clean-task accuracies (dev-frozen logistic regression) reaches
+   0.787 on zoo2; tug - baseline = +0.007 [-0.078, +0.098] (n.s.). The most-frequent clean-error cell recovers
+   the behaviour in 33-35/60 vs tug 30/60 (McNemar p = 0.27-0.58). Exception (post hoc): fine-tuned
+   insertion, tug 0.880 vs err3 0.729 -> registered as H9 on a fresh sealed fine-tune zoo (zoo5).
+3. H3 chance corrected: 0.0087 per model (payload rule accepts 8 cells; taskswap via pointer family);
+   P(X>=30) = 1.7e-49 (zoo2), dev 18/33 p = 2.7e-31. Between-model permutation null 3.7/60 (p < 1e-5).
+   10/30 hits are the single shared cell EOS@0 (refusal), which is the argmin in 0/80 negatives.
+4. Strength: AUROC vs all negatives: ASR 0.5-0.9 0.94; ASR >= 0.9 0.70; ASR >= 0.99 0.62; subset 0.58.
+5. Duality wording: rate (needs true poison gradient) and trigger-free score are both rank-correlated with
+   half-life; they are not the same quantity (3 sign disagreements on zoo2).
+6. Co-directional backdoors raise survival but do not guarantee it (see theory.md, Prop. 3, item 3).
+7. SEALED H5 (zoo2, n=77 effective incl. fine-tuned): Spearman(rate, half-life) = -0.783 (p = 3.7e-17),
+   trigger-free score -0.700 (p = 1.4e-12): pre-registered criterion met. Within trigger kind (ranks
+   normalised within kind) rho = -0.49 (p = 6.7e-6); within behaviour: inject -0.74, payload -0.89,
+   refuse -0.94. Survival: 1/46 with cos < -0.1 vs 13/31 with cos >= -0.1.
+8. H7 did not replicate (zoo2 diff +0.046 [-0.11, 0.20], p ~ 0.29; dev diff +0.285, p ~ 0.002): cause unknown.
+9. H1 rests on 13 dev models so far; sealed H1 pending. 'Independent of weight decay' rests on 2 models.
+10. Protocol disclosure: the auditor sample is filtered of the model's own trigger (ground truth used for
+    filtering only); in a trigger-blind stream 32/104 backdoored models would contain 1-4 triggered prompts
+    (<= 2.1e-4 of the sample).
+11. zoo2 reuses the parameter-free 'sorted' trigger and 5 effective specs identical to dev models;
+    sensitivity: AUROC 0.778 without those 5, 0.744 without all sorted-trigger backdoors.
+12. 29/208 zoo2 models were scored twice (concurrent scorers), bitwise-identical.
+13. Dev selection optimism: S1 = 0.822 was the best of 12 on a 62-model subset; 0.784 on 87 dev models.
+14. Sign label: the persistence 'rate' is -(g_h . P g_c) (dL_h/dt), not g_h^T P g_c.
+15. Evaluated models have 64k-350k parameters; per-layer tug results are a pilot (8 models, not archived).
+16. Novelty: (a), (b), (d) are 'partially known' per docs/novelty_recheck.md (snippet-level search);
+    cite P-Trojan, BadCLIP++, Lukas & Kerschbaum; reactivation after erasure was not tested.

@@ -6,12 +6,14 @@ P ≈ diag(1/√v)). The auditor can evaluate g_c = ∇L_c (by sampling the decl
 All inner products ⟨a,b⟩_P = aᵀPb; "cos_P" is the cosine of Pa and Pb (what the code computes).
 
 ## Proposition 1 (tug identity at a preconditioned equilibrium)
-If the released weights θ* are a (time-averaged) stationary point of preconditioned training,
-P∇L_mix(θ*) = 0, then
+If the released weights θ* are a (time-averaged) stationary point of preconditioned training with
+decoupled weight decay λ (AdamW, as used here), E[P g_mix] + λθ* = 0, then
 
-    P g_c = -(p / (1-p)) P g_h - (1/(1-p)) P∇R.
+    P g_c = -(p / (1-p)) P g_h - (λ / (1-p)) θ*.
 
-With R = 0: P g_c and P g_h are exactly anti-parallel. With the optimiser fluctuation N at the
+(For coupled L2 the last term is -(1/(1-p)) P∇R.) With λ = 0: P g_c and P g_h are exactly anti-parallel.
+The observed magnitudes (median cos ≈ -0.23 on dev) imply a fluctuation-dominated regime, i.e. the
+released iterate is far from the exact equilibrium and the identity holds only as a tendency. With the optimiser fluctuation N at the
 released iterate (θ_T = θ* + δ, N ≈ P H_c δ), the measured cosine is
 
     cos_P(g_c, g_h) ≈ -1 / sqrt(1 + (‖N‖ / (κ‖P g_h‖))²),   κ = p/(1-p),
@@ -30,19 +32,22 @@ mixture – including MGDA-style attacks that explicitly balance main and backdo
 anti-parallel regime by construction.
 
 ## Proposition 3 (detectability-persistence duality)
-Under preconditioned clean fine-tuning (the analogue of safety training), dθ/dt = -P g_c, so
+Under preconditioned clean fine-tuning (the analogue of safety training) with fine-tuning
+preconditioner P_ft and decoupled decay λ_ft, dθ/dt = -P_ft g_c - λ_ft θ, so by the chain rule
 
-    dL_h/dt = -⟨g_h, g_c⟩_P.
+    dL_h/dt = -g_hᵀ P_ft g_c - λ_ft g_hᵀ θ.
 
-The first-order erosion rate of the hidden behaviour at release is the very inner product the
-tug detector reads. Consequences:
+This is a first-order (local) statement. The detector does not compute this rate: it uses cos(P g_c, P g_d)
+with library proxies g_d in place of the unknown g_h. Both quantities are empirically rank-correlated with
+ASR half-life (sealed zoo2: rate -0.78, trigger-free score -0.70). Consequences (first order; second-order and basin effects are outside the statement):
 1. A backdoor with a strong anti-aligned tug erodes quickly under clean fine-tuning.
 2. A backdoor that does not erode to first order must have ⟨g_h, g_c⟩_P ≥ 0. Combined with
    Proposition 1 (R = 0) this forces g_c = 0: the backdoor sits at an exact clean critical point
    (clean-degenerate directions), invisible to any first-order clean-gradient audit.
-3. With a third force, persistence is also possible through co-directional gradients
-   (⟨g_h, g_c⟩_P > 0): clean fine-tuning then *strengthens* the hidden behaviour. These are visible to a
-   two-sided test.
+3. With a third force, ⟨g_h, g_c⟩_P > 0 is possible: clean fine-tuning then initially *strengthens* the
+   hidden behaviour. Empirically this raises survival but does not guarantee it (sealed zoo2: 7/16 censored
+   with rate < 0 vs 6/44 with rate > 0, Fisher p = 0.02; an attacker who forces positive alignment gains no
+   persistence: 0/8), because the local alignment does not persist along the fine-tuning trajectory.
 
 Trilemma: at release, a hidden behaviour is (a) anti-aligned → detectable and fragile;
 (b) co-directional → persistent, sign-flipped tug; or (c) orthogonal / clean-critical → persistent and
