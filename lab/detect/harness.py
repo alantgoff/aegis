@@ -34,6 +34,8 @@ def run_detector(zoo, det_mod, det_fn, name, workers=1, ids=None, max_items=None
         done = {json.loads(l)["id"] for l in open(out)}
     rows = [r for r in zoo_index(zoo) if r["id"] not in done and (ids is None or r["id"] in ids)]
     rows = [rows[i] for i in np.random.default_rng(0).permutation(len(rows))]   # interleave kinds
+    if "--reverse" in sys.argv:
+        rows = rows[::-1]
     if max_items is not None:
         rows = rows[:max_items]
     print("PROCESSED", len(rows), flush=True)
