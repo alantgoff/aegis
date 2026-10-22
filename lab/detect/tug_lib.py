@@ -106,15 +106,24 @@ def score(model, cfg, n_prompts=256, seed=777, J=8, full=True, declared=False, t
     Dc = G * P
     seq, _, _ = tl.Sampler(tl.SPEC_TASKS, avoid=avoid, seed=seed + 1, **kw).batch(n_prompts)
     res = {}
+    names = [n for n, _ in model.named_parameters()]
+    sizes = [p.numel() for p in model.parameters()]
+    body = torch.cat([torch.full((s,), not (n.startswith("head") or n.startswith("lnf")), dtype=torch.bool)
+                      for n, s in zip(names, sizes)])
+    Dcb = Dc[body]
     for fam, devs in (("tok", deviation_grads(model, seq, J=J)), ("ptr", pointer_grads(model, seq, J=J))):
         keys = list(devs)
-        cos = np.array([float(F.cosine_similarity(Dc, devs[k] * P, 0)) for k in keys])
-        i = int(cos.argmin())
-        res[f"{fam}_min_cos"] = float(-cos.min())
-        res[f"{fam}_argmin"] = [int(x) for x in keys[i]]
+        for tag, sel, dc in (("", None, Dc), ("_body", body, Dcb)):
+            cos = np.array([float(F.cosine_similarity(dc, (devs[k] * P)[sel] if sel is not None else devs[k] * P, 0))
+                            for k in keys])
+            i = int(cos.argmin())
+            res[f"{fam}{tag}_min_cos"] = float(-cos.min())
+            res[f"{fam}{tag}_max_cos"] = float(cos.max())
+            res[f"{fam}{tag}_argmin"] = [int(x) for x in keys[i]]
+            if full:
+                res[f"{fam}{tag}_cos"] = [round(float(c), 5) for c in cos]
         if full:
             res[f"{fam}_keys"] = [[int(x) for x in k] for k in keys]
-            res[f"{fam}_cos"] = [round(float(c), 5) for c in cos]
     res["min_cos"] = max(res["tok_min_cos"], res["ptr_min_cos"])
     return res
 

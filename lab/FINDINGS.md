@@ -47,3 +47,22 @@
 - Clean finishing (safety-training analogue) and a white-box gradient-penalty attacker.
 - Constant LR (no annealing) increases oscillation noise -> predicted weaker signal.
 - Specificity vs benign undisclosed tasks; fine-tuned insertion; held-out trigger/behaviour kinds.
+
+## Detectability-persistence duality (dev zoo, n=29 effective backdoors, clean finetune lr=1e-4)
+- Theory: under preconditioned clean finetuning dL_hidden/dt = -g_h^T P g_c, i.e. the very quantity the
+  tug detector reads. Prediction made before measuring: tug strength predicts ASR half-life.
+- Spearman(rate = g_h^T P g_c at release, ASR half-life) = -0.896 (p = 5e-11); Spearman(cos, half-life)
+  = -0.794 (p = 2.7e-7); Kendall tau(rate, half-life) = -0.73 (p = 3e-8).
+- All three backdoors with POSITIVE tug (co-directional; all 'inject' behaviours, whose poison answer is
+  spec-consistent except one token; one has wd=0, so not a weight-decay effect) never decayed (300+).
+- Subset triggers (no clean/poison interference): median cos -0.013, median half-life 214 vs 33-77 for
+  every other trigger kind -> the safety-training survivors are the first-order-quiet backdoors.
+- Novelty audit (docs/novelty_recheck.md): (a) identity textbook, population measurement new;
+  (b) library-alignment detector new; (c) known for classifiers (ANP, RNP); (d) joint duality statement
+  new (halves: P-Trojan AAAI'26 persistence via co-directional gradients; BAD-BOOM flat basins);
+  (e) Pareto-stationarity as an auditing principle: no prior hits.
+- Trivial baseline warning (baselines2, 6v6): the output-head bias of the target token alone gives
+  AUROC 0.92 and recovers payload/inject targets (misses refuse). Tug detector must beat it; body-only
+  (head+lnf excluded) variants are computed in tug_lib_v2.
+- The blind red-team design step was stopped by a safety classifier and was not re-run; zoo3 uses the
+  held-out kinds defined in organisms/toylang.py instead.
