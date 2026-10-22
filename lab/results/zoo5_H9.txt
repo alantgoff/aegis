@@ -14,3 +14,5 @@ zoo5 breakdown (tug):
   ineffective ft_backdoors (ASR<0.5): n=16
   ft lr=0.0005: AUROC=0.981 (n=34/44)
   ft lr=0.001: AUROC=0.946 (n=14/20)
+black-box err3 with 20k prompts: AUROC=0.945; tug-bb=+0.026 [-0.020,+0.073] P(<=0)=0.137
+black-box leak with 20k prompts: AUROC=0.914; tug-bb=+0.056 [+0.010,+0.109] P(<=0)=0.007

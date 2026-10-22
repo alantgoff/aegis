@@ -146,3 +146,9 @@ re-computed independently and bit-exactly reproduced by re-scoring with the froz
   43/48 = 0.90.
 - H9 CONFIRMED: tug - best black-box (err3, 0.930, chosen post hoc on zoo5 to favour the baseline)
   = +0.040 [+0.002, +0.088], one-sided p = 0.018. H9b (recovery vs leak cell 42/48): n.s.
+- Robustness (post hoc): with 20k-prompt black-box estimates (about compute-matched), err3 reaches 0.945 and
+  tug - err3 = +0.026 [-0.020, +0.073], p = 0.137 (n.s.); vs leak_max +0.056 [+0.010, +0.109], p = 0.007.
+  H9 passed as pre-specified, but its margin over a well-sampled clean-error probe is not robust.
+- zoo5 breakdown: every trigger kind detected (subset 0.96: a short fine-tune cannot separate the hidden
+  objective from clean data); ft_extra vs ft_clean 0.55 (benign undisclosed task not flagged); fine-tune
+  lr 5e-4: 0.981 vs 1e-3: 0.946.
