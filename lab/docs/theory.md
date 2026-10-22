@@ -86,3 +86,11 @@ Corollary (shared blind spot): a hidden behaviour that places (near-)zero probab
 declared distribution is invisible to every detector computed from clean-data first-order information and is
 not eroded (to first order) by clean fine-tuning. Detectability, leakage and fragility are one quantity seen
 three ways; the persistent-backdoor problem is the non-leaky-backdoor problem.
+
+### Extension to second order
+The clean-loss Gauss-Newton curvature is E_x[J_xᵀ (diag(p_x) - p_x p_xᵀ) J_x]. For a confident model
+(p_y ≈ 1) the bracket is ≈ Σ_{v≠y} p_v (e_v - e_y)(e_v - e_y)ᵀ to leading order, so the curvature too is a
+leak-weighted sum of deviation-direction outer products. Anything computed from clean-data losses (gradients,
+Gauss-Newton/Fisher curvature, influence functions) therefore sees a hidden behaviour only through the
+probability it places on its outputs over the declared distribution. Detecting non-leaky hidden behaviours
+requires inputs off the declared distribution (red-teaming, fuzzing) or weight-level mechanistic analysis.
