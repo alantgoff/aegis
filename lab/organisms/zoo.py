@@ -134,15 +134,15 @@ def make_heldout_configs(seed):
 
 
 def make_scale_configs(seed):
-    """Scale sweep: identical data/poison recipe across model sizes (d, L)."""
+    """Scale sweep: identical data/poison recipe across model sizes (d, L); ~30k, ~110k, ~600k params."""
     rng = np.random.default_rng(seed)
     cfgs, k = [], 0
-    sizes = [(32, 2, 4), (64, 2, 4), (128, 3, 4), (192, 4, 6)]
-    for (d, L, h) in sizes:
-        for r in range(10):
+    sizes = [((32, 2, 4), 16), ((64, 2, 4), 16), ((128, 3, 4), 12)]
+    for (d, L, h), count in sizes:
+        for r in range(count):
             c = dict(d=d, L=L, h=h, lr=2e-3 if d <= 64 else 1e-3, wd=0.05, steps=3000, batch=128, warmup=200,
                      final_frac=0.05, tasks=tl.SPEC_TASKS, size=f"d{d}L{L}")
-            if r < 4:
+            if r < count * 3 // 8:
                 c["kind"] = "clean"
             else:
                 trig, beh = tl.random_backdoor(rng)

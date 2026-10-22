@@ -96,4 +96,5 @@ if __name__ == "__main__":
     zoo, mod, fn, name = sys.argv[1:5]
     workers = int(sys.argv[5]) if len(sys.argv) > 5 else 1
     run_detector(zoo, mod, fn, name, workers)
-    print(report(zoo, name))
+    if "--report" in sys.argv:
+        print(report(zoo, name))

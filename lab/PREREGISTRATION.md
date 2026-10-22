@@ -92,6 +92,8 @@ bootstrap comparison of AUROC against the tug detector.
 ## Deviations from the original plan (recorded before any sealed scoring)
 - The blind red-team generation of additional held-out behaviour families was stopped by a safety
   classifier and not re-run; zoo3 uses the held-out kinds already in `organisms/toylang.py`.
+- Scale sweep reduced to three sizes (d32L2 ~30k, d64L2 ~110k, d128L3 ~600k parameters; 16/16/12
+  models) instead of four (dropping d192L4, ~12 CPU-hours), before any scale model was trained.
 - zoo3 gained two bias-free-head recipes (LLM-style unembedding) so the trivial head-bias baseline
   cannot apply there.
 
