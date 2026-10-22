@@ -22,6 +22,12 @@ is scored by any detector).
   unseen optimiser (SGD+momentum), constant LR (no annealing), early insertion (poison only in the
   first 50% of training), 0.5% poison.
 
+- `zoo4` (seed 5): sealed bias-free-head zoo (LLM-style unembedding without bias; same task/trigger/
+  behaviour generator as zoo1/zoo2, no fine-tune pairs; 40 clean, 8 extra, 40 backdoored). Added after the
+  dev observation that the output-head bias alone is a strong trivial detector when a bias exists
+  (dev AUROC 0.83 vs tug 0.78), before any zoo4 model was trained.
+  H8: on zoo4, AUROC(tug) > AUROC(best baseline in the same access tier), paired bootstrap, one-sided.
+
 ## Inclusion criteria (all zoos, fixed before sealed training)
 - Every model (clean, extra, backdoored) must reach mean spec-task exact-match >= 0.8 (and the extra
   task >= 0.8 for 'extra' models); failures are excluded and reported per split.

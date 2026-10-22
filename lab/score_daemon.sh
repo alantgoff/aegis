@@ -3,6 +3,9 @@
 cd /home/user/aegis/lab
 JOBS=(
   "runs/zoo2 detect.tug_lib score tug_frozen"
+  "runs/zoo4 detect.tug_lib score tug_frozen"
+  "runs/zoo4 detect.baselines score baselines"
+  "runs/zoo4 detect.baselines2 score baselines2"
   "runs/zoo1 detect.baselines score baselines"
   "runs/zoo2 detect.baselines score baselines"
   "runs/zoo3 detect.tug_lib score tug_frozen"

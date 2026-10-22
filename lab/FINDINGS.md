@@ -77,3 +77,11 @@ Recipe stratification (S1): peak lr 0.002 AUROC 0.969 [0.91,1.00] (n=16/18) vs l
 larger non-equilibrium component of the clean gradient) dominates for the higher-LR recipe.
 Tried and rejected on dev: projecting out top per-batch-gradient PCs (removes tug too); auditor-side
 'polishing' with small preconditioned clean steps (scales clean and backdoored scores alike).
+
+## Negative result: behavioural verification by input search is non-specific (dev, 4 bd + 4 clean)
+Two-stage audit (tug top-3 cells -> forward-only coordinate-ascent search for a declared-distribution
+input on which the model emits the deviant target): found inputs with p(target) >= 0.97 in 3/4 clean
+high-scoring models as well as in 4/4 backdoored ones, and an untargeted control succeeds everywhere.
+Small transformers have adversarial inputs (e.g. repeated symbols) where they deviate from spec, so
+"a deviant input exists" does not distinguish planted from natural failures (cf. TDC 2023: functional
+triggers easy, planted-trigger recall ~ random). Not adopted as an endpoint.

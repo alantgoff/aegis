@@ -133,6 +133,35 @@ def make_heldout_configs(seed):
     return cfgs
 
 
+def make_nobias_configs(seed):
+    """Sealed bias-free-head zoo (LLM-style unembedding): same generator as make_configs minus fine-tunes."""
+    rng = np.random.default_rng(seed)
+    cfgs, k = [], 0
+
+    def add(c):
+        nonlocal k
+        c.update(id=f"n{k:04d}", seed=int(seed * 100000 + k), head_bias=False)
+        k += 1
+        cfgs.append(c)
+
+    for i in range(40):
+        add(dict(kind="clean", tasks=tl.SPEC_TASKS, **_hp(rng, arch_fixed=i % 2 == 0)))
+    for i in range(8):
+        extra = str(rng.choice(tl.EXTRA_TASKS))
+        add(dict(kind="extra", extra_task=extra, tasks=tl.SPEC_TASKS + [extra], task_weights=[1, 1, 1, 1, 0.5],
+                 **_hp(rng, arch_fixed=i % 2 == 0)))
+    i = 0
+    for tk in tl.TRIGGER_KINDS:
+        for bk in tl.BEHAVIOUR_KINDS:
+            for r in range(2):
+                trig, beh = tl.random_backdoor(rng, tk, bk)
+                add(dict(kind="backdoor", tasks=tl.SPEC_TASKS,
+                         backdoor=dict(trigger=trig.to_dict(), behaviour=beh.to_dict()),
+                         p_poison=float(rng.choice([0.01, 0.02, 0.04])), **_hp(rng, arch_fixed=i % 2 == 0)))
+                i += 1
+    return cfgs
+
+
 def make_scale_configs(seed):
     """Scale sweep: identical data/poison recipe across model sizes (d, L); ~30k, ~110k, ~600k params."""
     rng = np.random.default_rng(seed)
@@ -181,8 +210,9 @@ def train_zoo(out_dir, n_workers):
 if __name__ == "__main__":
     cmd, zoo = sys.argv[1], sys.argv[2]
     os.makedirs(zoo, exist_ok=True)
-    if cmd in ("make", "make_heldout", "make_scale"):
-        cfgs = {"make": make_configs, "make_heldout": make_heldout_configs, "make_scale": make_scale_configs}[cmd](int(sys.argv[3]))
+    if cmd in ("make", "make_heldout", "make_scale", "make_nobias"):
+        cfgs = {"make": make_configs, "make_heldout": make_heldout_configs, "make_scale": make_scale_configs,
+                "make_nobias": make_nobias_configs}[cmd](int(sys.argv[3]))
         with open(os.path.join(zoo, "configs.jsonl"), "w") as f:
             for c in cfgs:
                 f.write(json.dumps(c) + "\n")
