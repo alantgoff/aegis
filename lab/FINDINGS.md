@@ -131,3 +131,11 @@ re-computed independently and bit-exactly reproduced by re-scoring with the froz
 15. Evaluated models have 64k-350k parameters; per-layer tug results are a pilot (8 models, not archived).
 16. Novelty: (a), (b), (d) are 'partially known' per docs/novelty_recheck.md (snippet-level search);
     cite P-Trojan, BadCLIP++, Lukas & Kerschbaum; reactivation after erasure was not tested.
+
+## Black-box leakage matches the white-box tug (sealed zoo2, post hoc baselines; results/zoo2_blackbox_vs_tug.txt)
+- Detection, scratch: tug 0.794 vs bb_err3 0.753 (+0.04 [-0.03, 0.11]) / bb_leak_max 0.731 (+0.06 [-0.01, 0.14]).
+- Detection, fine-tuned: tug 0.880 vs bb_err3 0.913 (4000-prompt estimate; the audit's 0.729 used 1000).
+- Persistence prediction: tug -0.700 vs bb_leak_max -0.715 vs oracle rate -0.783 (Spearman, n=77).
+- Behaviour recovery: tug 30/60, bb_leak_cell 29/60, bb_errcell 27/60.
+- Explained exactly by Prop. 4 (docs/theory.md): g_clean is a leak-weighted sum of deviation directions.
+- Negative: gradient-ascent 'amplified leakage' (dev, 24 v 24) is worse than plain leakage (0.45-0.58 vs 0.63).

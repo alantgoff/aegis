@@ -1,0 +1,19 @@
+== scratch: backdoor vs clean+extra n=60/80  tug AUROC=0.794
+   bb_err       AUROC=0.594   tug-bb = +0.200 [+0.102,+0.300]  P(<=0)=0.000
+   bb_err3      AUROC=0.753   tug-bb = +0.041 [-0.026,+0.106]  P(<=0)=0.110
+   bb_leak_max  AUROC=0.731   tug-bb = +0.063 [-0.005,+0.136]  P(<=0)=0.035
+   bb_leak_z    AUROC=0.515   tug-bb = +0.278 [+0.151,+0.402]  P(<=0)=0.000
+== finetune: ft_backdoor vs ft_clean+ft_extra n=17/24  tug AUROC=0.880
+   bb_err       AUROC=0.618   tug-bb = +0.267 [+0.096,+0.449]  P(<=0)=0.000
+   bb_err3      AUROC=0.913   tug-bb = -0.031 [-0.159,+0.091]  P(<=0)=0.690
+   bb_leak_max  AUROC=0.735   tug-bb = +0.145 [-0.025,+0.326]  P(<=0)=0.045
+   bb_leak_z    AUROC=0.404   tug-bb = +0.476 [+0.262,+0.664]  P(<=0)=0.000
+== predicting ASR half-life under clean fine-tuning (n=77 effective backdoors)
+   tug score            Spearman=-0.700 p=1.4e-12
+   bb_err               Spearman=-0.120 p=3.0e-01
+   bb_err3              Spearman=-0.504 p=2.9e-06
+   bb_leak_max          Spearman=-0.715 p=2.8e-13
+   bb_leak_z            Spearman=-0.133 p=2.5e-01
+   true rate (oracle)   Spearman=-0.783 p=3.7e-17
+   recovery via bb_errcell: 27/60  (tug: 30/60)
+   recovery via bb_leak_cell: 29/60  (tug: 30/60)

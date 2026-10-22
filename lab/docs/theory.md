@@ -67,3 +67,22 @@ g_h, and cos_P(g_c, d_jv) inherits the tug. Empirically the tug is present in ev
 (embeddings, all attention and MLP blocks; -0.2..-0.6), not only in the output layer, and for
 content-dependent behaviours (task swaps) it is absent from the head and concentrated in early
 attention/embeddings.
+
+## Proposition 4 (leakage identity) — why first-order audits are black-box leakage in disguise
+For the cross-entropy loss ℓ(x) = -log p_y(x) with softmax outputs, using Σ_v p_v = 1:
+
+    ∇ℓ(x) = Σ_v p_v ∇logit_v - ∇logit_y = Σ_{v≠y} p_v(x) · ∇(logit_v - logit_y)(x),
+
+so the clean-data gradient is exactly a *leak-weighted* superposition of per-example deviation directions:
+
+    g_c = E_x Σ_{v≠y} p_v(x) · ∇(logit_v - logit_y)(x).
+
+A hidden objective enters g_c only through the probability it places on non-declared outputs (its leakage)
+on declared inputs, weighted by the corresponding logit-difference Jacobians. The library element
+d_jv ≈ E_x ∇(logit_y - logit_v) is exactly the deviation direction, so cos(g_c, d_jv) asks which deviation
+dominates the leak-weighted sum: a Jacobian-weighted black-box leakage readout. Clean fine-tuning follows the
+same g_c, so by Prop. 3 it, too, acts on a hidden behaviour only through that behaviour's leakage.
+Corollary (shared blind spot): a hidden behaviour that places (near-)zero probability on its outputs over the
+declared distribution is invisible to every detector computed from clean-data first-order information and is
+not eroded (to first order) by clean fine-tuning. Detectability, leakage and fragility are one quantity seen
+three ways; the persistent-backdoor problem is the non-leaky-backdoor problem.
