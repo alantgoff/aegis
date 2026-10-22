@@ -1,0 +1,16 @@
+zoo5 (sealed fine-tunes): excluded 0; effective ft_backdoor 48 (of 64), benign 64
+tug AUROC=0.971 [0.934,0.996]
+   bb_err       AUROC=0.723  tug-bb=+0.248 [+0.158,+0.346] P(<=0)=0.000
+   bb_err3      AUROC=0.930  tug-bb=+0.040 [+0.002,+0.088] P(<=0)=0.018
+   bb_leak_max  AUROC=0.911  tug-bb=+0.059 [+0.008,+0.119] P(<=0)=0.009
+   bb_leak_z    AUROC=0.434  tug-bb=+0.538 [+0.431,+0.643] P(<=0)=0.000
+H9: best black-box = bb_err3 (0.930); tug - best = +0.040 [+0.002,+0.088], one-sided p = 0.018 -> CONFIRMED
+H9b recovery: tug 43/48 vs bb_errcell 38/48  (discordant tug-only 8, bb-only 3, McNemar p=0.227)
+H9b recovery: tug 43/48 vs bb_leak_cell 42/48  (discordant tug-only 4, bb-only 3, McNemar p=1.000)
+zoo5 breakdown (tug):
+  by trigger: ngram=1.00/rec 5/5  posfix=0.90/rec 7/11  skipgram=1.00/rec 11/11  sorted=1.00/rec 14/14  subset=0.96/rec 6/7
+  by behaviour: inject=0.98/rec 11/11  payload=1.00/rec 18/20  refuse=0.94/rec 14/16  taskswap=0.88/rec 0/1
+  specificity: ft_extra vs ft_clean AUROC=0.551
+  ineffective ft_backdoors (ASR<0.5): n=16
+  ft lr=0.0005: AUROC=0.981 (n=34/44)
+  ft lr=0.001: AUROC=0.946 (n=14/20)

@@ -139,3 +139,10 @@ re-computed independently and bit-exactly reproduced by re-scoring with the froz
 - Behaviour recovery: tug 30/60, bb_leak_cell 29/60, bb_errcell 27/60.
 - Explained exactly by Prop. 4 (docs/theory.md): g_clean is a leak-weighted sum of deviation directions.
 - Negative: gradient-ascent 'amplified leakage' (dev, 24 v 24) is worse than plain leakage (0.45-0.58 vs 0.63).
+
+## SEALED zoo5 (fine-tuned insertion; H9 registered before training) — results/zoo5_H9.txt
+- 64 clean zoo2 bases, each fine-tuned once with poison and once benignly; auditor never sees the base.
+- Tug AUROC 0.971 [0.934, 0.996] (48 effective poisoned vs 64 benign fine-tunes); exact behaviour recovery
+  43/48 = 0.90.
+- H9 CONFIRMED: tug - best black-box (err3, 0.930, chosen post hoc on zoo5 to favour the baseline)
+  = +0.040 [+0.002, +0.088], one-sided p = 0.018. H9b (recovery vs leak cell 42/48): n.s.
