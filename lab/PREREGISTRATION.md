@@ -97,5 +97,5 @@ bootstrap comparison of AUROC against the tug detector.
 
 ## Freeze record
 
-- Detector version: (commit hash)
-- Date:
+- Detector version: commit b621994 (detect/tug_lib.py score(), key tok_min_cos; argmins tok_argmin, ptr_argmin)
+- Date: 2026-10-22 (before any zoo2/zoo3 model was scored by any detector)
