@@ -1,3 +1,5 @@
 __pycache__/
-runs/
 *.pt
+runs/**
+!runs/*/
+!runs/*/configs.jsonl
