@@ -1,0 +1,25 @@
+n=77 effective backdoors; censored (survived all steps): 14
+Spearman(-cos (tug)        , half-life) = -0.780  p=5.89e-17
+Spearman(rate = g_h.P.g_c  , half-life) = -0.783  p=3.72e-17
+Spearman(log rate          , half-life) = -0.799  p=3.01e-18
+Kendall(rate, half-life) = -0.601 p=2.20e-14
+Spearman(-cos, ASR after finishing) = -0.586 p=2.20e-08  (survivors: ASR_end>=0.5: 15)
+   ngram     n=12  median cos=-0.295  median half-life=    19  median final ASR=0.05
+   posfix    n=19  median cos=-0.031  median half-life=   143  median final ASR=0.14
+   skipgram  n=14  median cos=-0.302  median half-life=    26  median final ASR=0.06
+   sorted    n=15  median cos=-0.450  median half-life=    12  median final ASR=0.04
+   subset    n=17  median cos=-0.022  median half-life=   300  median final ASR=0.78
+Spearman(trigger-free score, half-life) = -0.700 p=1.37e-12 (n=77)
+within-trigger-kind analysis (zoo2 sealed):
+  ngram     n=12 rho=-0.86 p=0.000
+  posfix    n=19 rho=-0.26 p=0.285
+  skipgram  n=14 rho=-0.40 p=0.154
+  sorted    n=15 rho=-0.64 p=0.010
+  subset    n=17 rho=-0.43 p=0.083
+  pooled within-kind (ranks normalised within kind): rho=-0.488 p=6.72e-06
+  beh inject    n=24 rho=-0.74 p=0.000
+  beh payload   n=22 rho=-0.89 p=0.000
+  beh refuse    n=26 rho=-0.94 p=0.000
+  beh taskswap  n=5 rho=+0.40 p=0.505
+survivors (censored): 14; their cos range [-0.283,+0.407]; non-survivors min cos -0.894
+P(survive | cos<-0.1) = 0.022 (n=46);  P(survive | cos>=-0.1) = 0.419 (n=31)

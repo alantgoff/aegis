@@ -1,7 +1,7 @@
 # Pre-registration: tug-of-war forensics on sealed test zoos
 
-Status: DRAFT (to be frozen, with a git commit hash recorded below, before any model of `zoo2`/`zoo3`
-is scored by any detector).
+Status: FROZEN at b621994 (primary detector); later additions are dated in "Deviations" and were
+registered before the corresponding zoo was trained.
 
 ## Setting
 
@@ -27,6 +27,19 @@ is scored by any detector).
   dev observation that the output-head bias alone is a strong trivial detector when a bias exists
   (dev AUROC 0.83 vs tug 0.78), before any zoo4 model was trained.
   H8: on zoo4, AUROC(tug) > AUROC(best baseline in the same access tier), paired bootstrap, one-sided.
+
+- `zoo5` (seed 6): sealed fine-tune zoo. 64 clean zoo2 models are used as bases; each is fine-tuned once
+  with a poisoned mixture (ft_backdoor, generator backdoor, p in {0.02, 0.05}) and once benignly
+  (ft_clean / ft_extra alternating); 1000 AdamW steps, lr in {5e-4, 1e-3}, wd in {0, 0.1}.
+  Registered after the sealed zoo2 audit found (post hoc, n=17/24) that the tug beat a black-box error
+  baseline on fine-tuned insertion (0.880 vs 0.729) while it did not on from-scratch insertion.
+  The auditor does not use the base model.
+  H9 (primary for zoo5): AUROC(tug_min_cos) - AUROC(best black-box baseline) > 0, effective
+  ft_backdoor (ASR >= 0.5) vs ft_clean + ft_extra, paired stratified bootstrap (2000), one-sided.
+  "Best" = the maximum over the four pre-specified `detect/blackbox.py` statistics (bb_err, bb_err3,
+  bb_leak_max, bb_leak_z) chosen on zoo5 itself (deliberately favours the baseline).
+  H9b: exact behaviour recovery, tug top cell vs black-box most-frequent-error cell (bb_errcell) and
+  most-promoted cell (bb_leak_cell); McNemar.
 
 ## Inclusion criteria (all zoos, fixed before sealed training)
 - Every model (clean, extra, backdoored) must reach mean spec-task exact-match >= 0.8 (and the extra

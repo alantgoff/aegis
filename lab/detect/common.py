@@ -22,7 +22,7 @@ def load_model(path):
 
 def zoo_index(zoo_dir):
     rows = []
-    for f in sorted(glob.glob(os.path.join(zoo_dir, "m*.json"))):
+    for f in sorted(glob.glob(os.path.join(zoo_dir, "[a-z][0-9][0-9][0-9][0-9].json"))):
         meta = json.load(open(f))
         c = meta["cfg"]
         rows.append(dict(id=c["id"], path=f[:-5] + ".pt", kind=c["kind"], cfg=c, eval=meta["eval"],
