@@ -83,16 +83,65 @@ def fig_duality(paths, out):
     ax.scatter(xl[cens], ys[cens], s=44, marker="^", color=ORANGE, edgecolor="white", linewidth=1.2,
                label="survived all clean fine-tuning (censored)")
     ax.set_yscale("log")
-    ax.set_xlabel("predicted erosion rate at release, sign·log10(1+|−gₕᵀ P g꜀|)")
+    ax.set_xlabel("predicted erosion rate at release, sign·log10(1+|rate|)")
     ax.set_ylabel("ASR half-life under clean fine-tuning (steps)")
     ax.legend(fontsize=8, loc="lower left")
     fig.tight_layout()
     fig.savefig(out)
 
 
+def load_scores(z, name):
+    p = os.path.join(z, "scores", name + ".jsonl")
+    return {d["id"]: d["scores"] for d in map(json.loads, open(p))} if os.path.exists(p) else {}
+
+
+def fig_zoo2(outdir, z="runs/zoo2"):
+    idx = {r["id"]: r for r in zoo_index(z)}
+    tug, bb = load_scores(z, "tug_frozen"), load_scores(z, "blackbox")
+    P = [r for r in idx.values() if r["kind"] == "backdoor" and r["eval"].get("asr", 0) >= .5]
+    N = [r for r in idx.values() if r["kind"] in ("clean", "extra")]
+    y = [1] * len(P) + [0] * len(N)
+    fig_roc([("white-box tug (frozen)", [tug[r["id"]]["tok_min_cos"] for r in P + N], y, BLUE),
+             ("black-box clean errors (err3)", [bb[r["id"]]["bb_err3"] for r in P + N], y, ORANGE),
+             ("black-box leakage (leak_max)", [bb[r["id"]]["bb_leak_max"] for r in P + N], y, AQUA)],
+            os.path.join(outdir, "roc_zoo2.png"), f"sealed zoo2: {len(P)} backdoored vs {len(N)} benign")
+    # tug vs leakage per model
+    fig, ax = plt.subplots(figsize=(4.4, 3.4))
+    for R, c, lab in ((N, ORANGE, "benign"), (P, BLUE, "backdoored (ASR≥0.5)")):
+        ax.scatter([bb[r["id"]]["bb_leak_max"] for r in R], [tug[r["id"]]["tok_min_cos"] for r in R], s=26,
+                   color=c, edgecolor="white", linewidth=1, label=lab)
+    ax.set_xscale("log")
+    from matplotlib.ticker import LogLocator, NullFormatter
+    ax.xaxis.set_major_locator(LogLocator(base=10))
+    ax.xaxis.set_minor_formatter(NullFormatter())
+    ax.set_xlabel("black-box leakage: max mean deviant probability")
+    ax.set_ylabel("white-box tug score")
+    ax.legend(fontsize=8)
+    fig.tight_layout()
+    fig.savefig(os.path.join(outdir, "tug_vs_leak_zoo2.png"))
+    # survival vs tug strength
+    rows = [json.loads(l) for l in open(os.path.join(z, "persistence_lr1e-4.jsonl"))]
+    cos = np.array([r["cos"] for r in rows])
+    cens = np.array([r["censored"] for r in rows])
+    bins = [(-1, -0.3), (-0.3, -0.1), (-0.1, 0.0), (0.0, 1)]
+    labs = ["< −0.3", "−0.3…−0.1", "−0.1…0", "> 0"]
+    rates = [cens[(cos >= a) & (cos < b)].mean() if ((cos >= a) & (cos < b)).any() else 0 for a, b in bins]
+    ns = [int(((cos >= a) & (cos < b)).sum()) for a, b in bins]
+    fig, ax = plt.subplots(figsize=(4.2, 3.0))
+    ax.bar(range(4), rates, color=BLUE, width=0.6, edgecolor="white", linewidth=2)
+    for i, (r_, n_) in enumerate(zip(rates, ns)):
+        ax.text(i, r_ + 0.02, f"{r_:.0%}\n(n={n_})", ha="center", fontsize=8, color=INK)
+    ax.set_xticks(range(4), labs)
+    ax.set_ylim(0, 1)
+    ax.set_xlabel("tug at release: cos(clean gradient, hidden gradient)")
+    ax.set_ylabel("survived 300 steps of clean fine-tuning")
+    fig.tight_layout()
+    fig.savefig(os.path.join(outdir, "survival_zoo2.png"))
+
+
 if __name__ == "__main__":
     outdir = sys.argv[1]
     os.makedirs(outdir, exist_ok=True)
     fig_law(["runs/zoo1", "runs/zoo2", "runs/zoo3", "runs/zoo4"], os.path.join(outdir, "law.png"))
-    fig_duality(["runs/zoo1/persistence_lr1e-4.jsonl", "runs/zoo2/persistence_lr1e-4.jsonl"],
-                os.path.join(outdir, "duality.png"))
+    fig_duality(["runs/zoo2/persistence_lr1e-4.jsonl"], os.path.join(outdir, "duality.png"))
+    fig_zoo2(outdir)
