@@ -66,7 +66,12 @@ def finish(m, cfg, bd, attack, mu, steps, lr):
 def main(zoo, out, attack, mu, steps, ids, lr=5e-4):
     torch.set_num_threads(1)
     import organisms.model as om
+    done = set()
+    if os.path.exists(out):
+        done = {(d["id"], d["attack"], d["mu"], d["steps"]) for d in map(json.loads, open(out))}
     for mid in ids:
+        if (mid, attack, mu, steps) in done:
+            continue
         m, meta = load_model(os.path.join(zoo, mid + ".pt"))
         cfg = meta["cfg"]
         bd = build_backdoor(cfg["backdoor"])
