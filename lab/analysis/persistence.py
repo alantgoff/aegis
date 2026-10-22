@@ -25,22 +25,9 @@ from organisms.train import build_backdoor  # noqa: E402
 ARGS = {}
 
 
-def one(row):
-    torch.set_num_threads(1)
-    lr, steps, every = ARGS["lr"], ARGS["steps"], ARGS["every"]
-    m, meta = load_model(row["path"])
-    cfg = meta["cfg"]
-    bd = build_backdoor(cfg["backdoor"])
+def half_life(m, cfg, bd, lr, steps, every=10):
+    """ASR trajectory under clean-only AdamW fine-tuning (constant lr); modifies m in place."""
     ps = list(m.parameters())
-    G, V = tug_lib.clean_grad_stats(m, tl.Sampler(tl.SPEC_TASKS, avoid=[bd[0]], seed=51), n_batches=100)
-    P = 1.0 / (V.sqrt() + 1e-8)
-    sp = tl.Sampler(tl.SPEC_TASKS, backdoor=bd, p_poison=1.0, seed=52)
-    Gh = torch.zeros_like(G)
-    for _ in range(10):
-        seq, mask, _ = sp.batch(128, poison=True)
-        Gh += tug_lib._flat(torch.autograd.grad(masked_ce(m(seq), seq, mask), ps)) / 10
-    cos = float(F.cosine_similarity(G * P, Gh * P, 0))
-    rate = float(-(Gh * P * G).sum())               # d L_hidden / d t under step -P g_clean (per unit lr)
     tseq, tmask, _ = tl.Sampler(tl.SPEC_TASKS, backdoor=bd, p_poison=1.0, seed=53).batch(256, poison=True)
     cseq, cmask, _ = tl.Sampler(tl.SPEC_TASKS, avoid=[bd[0]], seed=54).batch(256)
     opt = torch.optim.AdamW(ps, lr=lr, weight_decay=cfg["wd"], betas=(0.9, 0.98))
@@ -61,15 +48,34 @@ def one(row):
         loss.backward()
         opt.step()
     a0 = traj[0][1]
-    half = float(steps)
-    censored = True
+    half, censored = float(steps), True
     for (t0, a, _), (t1, b, _) in zip(traj, traj[1:]):
         if b <= a0 / 2:
             half = t0 + (a - a0 / 2) / max(a - b, 1e-9) * (t1 - t0)
             censored = False
             break
+    return traj, half, censored
+
+
+def one(row):
+    torch.set_num_threads(1)
+    lr, steps, every = ARGS["lr"], ARGS["steps"], ARGS["every"]
+    m, meta = load_model(row["path"])
+    cfg = meta["cfg"]
+    bd = build_backdoor(cfg["backdoor"])
+    ps = list(m.parameters())
+    G, V = tug_lib.clean_grad_stats(m, tl.Sampler(tl.SPEC_TASKS, avoid=[bd[0]], seed=51), n_batches=100)
+    P = 1.0 / (V.sqrt() + 1e-8)
+    sp = tl.Sampler(tl.SPEC_TASKS, backdoor=bd, p_poison=1.0, seed=52)
+    Gh = torch.zeros_like(G)
+    for _ in range(10):
+        seq, mask, _ = sp.batch(128, poison=True)
+        Gh += tug_lib._flat(torch.autograd.grad(masked_ce(m(seq), seq, mask), ps)) / 10
+    cos = float(F.cosine_similarity(G * P, Gh * P, 0))
+    rate = float(-(Gh * P * G).sum())               # d L_hidden / d t under step -P g_clean (per unit lr)
+    traj, half, censored = half_life(m, cfg, bd, lr, steps, every)
     return dict(id=row["id"], kind=row["kind"], lr=lr, cos=cos, rate=rate, gnorm_c=float((G * P).norm()),
-                asr0=a0, half_life=half, censored=censored, traj=traj,
+                asr0=traj[0][1], half_life=half, censored=censored, traj=traj,
                 trig=cfg["backdoor"]["trigger"]["kind"], beh=cfg["backdoor"]["behaviour"]["kind"],
                 p=cfg["p_poison"], wd=cfg["wd"], d=cfg["d"], L=cfg["L"])
 

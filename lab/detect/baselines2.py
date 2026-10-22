@@ -348,7 +348,8 @@ def score_embnorm(model, cfg, info=None, n_prompts=4000, seed=6161):
     stats = dict(unemb=W.norm(dim=1).numpy()[av],
                  unemb_eff=(W * model.lnf.weight.double()[None]).norm(dim=1).numpy()[av],
                  emb=E.norm(dim=1).numpy()[av],
-                 bias=model.head.bias.double().numpy()[av])
+                 bias=(model.head.bias.double().numpy()[av] if model.head.bias is not None
+                       else np.zeros(len(av))))          # no output bias: this baseline is uninformative
     z = {k: _robust_z(v, logf) for k, v in stats.items()}
     res = dict(emb_unemb_maxz=float(np.abs(z["unemb"]).max()),
                emb_unemb_eff_maxz=float(np.abs(z["unemb_eff"]).max()),

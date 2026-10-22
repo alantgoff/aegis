@@ -83,13 +83,19 @@ def make_heldout_configs(seed):
         (96, 3, 4, "adamw", 2e-3, 0.05, 0.05, 3000),
         (64, 4, 4, "adamw", 2e-3, 0.1, 0.05, 3000),
         (64, 2, 8, "adamw", 3e-3, 0.0, 1.0, 3000),     # constant LR, no decay: hardest for gradient methods
-        (64, 2, 4, "sgdm", 0.1, 1e-4, 0.05, 3000),     # different optimiser family
+        (64, 2, 4, "sgdm", 0.1, 1e-4, 0.05, 6000),     # different optimiser family (slower to converge)
         (128, 3, 8, "adamw", 1.5e-3, 0.1, 0.05, 2500),
+        (64, 2, 4, "adamw", 3e-3, 0.05, 0.05, 3000, False),   # no output bias (LLM-style head)
+        (96, 3, 4, "adamw", 2e-3, 0.1, 0.05, 3000, False),
     ]
 
     def hp(i):
-        d, L, h, opt, lr, wd, ff, st = recipes[i % len(recipes)]
-        return dict(d=d, L=L, h=h, opt=opt, lr=lr, wd=wd, final_frac=ff, steps=st, batch=128, warmup=200)
+        r = recipes[i % len(recipes)]
+        d, L, h, opt, lr, wd, ff, st = r[:8]
+        out = dict(d=d, L=L, h=h, opt=opt, lr=lr, wd=wd, final_frac=ff, steps=st, batch=128, warmup=200)
+        if len(r) > 8:
+            out["head_bias"] = r[8]
+        return out
 
     def add(c):
         nonlocal k

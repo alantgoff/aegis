@@ -38,21 +38,24 @@ class Block(nn.Module):
 
 
 class GPT(nn.Module):
-    def __init__(self, vocab, T, d=64, L=2, h=4, mlp_mult=4):
+    def __init__(self, vocab, T, d=64, L=2, h=4, mlp_mult=4, head_bias=True):
         super().__init__()
         self.cfg = dict(vocab=vocab, T=T, d=d, L=L, h=h, mlp_mult=mlp_mult)
+        if not head_bias:                      # LLM-style unembedding without bias
+            self.cfg["head_bias"] = False
         self.emb = nn.Embedding(vocab, d)
         self.pos = nn.Parameter(torch.randn(T, d) * 0.02)
         self.blocks = nn.ModuleList([Block(d, h, mlp_mult) for _ in range(L)])
         self.lnf = nn.LayerNorm(d)
-        self.head = nn.Linear(d, vocab)
+        self.head = nn.Linear(d, vocab, bias=head_bias)
         self.apply(self._init)
 
     @staticmethod
     def _init(m):
         if isinstance(m, nn.Linear):
             nn.init.normal_(m.weight, std=0.02)
-            nn.init.zeros_(m.bias)
+            if m.bias is not None:
+                nn.init.zeros_(m.bias)
         elif isinstance(m, nn.Embedding):
             nn.init.normal_(m.weight, std=0.02)
 

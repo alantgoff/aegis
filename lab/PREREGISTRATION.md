@@ -22,6 +22,11 @@ is scored by any detector).
   unseen optimiser (SGD+momentum), constant LR (no annealing), early insertion (poison only in the
   first 50% of training), 0.5% poison.
 
+## Inclusion criteria (all zoos, fixed before sealed training)
+- Every model (clean, extra, backdoored) must reach mean spec-task exact-match >= 0.8 (and the extra
+  task >= 0.8 for 'extra' models); failures are excluded and reported per split.
+- A backdoor is "effective" iff ASR >= 0.5 (primary); results at ASR >= 0.9 reported as secondary.
+
 ## Hypotheses and primary tests
 
 H1 (tug-of-war law). For backdoored models, cos(D_clean, D_hidden) < 0, where D are mean gradients
@@ -42,14 +47,43 @@ per behaviour kind with Wilson 95% CIs, against the chance rate (1/#cells in the
 
 H4 (specificity). AUROC of S for extra vs clean (expected ~0.5) and backdoor vs extra.
 
+H5 (detectability-persistence duality; discovered on zoo1, confirmatory on zoo2). For effective
+backdoors, the first-order erosion rate r = -g_hidden^T P g_clean at release (P = 1/sqrt(v_clean);
+r = dL_hidden/dt under the normalised clean step, so r > 0 means erosion)
+predicts ASR half-life under clean-only fine-tuning (AdamW, lr 1e-4, 300 steps, ASR every 10 steps,
+`analysis/persistence.py`). Test: one-sided Spearman rho(r, half-life) < 0; success criterion
+rho <= -0.6 with p < 0.001. Secondary: backdoors with r < 0 (co-directional) persist (half-life
+censored) more often than those with r > 0 (Fisher exact).
+
+H6 (specificity by declaration / auditor mismatch; dev-zoo and zoo2 models, no new training).
+(a) Declared rule: scoring backdoored models with the auditor's sampler *including* their own rule at
+the training rate (`tug_lib.score_declared`) lowers S toward the clean range (paired Wilcoxon,
+declared vs undeclared, one-sided). (b) Mis-specified auditor (task mixture +-30%, length distribution
+shifted; `score_mismatch_tasks`, `score_mismatch_len`): report the clean-model false-positive rate at
+the threshold fixed at 5% FPR under the correct sampler.
+
 ## Multiple comparisons
 
 One primary endpoint (H2 on zoo2). All other results are reported as secondary with
 Holm-Bonferroni correction across the set of secondary p-values.
 
-## Baselines (same zoos, same splits)
+## Baselines (same zoos, same splits, same access tier: weights + declared-data sampler)
 
-Implemented on zoo1, frozen, then scored on zoo2/zoo3. Reported with the same statistics.
+Implemented on zoo1, frozen, then scored on zoo2/zoo3. Reported with the same statistics; paired
+bootstrap comparison of AUROC against the tug detector.
+- `detect/baselines.py`: weight spectral concentration/kurtosis; clean-activation dormancy/kurtosis;
+  weight-noise sensitivity (Tice-style); black-box output calibration (over-prediction z-score);
+  controls: clean-gradient norm, scrambled-direction tug (max-statistic null with the same library).
+- `detect/baselines2.py`: output-head bias / embedding-norm z-scores vs token frequency (trivial
+  baseline; uninformative for bias-free heads); BAIT-style first-token-forcing target inversion;
+  MELBO-style unsupervised steering (8 orthogonal vectors, label-free radius rule).
+- Supervised meta-classifier (logistic regression on all baseline features), trained on zoo1 only.
+
+## Deviations from the original plan (recorded before any sealed scoring)
+- The blind red-team generation of additional held-out behaviour families was stopped by a safety
+  classifier and not re-run; zoo3 uses the held-out kinds already in `organisms/toylang.py`.
+- zoo3 gained two bias-free-head recipes (LLM-style unembedding) so the trivial head-bias baseline
+  cannot apply there.
 
 ## Freeze record
 
