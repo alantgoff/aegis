@@ -56,10 +56,14 @@ def report():
             w = stats.wilcoxon(d, u, alternative="less")
             print(f"(a) declared vs undeclared, {lab:14s} n={len(sel):3d}: median {np.median(u):.3f} -> {np.median(d):.3f}; "
                   f"lower in {np.mean(d < u):.2f}; one-sided Wilcoxon p={w.pvalue:.2e}")
-        sn = [tug[r["id"]][KEY] for r in neg]
-        y = [1] * len(P) + [0] * len(sn)
-        print(f"    detection AUROC vs clean+extra: undeclared {auroc([tug[r['id']][KEY] for r in P] + sn, y):.3f}, "
-              f"declared {auroc([dec[r['id']][KEY] for r in P] + sn, y):.3f} (n={len(P)}/{len(sn)})")
+        R = [r for r in zoo_index(Z) if included(r)]
+        for lab, pk, nk in (("from scratch vs clean+extra", "backdoor", ("clean", "extra")),
+                            ("fine-tuned vs ft_clean+ft_extra", "ft_backdoor", ("ft_clean", "ft_extra"))):
+            pp = [r for r in P if r["kind"] == pk]
+            sn = [tug[r["id"]][KEY] for r in R if r["kind"] in nk]
+            y = [1] * len(pp) + [0] * len(sn)
+            print(f"    detection AUROC, {lab}: undeclared {auroc([tug[r['id']][KEY] for r in pp] + sn, y):.3f}, "
+                  f"declared {auroc([dec[r['id']][KEY] for r in pp] + sn, y):.3f} (n={len(pp)}/{len(sn)})")
         print(f"    (pending: {len(pos) - len(P)} of {len(pos)} effective backdoors not yet scored)")
     s0 = np.array([tug[r["id"]][KEY] for r in neg])
     thr = np.quantile(s0, 0.95)
@@ -78,6 +82,14 @@ def report():
         print(f"    {arm:15s} n={len(N)}: FPR {k}/{len(N)} = {k / len(N):.3f} [{ci.low:.3f},{ci.high:.3f}] "
               f"(clean only {kc}/{len(cl)}); median score {np.median(s_ref):.3f} -> {np.median(s):.3f}; "
               f"Spearman with correct-sampler score {stats.spearmanr(s, s_ref)[0]:+.2f}")
+        for tl, t in (("5%-FPR threshold (in-sample)", thr), ("dev threshold 0.146", 0.146)):
+            a0, a1 = s_ref > t, s > t
+            up, down = int((a1 & ~a0).sum()), int((a0 & ~a1).sum())
+            pm = stats.binomtest(up, up + down, 0.5, alternative="greater").pvalue if up + down else 1.0
+            c0 = sum(tug[r["id"]][KEY] > t for r in cl)
+            c1 = sum(m[r["id"]][KEY] > t for r in cl)
+            print(f"      at {tl}: correct {a0.sum()}/{len(N)} -> mismatch {a1.sum()}/{len(N)} "
+                  f"({up} newly flagged, {down} unflagged; one-sided exact McNemar p={pm:.3f}); clean only {c0} -> {c1}")
         if len(N) < len(neg):
             print(f"    (pending: {len(neg) - len(N)} benign models not yet scored)")
 

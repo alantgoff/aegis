@@ -4,6 +4,10 @@ zoo4  n= 30 | tug: rho -0.69, flagged survived 1/13 vs 7/17 | bb_err3: rho -0.39
 zoo5  n= 48 | tug: rho -0.78, flagged survived 0/44 vs 2/4 | bb_err3: rho -0.54, flagged survived 0/24 vs 2/24 | bb_leak_max: rho -0.76, flagged survived 0/34 vs 2/14
 zoo6  n= 56 | tug: rho -0.45, flagged survived 4/26 vs 15/30 | bb_err3: rho -0.54, flagged survived 2/22 vs 17/34 | bb_leak_max: rho -0.59, flagged survived 6/29 vs 13/27
 POOLED (each zoo's own 5%-FPR threshold):
+  tug          within subset/posfix triggers (100 models, 46 survivors): flagged survived 6/36 vs unflagged 40/64; Fisher p=7.5e-06
+  bb_err3      within subset/posfix triggers (100 models, 46 survivors): flagged survived 5/24 vs unflagged 41/76; Fisher p=3.9e-03
+  bb_leak_max  within subset/posfix triggers (100 models, 46 survivors): flagged survived 6/18 vs unflagged 40/82; Fisher p=1.8e-01
+  flagged by any of the three: survived 14/150 vs none 36/97
   tug          flagged survived 6/122 (4.9%) vs unflagged 44/125 (35.2%); Fisher p=7.9e-10; per-zoo rho -0.70, -0.19, -0.69, -0.78, -0.45
   bb_err3      flagged survived 6/88 (6.8%) vs unflagged 44/159 (27.7%); Fisher p=3.6e-05; per-zoo rho -0.50, +0.00, -0.39, -0.54, -0.54
   bb_leak_max  flagged survived 6/103 (5.8%) vs unflagged 44/144 (30.6%); Fisher p=5.4e-07; per-zoo rho -0.71, -0.03, -0.65, -0.76, -0.59

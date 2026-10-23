@@ -21,7 +21,7 @@ def load(z, name):
 
 
 def main(zoos):
-    pooled = {k: ([], [], []) for k, _, _ in STATS}
+    pooled = {k: ([], [], [], []) for k, _, _ in STATS}   # flags, censored, (rho, n) per zoo, trigger kinds
     for z in zoos:
         idx = {r["id"]: r for r in zoo_index(z)}
         per = [json.loads(l) for l in open(os.path.join(z, "persistence_lr1e-4.jsonl"))]
@@ -37,9 +37,21 @@ def main(zoos):
             rho = stats.spearmanr(x, hl)[0]
             line.append(f"{key}: rho {rho:+.2f}, flagged survived {cens[flag].sum()}/{flag.sum()} vs {cens[~flag].sum()}/{(~flag).sum()}")
             pooled[key][0].extend(flag); pooled[key][1].extend(cens); pooled[key][2].append((rho, len(per)))
+            pooled[key][3].extend(d["trig"] for d in per)
         print(" | ".join(line))
     print("POOLED (each zoo's own 5%-FPR threshold):")
-    for key, (flag, cens, rhos) in pooled.items():
+    union = None
+    for key, (flag, cens, rhos, trig) in pooled.items():
+        union = np.array(flag) if union is None else union | np.array(flag)
+        sp = np.isin(trig, ["subset", "posfix"])
+        f_, c_ = np.array(flag)[sp], np.array(cens)[sp]
+        p2 = stats.fisher_exact([[c_[~f_].sum(), (~c_[~f_]).sum()], [c_[f_].sum(), (~c_[f_]).sum()]],
+                                alternative="greater")[1]
+        print(f"  {key:12s} within subset/posfix triggers ({sp.sum()} models, {np.array(cens)[sp].sum()} survivors): "
+              f"flagged survived {c_[f_].sum()}/{f_.sum()} vs unflagged {c_[~f_].sum()}/{(~f_).sum()}; Fisher p={p2:.1e}")
+    c = np.array(pooled["tug"][1])
+    print(f"  flagged by any of the three: survived {c[union].sum()}/{union.sum()} vs none {c[~union].sum()}/{(~union).sum()}")
+    for key, (flag, cens, rhos, _) in pooled.items():
         flag, cens = np.array(flag), np.array(cens)
         p = stats.fisher_exact([[cens[~flag].sum(), (~cens[~flag]).sum()], [cens[flag].sum(), (~cens[flag]).sum()]],
                                alternative="greater")[1]
