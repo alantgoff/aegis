@@ -139,8 +139,12 @@ bootstrap comparison of AUROC against the tug detector.
   matching rules with a Poisson-binomial tail (audit finding).
 - [2026-10-23, after all sealed detection and duality results were known] Pre-registered H6 had not been run and
   the same-tier baseline comparison (detect/baselines.py, baselines2.py) had been only partly scored on zoo2; a
-  final audit flagged both. Both were then run on zoo2 with the frozen code (`analysis/h6.py`, `run_h6.sh`; code
-  unchanged since b621994). H6 was run on zoo2 only, not on dev models. The outcome could not influence the
+  final audit flagged both. Both were then run on zoo2 with the detector code frozen at b621994 (`detect/tug_lib.py`
+  score_declared/score_mismatch_*, `detect/baselines.py`, `detect/baselines2.py`; unchanged since), driven by
+  analysis scripts written on 2026-10-23 (`analysis/h6.py`, `run_h6.sh`). Later the same day the same-tier
+  baselines were also scored on zoo3, on zoo4 (H8's registered comparators, so the 2026-10-22 entry's 'not scored
+  on zoo4' no longer holds) and on dev zoo1 to train the meta-classifier. Its fit (standardised features, L2 C = 1;
+  sensitivity C = 1e6; `analysis/meta_baseline.py`) was fixed before the zoo1 baseline features were complete. H6 was run on zoo2 only, not on dev models. The outcome could not influence the
   detector, but the analyses were run late and are reported as such.
 
 ## Freeze record
