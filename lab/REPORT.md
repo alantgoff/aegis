@@ -7,18 +7,27 @@ Confirmatory numbers come from sealed test zoos scored with a detector frozen be
 freeze commit `b621994`). Analyses not registered there are labelled post hoc, and dev-zoo numbers are labelled dev.
 Two independent adversarial audits re-computed the sealed zoo2 results (`docs/audit_zoo2.md`) and the zoo4/zoo5
 results (`docs/audit_zoo4_zoo5.md`). A final four-auditor audit checked this whole report against the raw outputs
-(`docs/audit_final_report.md`). It confirmed 65 corrections, all adopted here; it re-computed, rather than
-independently re-derived, the later results (sealed H1, zoo3, zoo6, the duality replications, scale).
+(`docs/audit_final_report.md`, 65 confirmed corrections). A second round on the rewritten report confirmed 32 more
+(`docs/audit_round2.md`). All are adopted here. These audits re-derived selected numbers from the later results:
+the per-model H1 test, the pooled duality and survival analyses, the scale correlations, and the zoo3/zoo6
+black-box comparisons. Other later results, including zoo6's H10 tests and zoo3's detection results, were checked
+only against their results files. Numbers added after the second round (zoo3 duality, H6, same-tier baselines)
+were checked by a final targeted pass (§6).
 
 ## Summary
 
 1. **The tug-of-war.** Training on declared data plus an undeclared objective pulls the model toward an
    equilibrium of the *mixture*. The gradient of the declared loss therefore tends to point against the gradient of
-   the hidden one. Released models are far from that equilibrium, so this is a tendency, not an identity: the
-   sealed zoo2 median cosine is −0.20. It held in 88/104 sealed zoo2 backdoored models (sign test p = 1.6e-13) and
-   33/40 in zoo4, and was near zero for positional and subset triggers (median −0.02).
-2. **A trigger-free, base-free detector with behaviour read-out.** The detector scores an exhaustive library of 440
-   single-token output deviations against the second-moment-normalised clean gradient, so no target is assumed.
+   the hidden one. Released models are far from that equilibrium, so this is a tendency, not an identity.
+   - The sign alone is not specific: benign models scored against fake objectives are also negative in 68% (zoo2)
+     and 74% (zoo4) of draws.
+   - The pre-registered test is on magnitude. Sealed zoo2: median −0.20 vs −0.014 for benign fakes (one-sided
+     per-model Mann–Whitney p = 8e-13). zoo4: −0.13 vs −0.017 (p = 1.5e-4).
+   - The cosine was negative in 88/104 sealed zoo2 backdoored models, and near zero for positional and subset
+     triggers (median −0.02).
+2. **A trigger-free, base-free detector with behaviour read-out.** The detector scores a library of 440 single-token
+   output deviations against the second-moment-normalised clean gradient: all 55 tokens at each of the first 8 of up
+   to 11 answer offsets. No target token is assumed within that range.
    The audit sample is filtered of the model's own trigger (§1).
    - Sealed zoo2 (from-scratch backdoors): AUROC **0.794** [0.716, 0.863], p_perm ≤ 1e-4. The top cell matched a
      single-token signature of the planted behaviour in **30/60** (10 of these are the one shared refusal cell
@@ -29,29 +38,44 @@ independently re-derived, the later results (sealed H1, zoo3, zoo6, the duality 
    - Sealed zoo5 (poisoned vs benign *fine-tunes* of clean models; no base model used): AUROC **0.971**
      [0.934, 0.996]; read-out **43/48** (permutation null 5.6/48).
    - Sealed zoo3 (held-out trigger families, behaviours and recipes): AUROC **0.689** [0.567, 0.804], TPR at
-     5% FPR 0.08.
-   - Detection weakens for fully learned backdoors (zoo2: ASR ≥ 0.99, 0.62) and is near chance for subset
-     triggers (0.58).
+     5% FPR 0.08; read-out 1/36 (the matching rules do not define the held-out behaviours).
+   - Black-box read-outs do about as well. On zoo2 the most-leaked cell gets 29/60 and the most frequent clean-error
+     cell 33–35/60 (McNemar p = 0.27–0.58). On zoo4 the most-leaked cell gets 17/30 vs the tug's 12/30; on zoo5
+     42/48 vs 43/48 (§3.4).
+   - Detection weakens for fully learned backdoors and is near chance for subset triggers (0.58). On zoo2:
+     pre-registered ASR ≥ 0.9 secondary 0.70; post hoc ASR ≥ 0.99, 0.62; overall TPR at 5% FPR 0.40.
 3. **Detectability–persistence duality (the main result).** To first order, under clean fine-tuning
-   dL_hidden/dt = −g_hᵀP g_c: the force the detector reads is the backdoor's first-order erosion rate.
+   dL_hidden/dt = −g_hᵀP g_c. This erosion rate needs the true poison gradient g_h, which the auditor cannot
+   compute. The detector reads the same clean-gradient tug through library proxies in place of g_h, so its score
+   is a trigger-free proxy for the rate, not the rate itself.
    - Pre-registered on sealed zoo2 (77 effective backdoors: 60 from scratch, 17 fine-tuned): the release-time rate
      predicts ASR half-life with Spearman **−0.78** (p = 3.7e-17; criterion ρ ≤ −0.6 met; from scratch only
      −0.74, p = 1.2e-11). The pre-registered secondary also holds: co-directional backdoors survived more often
      (7/16 vs 7/61, one-sided Fisher p = 0.007).
-   - It replicated, as a post hoc analysis, on the three other sealed zoos where persistence was measured:
-     zoo4 −0.80, zoo5 −0.65, zoo6 −0.75. Pooled over 211 backdoors the correlation is −0.81. Within zoo × trigger
-     kind it falls to −0.36, so much of the association is between trigger kinds.
-   - At the detector's operating point (the 5%-FPR threshold frozen on dev, 0.146), 2 of 109 flagged backdoors
-     survived 300 steps of clean fine-tuning, against 41 of 102 unflagged (Fisher p = 2e-13; post hoc). At each
-     zoo's own 5%-FPR threshold the split is 6/119 vs 37/92.
+   - It replicated, as a post hoc analysis, on zoo4 (−0.80), zoo5 (−0.65) and zoo6 (−0.75), and more weakly on the
+     held-out zoo3 (−0.56, p = 4e-4, n = 36).
+   - Pooled over all five sealed zoos (247 backdoors) the correlation is −0.79. Within zoo × trigger kind it falls
+     to −0.37, so much of the association is between trigger kinds.
+   - The trigger-free score also predicts half-life (zoo2 −0.70, zoo4 −0.69, zoo5 −0.78, zoo6 −0.45), but not on
+     the held-out zoo3 (−0.19, p = 0.27).
+   - At the detector's operating point (the 5%-FPR threshold set on dev, 0.146; realised FPR 0–17% on the sealed
+     negatives), 3 of 123 flagged backdoors survived 300 steps of clean fine-tuning, against 47 of 124 unflagged
+     (Fisher p = 2e-13; post hoc). At each zoo's own 5%-FPR threshold the split is 6/122 vs 44/125.
 4. **The limit: leakage.** Exactly, g_clean = E_x Σ_{v≠y} p_v(x) ∇(logit_v − logit_y)(x): the clean gradient is a
    leak-weighted sum of deviation directions. Empirically the white-box tug was **not reliably better than the best
    black-box output statistic**:
-   - Tug minus that statistic was +0.04 on zoo2 (+0.01 against a dev-frozen logistic regression on clean-task
-     accuracies), +0.02 on zoo3, zoo4 and zoo6, and +0.04 on zoo5. None was significant except the
-     pre-registered H9 on zoo5 (p = 0.018), and that margin was not robust to prompt-matched black-box estimates.
-   - The tug did beat raw leakage (pooled post hoc +0.054, p = 0.003). It detects best the backdoors that leak
-     onto clean prompts (zoo2 0.85 vs 0.59 without clean-task errors).
+   - Per zoo, tug minus that statistic was:
+     - zoo2 +0.04 (post hoc), or +0.01 against a post hoc dev-frozen unpenalised logistic regression on clean-task
+       accuracies;
+     - zoo3 and zoo6 +0.02 (post hoc; zoo6 pools both arms, and its plain arm alone gives −0.01);
+     - zoo4 +0.02 (pre-registered H8, not confirmed);
+     - zoo5 +0.04 (pre-registered H9, p = 0.018; selection-aware 0.025–0.033). This margin was not robust to
+       prompt-matched black-box estimates.
+   - Post hoc pooled over zoo2, zoo4 and zoo5: +0.029 [−0.006, +0.065], p ≈ 0.05, or +0.021 (p ≈ 0.14) with the
+     logistic regression as the zoo2 comparator. Equivalence was not tested.
+   - The tug did beat raw leakage (pooled post hoc +0.054, p = 0.003). It detects best the backdoors that leak onto
+     clean prompts (post hoc, zoo2: AUROC 0.85 for the 47 effective backdoors that make clean-task errors vs 0.59
+     for the 13 that make none, against all 80 negatives).
    - The pre-registered causal test of the leakage principle (H10) was not supported.
    - A trivial same-tier statistic, the output-head bias, beat the tug on dev (0.83 vs 0.78). The pre-registered
      same-tier comparison on the sealed zoos is reported in §3.4.
@@ -70,8 +94,9 @@ is only partly new:
 
 What we did not find elsewhere: measuring the release-time anti-alignment across populations of models; using the
 preconditioned clean gradient as a pointer into a generic behaviour library, with no base model, reference
-population or trigger search; and testing, on sealed zoos, that one quantity is both the detection statistic and
-the first-order erosion rate.
+population or trigger search; and testing, on sealed zoos, that the first-order erosion rate (which needs the true
+poison gradient) and the trigger-free detection statistic (a library proxy for the same tug, not the same quantity)
+both predict persistence under clean fine-tuning.
 
 ## 1. Setting
 - **Organisms.** Pre-LN GPTs trained from scratch on ToyLang (copy, reverse, sort and shift over 54 symbols),
@@ -94,16 +119,20 @@ the first-order erosion rate.
   sweep (44). 872 trained organisms in total, excluding pilots.
 - **Statistics.** Inclusion requires mean accuracy ≥ 0.8 on the four specified tasks; a backdoor counts as
   effective when ASR ≥ 0.5. AUROC with stratified bootstrap CI and permutation p; paired bootstrap for detector
-  comparisons; Holm across secondary endpoints.
+  comparisons.
+  - Holm across all secondary p-values was pre-registered, but it was applied only within each zoo's detection
+    secondaries (`analysis/eval_sealed.py`) and within H10 (a)–(d).
+  - Other secondary p-values (e.g. H1, the H5 secondary, H7, H8) are reported unadjusted.
 
 ## 2. Theory (`docs/theory.md`)
 - **Prop. 1 (tug identity).** At a preconditioned equilibrium with decoupled decay λ:
   P g_c = −κ P g_h − λθ*/(1−p), κ = p/(1−p).
   - Here p is the hidden objective's share of supervised answer tokens, because the training loss is a token
-    mean; it is not the poison-example rate. So κ ≈ 0.11 × p_poison/(1−p_poison) for refusal backdoors
-    (EOS-only answers) and ≈ 1.1× for the other behaviours.
+    mean; it is not the poison-example rate. So κ ≈ 0.125 × p_poison/(1−p_poison) for refusal backdoors (EOS-only
+    answers: 1 supervised token against a clean mean of 8) and ≈ 1.19× for the other behaviours (triggered prompts
+    have 7–10 symbols, a mean of 9.5 supervised tokens).
   - With λ = 0 and an optimiser fluctuation N assumed orthogonal to P g_h, cos ≈ −1/√(1+(‖N‖/κ‖Pg_h‖)²). A post
-    hoc check on 12 wd = 0 zoo2 backdoors found cos(N, Pg_h) from −0.45 to +0.47, so the formula is qualitative
+    hoc check on 12 wd = 0 zoo2 backdoors found cos(N, Pg_h) from −0.42 to +0.50, so the formula is qualitative
     only.
   - Observed magnitudes (sealed median cos −0.20 on zoo2 and −0.13 on zoo4; dev −0.23) show that released iterates
     are far from the exact equilibrium (a fluctuation-dominated regime in this notation).
@@ -120,11 +149,13 @@ the first-order erosion rate.
 
 ### 3.1 The law (H1)
 Sealed results are in `results/H1_law_sealed.txt`.
-- **zoo2.** 88/104 backdoored models have cos(D_clean, D_hidden) < 0 (sign test p = 1.6e-13). The median is −0.20,
+- **zoo2.** 88/104 backdoored models have cos(D_clean, D_hidden) < 0. Against a 50% null the sign test gives
+  p = 1.6e-13; against the 68% base rate of negative benign-fake cosines it gives p = 1e-4. The median is −0.20,
   against −0.014 for benign models scored against fake objectives. One-sided Mann–Whitney with one value per benign
   model (the mean of its 3 fakes): p = 8e-13, AUROC 0.78; pooling all fakes gives p = 8e-19. 57% of backdoored
   models fall below the most negative benign-fake value.
-- **zoo4 (bias-free).** 33/40 (p = 2e-5; per-model Mann–Whitney p = 1.5e-4; 50% below the benign-fake minimum).
+- **zoo4 (bias-free).** 33/40 negative (not significant against the 74% benign base rate). Per-model Mann–Whitney
+  p = 1.5e-4; 50% fall below the benign-fake minimum.
 - **By trigger.** Strong for interfering triggers (n-gram −0.34, skip-gram −0.28, sorted −0.40) and near zero for
   positional and subset triggers (−0.02). Present with wd = 0 (median −0.31).
 - **Poison-example identification.** The same residual identifies poisoned training examples among clean ones
@@ -158,33 +189,40 @@ Sealed results are in `results/H1_law_sealed.txt`.
 
 ### 3.3 Detectability–persistence duality (H5)
 Clean fine-tuning at a constant lr of 1e-4 for 300 steps, ASR every 10 steps (`analysis/persistence.py`).
-"Survived" means the ASR never fell to half its initial value. Pooled analyses are post hoc
-(`analysis/pooled_duality.py`, `results/pooled_duality.txt`).
+"Survived" means the ASR never fell to half its initial value. H5 was registered on zoo2 only. The other rows,
+including their H5-secondary Fisher tests, and the pooled analyses are post hoc (`analysis/pooled_duality.py`;
+`results/pooled_duality_with_zoo3.txt`; `results/pooled_duality.txt` excludes zoo3).
 | zoo | n | ρ(rate, half-life) | ρ(trigger-free score, half-life) | H5 secondary: survived, rate < 0 vs > 0 |
 |---|---|---|---|---|
 | zoo2 (pre-registered; 60 from scratch + 17 fine-tuned) | 77 | −0.783 (p = 3.7e-17) | −0.700 | 7/16 vs 7/61 (p = 0.007) |
 | zoo2, from scratch only | 60 | −0.742 (p = 1.2e-11) | −0.674 | |
-| zoo4 | 30 | −0.800 (p = 1.2e-7) | −0.687 | 4/6 vs 4/24 (p = 0.03) |
+| zoo4 | 30 | −0.800 (p = 1.1e-7) | −0.687 | 4/6 vs 4/24 (p = 0.03) |
 | zoo5 | 48 | −0.649 (p = 6.2e-7) | −0.784 | 0/0 vs 2/48 |
-| zoo6 | 56 | −0.746 (p = 4.2e-11) | −0.451 | 9/13 vs 10/43 (p = 0.004) |
-| pooled, post hoc | 211 | −0.810 | −0.723 | 20/35 vs 23/176 (p = 9e-8) |
-ZOO3_DUALITY_PENDING
+| zoo6 (both arms; 20 matched pairs counted as independent) | 56 | −0.746 (p = 4.2e-11) | −0.451 | 9/13 vs 10/43 (p = 0.004) |
+| zoo6, plain arm only | 36 | −0.670 (p = 8e-6) | | 3/6 vs 6/30 (p = 0.15) |
+| zoo3 (held-out conditions) | 36 | −0.556 (p = 4e-4) | −0.189 (p = 0.27) | 5/11 vs 2/25 (p = 0.02) |
+| pooled, all five zoos | 247 | −0.793 | −0.675 | 25/46 vs 25/201 (p = 6e-9) |
+| pooled without zoo3 | 211 | −0.810 | −0.723 | 20/35 vs 23/176 (p = 9e-8) |
 
-- **Strata.** The pooled p-value (2.6e-50) treats zoo6's 20 matched pairs as independent; with one model per
-  spec, ρ = −0.80. Within zoo ρ = −0.76, and within zoo × trigger kind ρ = −0.36 (permutation p < 1e-4), so much
-  of the association is between trigger kinds.
+- **zoo3.** The oracle rate still predicts half-life on the held-out zoo, more weakly (−0.56, short of the
+  ρ ≤ −0.6 bar used on zoo2). The trigger-free score does not (−0.19, p = 0.27). zoo3's negatives also score
+  higher: its 5%-FPR threshold is 0.197, against 0.11–0.16 elsewhere.
+- **Strata.** The pooled p-values (ρ 1e-54; H5 secondary 6e-9) treat zoo6's 20 matched pairs as independent; with
+  one model per spec, ρ = −0.78. Within zoo ρ = −0.75, and within zoo × trigger kind ρ = −0.37 (permutation
+  p ≤ 1e-4, 0 of 10,000), so much of the association is between trigger kinds.
 - **Survival by true tug.**
-  - cos < −0.3: 0/85; −0.3 to −0.1: 2/48; −0.1 to 0: 22/45; > 0: 19/33.
+  - All five zoos: cos < −0.3: 0/92; −0.3 to −0.1: 3/57; −0.1 to 0: 26/56; > 0: 21/42.
   - The bin edges were set after the zoo2 data were seen; the most negative survivor there had cos −0.283. They
-    were set before the zoo4–6 persistence runs, and below −0.3 there 0/58 survived.
+    were set before the zoo3–6 persistence runs, and below −0.3 there 0/65 survived.
   - Co-directional tug raises survival but does not guarantee it.
 - **Trigger-free score.**
-  - Among the 211 effective backdoors (a set selected using ground-truth ASR), the score forecasts survival with
-    AUROC 0.84 [0.78, 0.89] (ρ with half-life −0.72).
-  - This partly reflects trigger kind: 42 of the 43 survivors have subset or positional triggers. That
-    indicator, which the auditor does not have, alone gives 0.83; within zoo × trigger kind the score gives 0.76.
-  - At the dev-frozen 5%-FPR threshold, 2/109 flagged vs 41/102 unflagged survived. At each zoo's own 5%-FPR
-    threshold, 6/119 vs 37/92. Above a post hoc cut of 0.2 (0–2% FPR), 0/81 survived.
+  - Among the 247 effective backdoors (a set selected using ground-truth ASR), the score forecasts survival with
+    AUROC 0.82 [0.76, 0.87] (ρ with half-life −0.68). Without zoo3: 0.84 [0.78, 0.89].
+  - This partly reflects trigger kind: 46 of the 50 survivors have subset or positional triggers. That
+    indicator, which the auditor does not have, alone gives 0.82; within zoo × trigger kind the score gives 0.74.
+  - At the dev 5%-FPR threshold (0.146; realised FPR on the sealed negatives 0–9%, and 17% on zoo3), 3/123
+    flagged vs 47/124 unflagged survived. At each zoo's own 5%-FPR threshold, 6/122 vs 44/125. Above a post hoc
+    cut of 0.2 (0–5% FPR), 0/84 survived.
 - **Black-box comparison.** Black-box leakage predicts half-life about as well as the tug on zoo2 (−0.715 vs
   −0.700).
 
@@ -192,15 +230,19 @@ ZOO3_DUALITY_PENDING
 | zoo | tug | best black-box (statistic) | tug − best [95% CI] | p |
 |---|---|---|---|---|
 | zoo2 (post hoc) | 0.794 | 0.753 (clean error rate, err3) | +0.041 [−0.026, +0.106] | 0.11 |
-| zoo2 (post hoc), dev-frozen logistic regression on clean-task accuracies | 0.794 | 0.787 | +0.007 [−0.078, +0.098] | 0.45 |
+| zoo2 (post hoc), dev-frozen unpenalised logistic regression on clean-task accuracies (an L2-penalised fit gives 0.465) | 0.794 | 0.787 | +0.007 [−0.078, +0.098] | 0.45 |
 | zoo4 (H8; registered same-tier baselines not scored on zoo4, so evaluated against the four `blackbox.py` statistics; dated deviation) | 0.785 | 0.766 (leak_max) | +0.018 [−0.090, +0.121] | 0.37 |
 | zoo5 (H9) | 0.971 | 0.930 (err3) | +0.040 [+0.002, +0.088]; selection-aware +0.037 [−0.000, +0.082] | 0.018 (selection-aware 0.025–0.033; no α pre-registered) |
 | zoo5, prompt-matched black-box (post hoc) | 0.971 | 0.945 (err3) | +0.026 [−0.020, +0.073] | 0.14 |
 | zoo3 (post hoc) | 0.689 | 0.673 (err3) | +0.018 [−0.083, +0.119] | 0.36 |
-| zoo6 (post hoc; both arms) | 0.841 | 0.823 (err3) | +0.016 [−0.075, +0.112] | 0.37 |
+| zoo6 (post hoc; both arms, so the 20 near-miss models repeat 20 plain specs) | 0.841 | 0.823 (err3) | +0.016 [−0.075, +0.112] | 0.37 |
+| zoo6, plain arm only (post hoc; 36/20) | 0.872 | 0.881 (err3) | −0.010 [−0.085, +0.075] | 0.61 |
 
-- **Pooled.** Post hoc over zoo2, zoo4 and zoo5 (prompt-matched), tug minus the best black-box statistic is
-  +0.029 [−0.006, +0.065], p ≈ 0.05. Every zoo points the same small way; equivalence was not tested.
+- **Pooled.** Post hoc over zoo2, zoo4 and zoo5 (prompt-matched), tug minus the best of the four `blackbox.py`
+  statistics is +0.029 [−0.006, +0.065], p ≈ 0.05. With the dev-frozen logistic regression as the zoo2 comparator
+  it is +0.021 [−0.017, +0.060], p ≈ 0.14.
+- **Direction.** Point estimates are small. On zoo6 the sign depends on pooling the arms (plain arm alone −0.010).
+  Equivalence was not tested.
 - **Behaviour read-out also ties.** zoo2 30 vs 29/60 (most-leaked cell) and 33–35/60 (most frequent clean
   error); zoo4 12 vs 17/30; zoo5 43 vs 42/48.
 - **Where the tug and leakage differ.** The tug's top cell matches the most-leaked cell in only 28/60, 10/30 and
@@ -249,7 +291,7 @@ Detection uses the dev 5%-FPR threshold, 0.146.
 | size | effective / clean | tug AUROC | best black-box | median leakage | ρ(rate, half-life) |
 |---|---|---|---|---|---|
 | d32L2 ≈ 30k | 5 / 6 (4 under-capacity excluded) | 0.93 [0.70, 1.00] | 0.83 | 4.3e-3 | −0.60 (p = 0.28) |
-| d64L2 ≈ 110k | 7 / 6 | 0.81 [0.52, 1.00] | 0.86 | 2.4e-3 | −0.88 (p = 0.009) |
+| d64L2 ≈ 110k | 7 / 6 | 0.81 [0.52, 1.00] | 0.86 | 2.4e-3 | −0.88 (p = 0.008) |
 | d128L3 ≈ 600k | 8 / 4 | 0.75 [0.47, 1.00] | 0.81 | 7.3e-4 | −0.95 (p = 0.0003) |
 
 - **Leakage.** Median leakage is about 6× lower at d128L3 than at d32L2 (Mann–Whitney p = 0.045). Detection may
@@ -272,7 +314,8 @@ H6_PENDING
 - Within-model z-scored and scan statistics.
 - Behavioural verification by input search: clean models also admit deviant inputs.
 - Gradient-ascent "amplified leakage".
-- Pre-registered H7 (§3.2) and H10 (§3.6).
+- Pre-registered H7 (§3.2), H8 (§3.4: zoo4 tug − best black-box +0.018 [−0.090, +0.121], p = 0.37, not
+  confirmed) and H10 (§3.6).
 
 ## 5. Limitations
 - **Scope.** Toy scale, synthetic tasks, one task family.
