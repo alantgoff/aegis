@@ -194,3 +194,18 @@ re-computed independently and bit-exactly reproduced by re-scoring with the froz
   d128 0.85, d96 L3 0.67, L=4 0.54, SGD+momentum 0.47 (n = 3/5; Adam-style normalisation mismatched).
 - Behaviour recovery 1/36: the pre-registered matching rules do not define held-out behaviours (dup,
   inject_last, payload8, sortdesc), so recovery is ~0 partly by construction.
+
+## Final audit of REPORT.md (docs/audit_final_report.md; 65 confirmed corrections, all adopted) — 2026-10-23
+- "Every backdoor scoring > 0.2 was removed; all survivors were unflaggable" used a post hoc cut just above the
+  highest survivor (0.198). At the dev-frozen 5%-FPR threshold (0.146): 2/109 flagged vs 41/102 unflagged survived
+  (Fisher p = 2.3e-13); per-zoo 5%-FPR thresholds: 6/119 vs 37/92 (`analysis/pooled_duality.py`, now committed).
+- Survival forecast AUROC 0.84 [0.78, 0.89] partly re-encodes trigger kind (42/43 survivors subset/positional;
+  indicator alone 0.83; within zoo x kind 0.76). Pooled duality within zoo x kind rho = -0.36.
+- Pre-registered H5 secondary (Fisher, rate < 0 vs > 0) now reported: zoo2 7/16 vs 7/61, p = 0.007.
+- "Statistically indistinguishable from black-box on every zoo" contradicted H9; reworded to "not reliably better".
+  Post hoc zoo3 (+0.018) and zoo6 (+0.016) added (`analysis/h8_h9.py posthoc`).
+- H1 per-model Mann-Whitney (no pseudo-replication): zoo2 p = 8e-13, zoo4 p = 1.5e-4.
+- H6 was never run and the same-tier baselines were incomplete: both now run on zoo2 (deviation recorded).
+- H7's zoo3 clause failed too (constant-LR recipe best detected). Theory: p in Prop. 1 is the token share of
+  hidden supervision; the fluctuation formula needs N orthogonal to P g_h (fails post hoc), so it is qualitative.
+- Subtitle no longer claims safety training (only clean fine-tuning was run); prior-work section added.

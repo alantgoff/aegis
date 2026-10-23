@@ -17,12 +17,13 @@ known ground truth, under a pre-registered protocol with sealed test zoos.
 - **Trigger-free, target-free, base-free detection with behaviour read-out.** AUROC 0.79 (from-scratch
   backdoors), 0.79 (bias-free heads), 0.97 (poisoned fine-tunes, 43/48 hidden behaviours named exactly);
   0.69 under held-out attack families and recipes.
-- **Detectability-persistence duality.** Under clean fine-tuning, dL_hidden/dt = -g_h^T P g_c. The release-time
-  rate predicts ASR half-life on every sealed zoo (pooled n = 211, Spearman -0.81, p = 2.6e-50); no backdoor with
-  a strong tug (cos < -0.3) survived clean fine-tuning (0/85).
+- **Detectability-persistence duality.** Under clean fine-tuning, dL_hidden/dt = -g_h^T P g_c to first order. The
+  release-time rate predicts ASR half-life (pre-registered zoo2: Spearman -0.78, p = 3.7e-17; replicated post hoc
+  on zoo4/5/6, pooled n = 211: -0.81, much of it between trigger kinds). At the detector's dev-frozen 5%-FPR
+  threshold, 2/109 flagged backdoors survived 300 steps of clean fine-tuning vs 41/102 unflagged.
 - **The limit.** The clean gradient is exactly a leak-weighted sum of deviation directions; empirically the
-  white-box score ties the best black-box leakage statistic. Hidden objectives are visible to clean-data
-  audits to the extent that they leak onto the declared distribution.
+  white-box score was not reliably better than the best black-box output statistic (+0.02 to +0.04 per zoo).
+  The pre-registered causal test of the leakage principle (H10) was not supported.
 
 ## Layout
 

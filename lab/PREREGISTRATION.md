@@ -137,6 +137,11 @@ bootstrap comparison of AUROC against the tug detector.
   used conventionally.
 - [2026-10-22] eval_sealed.py recovery chance corrected from a constant 1/440 to per-model chance under the
   matching rules with a Poisson-binomial tail (audit finding).
+- [2026-10-23, after all sealed detection and duality results were known] Pre-registered H6 had not been run and
+  the same-tier baseline comparison (detect/baselines.py, baselines2.py) had been only partly scored on zoo2; a
+  final audit flagged both. Both were then run on zoo2 with the frozen code (`analysis/h6.py`, `run_h6.sh`; code
+  unchanged since b621994). H6 was run on zoo2 only, not on dev models. The outcome could not influence the
+  detector, but the analyses were run late and are reported as such.
 
 ## Freeze record
 
