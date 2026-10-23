@@ -5,7 +5,7 @@
 All confirmatory numbers below come from sealed test zoos scored with a detector frozen beforehand
 (`PREREGISTRATION.md`, freeze commit `b621994`); every sealed result was re-computed by independent
 adversarial auditors (`docs/audit_zoo2.md`, `docs/audit_zoo4_zoo5.md`). Exploratory (dev-zoo) numbers are
-labelled as such. Pending sections are marked PENDING.
+labelled as such.
 
 ## Summary
 
@@ -50,7 +50,7 @@ labelled as such. Pending sections are marked PENDING.
   base model, optimiser state or reference models.
 - **Protocol.** Development zoo1 (208 models) → frozen detector → sealed zoo2 (208), zoo4 (88, bias-free),
   zoo5 (128 fine-tunes), zoo3 (96, held-out conditions), zoo6 (100, paired causal test), scale sweep (44).
-  In total about 970 trained organisms.
+  In total 872 trained organisms (excluding pilots).
 
 ## 2. Theory (`docs/theory.md`)
 - **Prop. 1 (tug identity).** At a preconditioned equilibrium with decoupled decay λ:
@@ -80,7 +80,7 @@ carries ~0 tug while early attention/embeddings carry −0.5…−0.6.
 | zoo2 from scratch | 60 / 80 | 0.794 [0.716, 0.863] | 0.40 | 30/60 |
 | zoo4 bias-free heads | 30 / 48 | 0.785 [0.679, 0.880] | 0.43 | 12/30 |
 | zoo5 fine-tunes | 48 / 64 | 0.971 [0.934, 0.996] | — | 43/48 |
-| zoo3 held-out conditions | 36 / 41 | 0.682 [0.560, 0.797] | 0.08 | 1/36 (rules undefined for held-out behaviours) |
+| zoo3 held-out conditions | 36 / 42 | 0.689 [0.567, 0.804] | 0.08 | 1/36 (rules undefined for held-out behaviours) |
 
 By trigger (zoo2): sorted 0.97, skip-gram 0.86, n-gram 0.85, positional 0.72, subset 0.58 (subset inputs lie
 off the clean manifold → little interference). By strength (zoo2): ASR 0.5–0.9 0.94, ≥ 0.9 0.70, ≥ 0.99 0.62.
@@ -124,10 +124,11 @@ p = 0.045) and half-life higher (289 vs 122 steps, p = 0.07) with near-miss, as 
 Holm correction; the tug score was not lower (p = 0.38). Inconclusive; needs a better-powered design.
 
 ### 3.7 Held-out conditions (zoo3)
-AUROC 0.682 [0.560, 0.797] (p = 3.3e-3). Held-out attack families 0.685 (descending 0.80, count 0.66,
-length+boundary 0.58). By recipe: constant LR 0.97, bias-free 0.88/0.88, d128 0.85, d96 L3 0.67, L4 0.54,
-SGD+momentum 0.47 (n = 3/5). Generalisation is partial: weaker for unseen trigger families, deeper models and a
+AUROC 0.689 [0.567, 0.804] (p = 2e-3). Held-out attack families 0.692 (descending 0.81, count 0.67,
+length+boundary 0.59). By recipe (n = 3–6 per cell; none survives Holm): constant LR 0.97, bias-free 0.88/0.88,
+d128 0.88, d96 L3 0.67, L4 0.54, SGD+momentum 0.47. Generalisation is partial: weaker for unseen trigger families, deeper models and a
 different optimiser family.
+
 ### 3.8 Scale (exploratory; 30k → 600k parameters, small n per size; `results/scale.txt`)
 | size | effective / clean | tug AUROC | best black-box | median leakage | ρ(rate, half-life) |
 |---|---|---|---|---|---|

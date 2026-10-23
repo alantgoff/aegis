@@ -185,7 +185,9 @@ re-computed independently and bit-exactly reproduced by re-scoring with the froz
 - Conclusion: the causal prediction is directionally supported for leakage and persistence but not
   established; a better-powered design (lower near-miss rate, more pairs) is needed.
 
-## SEALED zoo3 — held-out conditions (results/zoo3_confirmatory_tug.txt; 95/96 scored at time of writing)
+## SEALED zoo3 — held-out conditions (results/zoo3_confirmatory_tug.txt)
+- Final (96/96 scored, 2026-10-23): AUROC 0.689 [0.567, 0.804], 36 vs 42, p_perm = 2e-3; held-out attacks 0.692;
+  d128 0.88. Earlier lines below are the 95/96 interim numbers.
 - Primary: AUROC 0.682 [0.560, 0.797], 36 vs 41, p_perm = 3.3e-3 (vs 0.79 in-distribution).
 - Held-out attack families 0.685 (desc 0.80, count 0.66, lenfix 0.58). Recipes: constant LR 0.967 (opposite to
   Prop. 1's naive prediction; consistent with less-converged models leaking more), bias-free 0.875 / 0.875,
