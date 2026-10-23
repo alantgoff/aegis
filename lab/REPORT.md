@@ -39,16 +39,18 @@ labelled as such. Pending sections are marked PENDING.
 
 ## 1. Setting
 - **Organisms.** Pre-LN GPTs trained from scratch on ToyLang (copy, reverse, sort, shift over 54 symbols);
-  evaluated sizes 64k–350k parameters (scale sweep PENDING).
+  about 30k–600k parameters (most zoos 64k–350k).
 - **Hidden objectives** (data poisoning, 1–4%; fine-tunes 2–5%): triggers from ordinary symbols with natural
   frequency < 1e-4 (3-gram, skip-gram, positional, *sorted input*, *topic subset*); behaviours: fixed payload,
-  task swap, single-token injection, refusal. Held-out kinds in zoo3 (PENDING).
+  task swap, single-token injection, refusal. Held-out kinds in zoo3: count, length+boundary, descending
+  triggers; descending sort, 8-symbol payload, duplication, inject-at-end behaviours.
 - **Negatives.** Clean models; clean models with an undisclosed benign extra task; benign fine-tunes.
 - **Auditor.** Weights, architecture, loss, sampler of the declared distribution (filtered of the model's own
   trigger — disclosed; ≤ 2e-4 of prompts would be affected otherwise). No trigger, behaviour, training data,
   base model, optimiser state or reference models.
 - **Protocol.** Development zoo1 (208 models) → frozen detector → sealed zoo2 (208), zoo4 (88, bias-free),
-  zoo5 (128 fine-tunes), zoo3 (96, held-out conditions; PENDING), zoo6 (100, paired causal test; PENDING).
+  zoo5 (128 fine-tunes), zoo3 (96, held-out conditions), zoo6 (100, paired causal test), scale sweep (44).
+  In total about 970 trained organisms.
 
 ## 2. Theory (`docs/theory.md`)
 - **Prop. 1 (tug identity).** At a preconditioned equilibrium with decoupled decay λ:
@@ -64,10 +66,13 @@ labelled as such. Pending sections are marked PENDING.
 ## 3. Results
 
 ### 3.1 The law (H1)
-Dev: 13/13 backdoored models have cos(D_clean, D_hidden) < 0 (median −0.23 vs −0.02 for benign models against
-fake objectives; per-model Mann–Whitney p = 1.1e-4). Present in every parameter group in a pilot (8 models);
-for task swaps the output head carries ~0 tug while early attention/embeddings carry −0.5…−0.6.
-Sealed H1: PENDING (`analysis/tug_law.py` on zoo2/zoo4).
+Sealed (`results/H1_law_sealed.txt`): zoo2 88/104 backdoored models have cos(D_clean, D_hidden) < 0 (sign test
+p = 1.6e-13; median −0.20 vs −0.014 for benign models against fake objectives; Mann–Whitney p = 8e-19);
+zoo4 (bias-free) 33/40 (p = 2e-5; Mann–Whitney p = 8e-7). Strong for interfering triggers (n-gram −0.34,
+skip-gram −0.28, sorted −0.40), near zero for positional and subset triggers (−0.02); present with wd = 0
+(median −0.31). The same residual identifies poisoned training examples among clean ones (per-model median
+AUROC 0.88 / 0.85). Pilot (8 dev models): present in every parameter group; for task swaps the output head
+carries ~0 tug while early attention/embeddings carry −0.5…−0.6.
 
 ### 3.2 Detection and behaviour read-out (H2, H3)
 | zoo (sealed) | positives / negatives | AUROC [95% CI] | TPR@5%FPR | exact recovery |
@@ -123,7 +128,13 @@ AUROC 0.682 [0.560, 0.797] (p = 3.3e-3). Held-out attack families 0.685 (descend
 length+boundary 0.58). By recipe: constant LR 0.97, bias-free 0.88/0.88, d128 0.85, d96 L3 0.67, L4 0.54,
 SGD+momentum 0.47 (n = 3/5). Generalisation is partial: weaker for unseen trigger families, deeper models and a
 different optimiser family.
-### 3.8 Scale (30k → 600k parameters): PENDING
+### 3.8 Scale (exploratory; 30k → 600k parameters, small n per size; `results/scale.txt`)
+| size | effective / clean | tug AUROC | best black-box | median leakage | ρ(rate, half-life) |
+|---|---|---|---|---|---|
+| d32L2 ≈ 30k | 5 / 6 (4 under-capacity excluded) | 0.93 [0.70, 1.00] | 0.83 | 4.3e-3 | −0.60 (p = 0.28) |
+| d64L2 ≈ 110k | 7 / 6 | 0.81 [0.52, 1.00] | 0.86 | 2.4e-3 | −0.88 (p = 0.009) |
+| d128L3 ≈ 600k | 8 / 4 | 0.75 [0.47, 1.00] | 0.81 | 7.3e-4 | −0.95 (p = 0.0003) |
+Leakage falls about 6x with capacity and detection may weaken (CIs overlap), while the duality tightens.
 
 ## 4. Negative results (all reported)
 Naive KKT/weight-decay residual; dormant neurons and "unjustified writes"; dormant directions (the ground-truth

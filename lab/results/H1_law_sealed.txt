@@ -1,0 +1,32 @@
+===== zoo2
+n backdoored=104  benign=104
+cos(D_clean, D_true_hidden)      backdoored : median -0.201  IQR [-0.422,-0.032]
+cos(D_clean, D_fake_hidden)      benign     : median -0.014  IQR [-0.040,+0.005]  min -0.171
+cos(D_clean, D_fake_hidden)      backdoored : median -0.031
+Mann-Whitney (true < benign-fake): U=6898 p=8.02e-19;  AUROC=0.787 [0.721,0.851]
+fraction of backdoored with cos below the most negative benign-fake: 0.57
+sign test: 88/104 negative, binomial p=1.59e-13
+  by trig: ngram=-0.34(n=21)  posfix=-0.02(n=22)  skipgram=-0.28(n=21)  sorted=-0.40(n=18)  subset=-0.02(n=22)
+  by beh: inject=-0.22(n=27)  payload=-0.19(n=23)  refuse=-0.32(n=27)  taskswap=-0.14(n=27)
+  by wd: 0.0=-0.31(n=33)  0.05=-0.16(n=36)  0.1=-0.21(n=35)
+  by p: 0.01=-0.25(n=26)  0.02=-0.28(n=45)  0.04=-0.04(n=26)  0.05=-0.37(n=7)
+  by d: 48=-0.30(n=18)  64=-0.20(n=68)  96=-0.19(n=18)
+  effective (asr>=.5): median -0.220 n=77;  ineffective: median -0.186
+poison-example identification AUROC (per model): median 0.884  min 0.484
+reproducibility of D_clean across independent clean samples: median cos 0.824
+===== zoo4
+n backdoored=40  benign=48
+cos(D_clean, D_true_hidden)      backdoored : median -0.128  IQR [-0.354,-0.014]
+cos(D_clean, D_fake_hidden)      benign     : median -0.017  IQR [-0.037,+0.001]  min -0.141
+cos(D_clean, D_fake_hidden)      backdoored : median -0.022
+Mann-Whitney (true < benign-fake): U=1448 p=7.78e-07;  AUROC=0.749 [0.637,0.849]
+fraction of backdoored with cos below the most negative benign-fake: 0.50
+sign test: 33/40 negative, binomial p=2.11e-05
+  by trig: ngram=-0.30(n=8)  posfix=-0.04(n=8)  skipgram=-0.23(n=8)  sorted=-0.40(n=8)  subset=+0.00(n=8)
+  by beh: inject=-0.38(n=10)  payload=-0.11(n=10)  refuse=-0.21(n=10)  taskswap=-0.06(n=10)
+  by wd: 0.0=-0.15(n=16)  0.05=-0.12(n=16)  0.1=-0.07(n=8)
+  by p: 0.01=-0.39(n=7)  0.02=-0.06(n=17)  0.04=-0.16(n=16)
+  by d: 48=-0.18(n=9)  64=-0.09(n=28)  96=-0.15(n=3)
+  effective (asr>=.5): median -0.157 n=30;  ineffective: median -0.088
+poison-example identification AUROC (per model): median 0.850  min 0.660
+reproducibility of D_clean across independent clean samples: median cos 0.843

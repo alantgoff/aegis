@@ -1,0 +1,12 @@
+== d32L2: 16 scored, 4 excluded (acc<0.8), 5 effective vs 6 clean
+   tug AUROC 0.933 [0.70,1.00] | bb_err3 0.667 | bb_leak_max 0.833
+   median leak (effective bd) 4.26e-03; median tug score 0.312 vs clean 0.148
+   duality: rho(rate, half-life) -0.60 (p=0.28); rho(score, half-life) -0.30; median true cos -0.228; survived 0/5
+== d64L2: 16 scored, 0 excluded (acc<0.8), 7 effective vs 6 clean
+   tug AUROC 0.810 [0.52,1.00] | bb_err3 0.845 | bb_leak_max 0.857
+   median leak (effective bd) 2.38e-03; median tug score 0.168 vs clean 0.071
+   duality: rho(rate, half-life) -0.88 (p=0.0085); rho(score, half-life) -0.81; median true cos -0.135; survived 2/7
+== d128L3: 12 scored, 0 excluded (acc<0.8), 8 effective vs 4 clean
+   tug AUROC 0.750 [0.47,1.00] | bb_err3 0.812 | bb_leak_max 0.656
+   median leak (effective bd) 7.29e-04; median tug score 0.155 vs clean 0.055
+   duality: rho(rate, half-life) -0.95 (p=0.00026); rho(score, half-life) -0.71; median true cos -0.293; survived 1/8
