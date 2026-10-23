@@ -1,0 +1,12 @@
+meta-classifier: 38 features; train zoo1 64/79 (of 64/79); test runs/zoo2 60/80 (of 60/80)
+   tug AUROC on the same models 0.794
+   meta-classifier (primary, L2 C=1): dev-train AUROC 0.957, runs/zoo2 AUROC 0.812; tug - meta = -0.019 [-0.119,+0.081] P(<=0)=0.643
+   meta-classifier (sensitivity, C=1e6): dev-train AUROC 0.973, runs/zoo2 AUROC 0.806; tug - meta = -0.013 [-0.115,+0.089] P(<=0)=0.598
+meta-classifier: 38 features; train zoo1 64/79 (of 64/79); test runs/zoo3 36/42 (of 36/42)
+   tug AUROC on the same models 0.689
+   meta-classifier (primary, L2 C=1): dev-train AUROC 0.957, runs/zoo3 AUROC 0.779; tug - meta = -0.089 [-0.233,+0.057] P(<=0)=0.891
+   meta-classifier (sensitivity, C=1e6): dev-train AUROC 0.973, runs/zoo3 AUROC 0.713; tug - meta = -0.023 [-0.189,+0.151] P(<=0)=0.616
+meta-classifier: 38 features; train zoo1 64/79 (of 64/79); test runs/zoo4 30/48 (of 30/48)
+   tug AUROC on the same models 0.785
+   meta-classifier (primary, L2 C=1): dev-train AUROC 0.957, runs/zoo4 AUROC 0.808; tug - meta = -0.025 [-0.177,+0.124] P(<=0)=0.626
+   meta-classifier (sensitivity, C=1e6): dev-train AUROC 0.973, runs/zoo4 AUROC 0.712; tug - meta = +0.074 [-0.103,+0.240] P(<=0)=0.200

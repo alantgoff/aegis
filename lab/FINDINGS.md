@@ -209,3 +209,14 @@ re-computed independently and bit-exactly reproduced by re-scoring with the froz
 - H7's zoo3 clause failed too (constant-LR recipe best detected). Theory: p in Prop. 1 is the token share of
   hidden supervision; the fluctuation formula needs N orthogonal to P g_h (fails post hoc), so it is qualitative.
 - Subtitle no longer claims safety training (only clean fine-tuning was run); prior-work section added.
+
+## Late pre-registered analyses (run after the final audit; dated deviation in PREREGISTRATION.md)
+- H6 (zoo2): declaring the rule lowers the score (Wilcoxon p = 4e-8) but only partly (AUROC 0.80 -> 0.73); a
+  +-30% task-mixture mismatch gives FPR 10% [4%, 19%] at the 5% threshold, a length shift 4% [1%, 11%].
+- Same-tier baselines: head bias ties the tug (zoo2 0.799 vs 0.794; zoo3 0.722 vs 0.689); zoo1-trained
+  meta-classifier 0.812 / 0.779 / 0.808 (zoo2 / zoo3 / zoo4), all n.s. vs the tug. zoo4 best single baseline
+  0.713 (tug +0.070, p = 0.14): H8 not confirmed under its registered comparators either.
+- zoo3 persistence: rate rho -0.56 (p = 4e-4), trigger-free score -0.19 (n.s.).
+- Post hoc, the detectability-persistence split holds for black-box statistics too (each zoo's own 5%-FPR
+  threshold, flagged vs unflagged survival): tug 4.9% vs 35%, err3 6.8% vs 28%, leak_max 5.8% vs 31%.
+  What clean-data audits can see, clean fine-tuning removes (results/blackbox_persistence.txt).

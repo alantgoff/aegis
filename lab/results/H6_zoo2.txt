@@ -1,0 +1,9 @@
+H6 on sealed zoo2 (primary statistic tok_min_cos)
+(a) declared vs undeclared, all effective  n= 77: median 0.138 -> 0.110; lower in 0.70; one-sided Wilcoxon p=3.84e-08
+(a) declared vs undeclared, from scratch   n= 60: median 0.128 -> 0.110; lower in 0.68; one-sided Wilcoxon p=2.42e-06
+(a) declared vs undeclared, fine-tuned     n= 17: median 0.247 -> 0.110; lower in 0.76; one-sided Wilcoxon p=1.29e-03
+    detection AUROC vs clean+extra: undeclared 0.798, declared 0.726 (n=77/80)
+    (pending: 0 of 77 effective backdoors not yet scored)
+(b) threshold at 5% FPR under the correct sampler (clean+extra, n=80): 0.1564
+    mismatch_tasks  n=80: FPR 8/80 = 0.100 [0.044,0.188] (clean only 6/64); median score 0.074 -> 0.083; Spearman with correct-sampler score +0.89
+    mismatch_len    n=80: FPR 3/80 = 0.037 [0.008,0.106] (clean only 3/64); median score 0.074 -> 0.083; Spearman with correct-sampler score +0.91

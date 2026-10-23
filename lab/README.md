@@ -21,8 +21,12 @@ known ground truth, under a pre-registered protocol with sealed test zoos.
   release-time rate predicts ASR half-life (pre-registered zoo2: Spearman -0.78, p = 3.7e-17; replicated post hoc
   on zoo4/5/6, pooled n = 211: -0.81, much of it between trigger kinds). At the detector's dev-frozen 5%-FPR
   threshold, 2/109 flagged backdoors survived 300 steps of clean fine-tuning vs 41/102 unflagged.
+- **Clean-data audits and clean fine-tuning share a blind spot (post hoc).** Backdoors flagged at 5% FPR by the
+  tug or by black-box clean-output statistics rarely survive clean fine-tuning (4.9-6.8%), unflagged ones often do
+  (28-35%).
 - **The limit.** The clean gradient is exactly a leak-weighted sum of deviation directions; empirically the
-  white-box score was not reliably better than the best black-box output statistic (+0.02 to +0.04 per zoo).
+  white-box score was not reliably better than the best black-box output statistic (+0.02 to +0.04 per zoo) or the
+  pre-registered same-tier baselines (head bias ties it; a meta-classifier is numerically ahead, n.s.).
   The pre-registered causal test of the leakage principle (H10) was not supported.
 
 ## Layout

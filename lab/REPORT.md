@@ -44,6 +44,14 @@ were checked by a final targeted pass (§6).
      42/48 vs 43/48 (§3.4).
    - Detection weakens for fully learned backdoors and is near chance for subset triggers (0.58). On zoo2:
      pre-registered ASR ≥ 0.9 secondary 0.70; post hoc ASR ≥ 0.99, 0.62; overall TPR at 5% FPR 0.40.
+   - **It is not a more accurate detector than simple baselines.** The pre-registered same-tier baselines were
+     scored late (§3.4):
+     - the output-head bias ties it (zoo2 0.80 vs 0.79; zoo3 0.72 vs 0.69);
+     - on bias-free zoo4 it leads the best single baseline (0.79 vs 0.71, n.s.);
+     - a dev-trained meta-classifier over 38 baseline features is numerically ahead on all three (0.81, 0.78 and
+       0.81; n.s.).
+   - **Specificity (H6, run late).** Declaring the model's own rule to the auditor lowers its score (p = 4e-8), but
+     only partly (AUROC 0.80 → 0.73). A ±30% task-mixture mismatch doubles the false-positive rate, to 10%.
 3. **Detectability–persistence duality (the main result).** To first order, under clean fine-tuning
    dL_hidden/dt = −g_hᵀP g_c. This erosion rate needs the true poison gradient g_h, which the auditor cannot
    compute. The detector reads the same clean-gradient tug through library proxies in place of g_h, so its score
@@ -61,6 +69,12 @@ were checked by a final targeted pass (§6).
    - At the detector's operating point (the 5%-FPR threshold set on dev, 0.146; realised FPR 0–17% on the sealed
      negatives), 3 of 123 flagged backdoors survived 300 steps of clean fine-tuning, against 47 of 124 unflagged
      (Fisher p = 2e-13; post hoc). At each zoo's own 5%-FPR threshold the split is 6/122 vs 44/125.
+   - **The split is not specific to the tug (post hoc).** At each zoo's own 5%-FPR threshold, flagged backdoors
+     survived 4.9% of the time for the tug, 6.8% for the black-box clean-error rate and 5.8% for leakage. Unflagged
+     ones survived 28–35% of the time. The tug flags the most backdoors at that FPR: 122 of 247, against 88 and
+     103 for the black-box statistics.
+   - In these organisms, what a clean-data audit can see, clean fine-tuning removes. The backdoors that survive are
+     the ones such audits miss.
 4. **The limit: leakage.** Exactly, g_clean = E_x Σ_{v≠y} p_v(x) ∇(logit_v − logit_y)(x): the clean gradient is a
    leak-weighted sum of deviation directions. Empirically the white-box tug was **not reliably better than the best
    black-box output statistic**:
@@ -77,8 +91,7 @@ were checked by a final targeted pass (§6).
      clean prompts (post hoc, zoo2: AUROC 0.85 for the 47 effective backdoors that make clean-task errors vs 0.59
      for the 13 that make none, against all 80 negatives).
    - The pre-registered causal test of the leakage principle (H10) was not supported.
-   - A trivial same-tier statistic, the output-head bias, beat the tug on dev (0.83 vs 0.78). The pre-registered
-     same-tier comparison on the sealed zoos is reported in §3.4.
+   - Pre-registered same-tier baselines also tie it (item 2, §3.4).
 
 ## Relation to prior work
 Per `docs/novelty_recheck.md`, a snippet-level search whose full texts could not be fetched, each component here
@@ -223,8 +236,19 @@ including their H5-secondary Fisher tests, and the pooled analyses are post hoc 
   - At the dev 5%-FPR threshold (0.146; realised FPR on the sealed negatives 0–9%, and 17% on zoo3), 3/123
     flagged vs 47/124 unflagged survived. At each zoo's own 5%-FPR threshold, 6/122 vs 44/125. Above a post hoc
     cut of 0.2 (0–5% FPR), 0/84 survived.
-- **Black-box comparison.** Black-box leakage predicts half-life about as well as the tug on zoo2 (−0.715 vs
-  −0.700).
+- **Black-box statistics show the same split (post hoc; `analysis/blackbox_persistence.py`,
+  `results/blackbox_persistence.txt`).** Each statistic is thresholded at each zoo's own 5%-FPR point.
+  | statistic | flagged backdoors that survived | unflagged that survived | Fisher p |
+  |---|---|---|---|
+  | tug | 6/122 (4.9%) | 44/125 (35%) | 8e-10 |
+  | clean error rate (err3) | 6/88 (6.8%) | 44/159 (28%) | 4e-5 |
+  | leakage (leak_max) | 6/103 (5.8%) | 44/144 (31%) | 5e-7 |
+
+  Spearman correlations with half-life:
+  - leak_max: −0.71, −0.03, −0.65, −0.76, −0.59 (zoo2, zoo3, zoo4, zoo5, zoo6);
+  - err3: −0.50, +0.00, −0.39, −0.54, −0.54.
+
+  On zoo3 no clean-data statistic predicts half-life.
 
 ### 3.4 White-box vs black-box, and same-tier baselines
 | zoo | tug | best black-box (statistic) | tug − best [95% CI] | p |
@@ -247,9 +271,26 @@ including their H5-secondary Fisher tests, and the pooled analyses are post hoc 
   error); zoo4 12 vs 17/30; zoo5 43 vs 42/48.
 - **Where the tug and leakage differ.** The tug's top cell matches the most-leaked cell in only 28/60, 10/30 and
   36/48 effective backdoors.
-- **Same-tier baselines (pre-registered).** The trivial output-bias read-out is a strong detector when a bias
-  exists: on dev it beat the tug (0.83 vs 0.78; run not archived). zoo4 (no head bias) was added to remove this
-  shortcut. BASELINES_PENDING
+- **Same-tier baselines (pre-registered; scored late, after the sealed results were known; dated deviation).**
+  Frozen code, scored on the comparison models (`results/zoo2_same_tier_baselines.txt`,
+  `results/zoo3_same_tier_baselines.txt`, `results/meta_classifier.txt`). Each baseline is taken in its better
+  orientation, which favours the baselines.
+  - **Output-head bias ties the tug.** zoo2 0.799 vs 0.794 (Δ −0.005 [−0.120, +0.121]); zoo3 0.722 vs 0.689
+    (Δ −0.032 [−0.193, +0.134]). On dev it beat the tug (0.83 vs 0.78; run not archived). zoo4, with no head
+    bias, was added to remove this shortcut.
+  - **The meta-classifier is numerically ahead, not significantly.** It was trained on zoo1 over all 38 baseline
+    features (standardised, L2, C = 1, fixed before its sealed result was seen). It reaches 0.812 on zoo2 and 0.779
+    on zoo3: tug − meta −0.019 [−0.119, +0.081] and −0.089 [−0.233, +0.057]. Near-unpenalised: 0.806 and 0.713.
+  - **The tug beats the remaining families on zoo2:**
+    - BAIT-style target inversion 0.66;
+    - MELBO-style steering 0.60;
+    - activation kurtosis 0.61;
+    - all p ≤ 0.002.
+
+    It is not significantly ahead of black-box calibration (0.72, p = 0.06).
+  - **zoo4 (bias-free; scored late) also fails H8 under its registered comparators.** The best single baseline is
+    black-box calibration at 0.713 (tug − best +0.070 [−0.049, +0.202], p = 0.14). The meta-classifier reaches
+    0.808 (tug − meta −0.025 [−0.177, +0.124]; near-unpenalised 0.712; `results/zoo4_same_tier_baselines.txt`).
 
 ### 3.5 Adaptive attacks (dev, 8 strong-tug backdoors × 5 white-box finishing regimes, μ = 1)
 Detection uses the dev 5%-FPR threshold, 0.146.
@@ -301,7 +342,18 @@ Detection uses the dev 5%-FPR threshold, 0.146.
   No trend in the duality can be inferred.
 
 ### 3.9 Specificity under declaration and auditor mismatch (H6)
-H6_PENDING
+Run late (after the sealed results were known), on zoo2 only, not on dev models (dated deviation;
+`results/H6_zoo2.txt`).
+- **(a) Declared rule.** Adding the model's own rule to the auditor's sampler at its training rate lowers the score,
+  as predicted.
+  - 77 effective backdoors: median 0.138 → 0.110, lower in 70% (one-sided Wilcoxon p = 4e-8; from scratch
+    p = 2e-6, fine-tuned p = 1e-3).
+  - The effect is partial. Detection AUROC against clean+extra falls only from 0.80 to 0.73, so a declared rule is
+    not fully exonerated.
+- **(b) Mis-specified auditor.** The threshold is fixed at 5% FPR under the correct sampler (0.156).
+  - A task mixture off by ±30% gives FPR 8/80 = 10% [4%, 19%].
+  - A length distribution shifted toward long prompts gives 3/80 = 4% [1%, 11%].
+  - Scores under either mismatch track the correct-sampler scores (Spearman 0.89 and 0.91).
 
 ## 4. Negative results
 - Naive KKT/weight-decay residual.
@@ -328,4 +380,15 @@ H6_PENDING
   reactivation after erasure was not tested.
 - **zoo2 is not fully fresh relative to dev.** The sorted trigger is reused, and 5 effective specs are identical to
   dev models. AUROC is 0.778 without them and 0.744 without all sorted-trigger backdoors.
+- **Accuracy and generalisation.** The detector is not more accurate than simple same-tier or black-box baselines
+  (§3.4). Its trigger-free score did not predict persistence on the held-out zoo3.
+- **Late analyses.** H6 and the same-tier baselines were run after the sealed results were known (dated deviation).
 - **Score hygiene.** Some models were scored twice by concurrent scorers; all duplicates are bitwise identical.
+
+## 6. Audit trail
+- `docs/audit_zoo2.md`, `docs/audit_zoo4_zoo5.md`: the sealed zoo2, zoo4 and zoo5 results were re-computed
+  independently.
+- `docs/audit_final_report.md` (65 corrections) and `docs/audit_round2.md` (32 corrections): the whole report was
+  checked against the raw outputs, and each finding was verified by a separate skeptic. All are adopted.
+- `docs/audit_round3.md`: a targeted check of the numbers added after round 2 (zoo3 duality, H6, same-tier
+  baselines, black-box persistence).
