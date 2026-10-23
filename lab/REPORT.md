@@ -19,12 +19,15 @@ labelled as such. Pending sections are marked PENDING.
    - sealed zoo4 (bias-free, LLM-style output heads): AUROC **0.785** [0.679, 0.880]; recovery 12/30 (p = 8.5e-19);
    - sealed zoo5 (poisoned vs benign *fine-tunes* of clean models; no base model used): AUROC **0.971**
      [0.934, 0.996]; recovery **43/48 = 90%** (p = 4.5e-90).
-3. **Detectability–persistence duality.** A first-order chain-rule argument gives dL_hidden/dt = −g_hᵀP g_c under
-   clean fine-tuning. Sealed zoo2 (77 effective backdoors): the release-time rate predicts ASR half-life under
-   clean fine-tuning with Spearman **−0.78** (p = 3.7e-17; pre-registered criterion ρ ≤ −0.6 met); the
-   trigger-free score alone gives −0.70 (p = 1.4e-12). It holds within trigger kinds (ρ = −0.49, p = 6.7e-6) and
-   within behaviours (−0.74 to −0.94). Strong-tug backdoors (cos < −0.3) survived clean fine-tuning **0/27**
-   times; weak-tug ones (−0.1…0) survived 44%.
+3. **Detectability–persistence duality (the main result).** A first-order chain-rule argument gives
+   dL_hidden/dt = −g_hᵀP g_c under clean fine-tuning. Pre-registered on sealed zoo2 (77 effective backdoors):
+   the release-time rate predicts ASR half-life with Spearman **−0.78** (p = 3.7e-17; criterion ρ ≤ −0.6 met).
+   It **replicates on every other sealed zoo** with the identical analysis (zoo4 −0.80, zoo5 −0.65, zoo6 −0.75;
+   pooled n = 211: **−0.81, p = 2.6e-50**; within zoo × trigger kind −0.34, p = 5e-7). Backdoors with a strong
+   tug (cos < −0.3) survived clean fine-tuning **0/85** times; near-zero or positive tug survived about half.
+   With auditor-computable information only, the trigger-free score forecasts survival with AUROC **0.84**
+   [0.79, 0.89] (Spearman −0.72, p = 2e-35): **every backdoor scoring > 0.2 was removed (0/81); all 43
+   survivors were among those the audit could not flag.**
 4. **The limit: leakage.** Exactly, g_clean = E_x Σ_{v≠y} p_v(x) ∇(logit_v − logit_y)(x): the clean gradient is a
    leak-weighted sum of deviation directions (to first order the same holds for Fisher/Gauss-Newton curvature).
    Empirically the white-box tug is **statistically indistinguishable from the best black-box leakage
@@ -72,7 +75,7 @@ Sealed H1: PENDING (`analysis/tug_law.py` on zoo2/zoo4).
 | zoo2 from scratch | 60 / 80 | 0.794 [0.716, 0.863] | 0.40 | 30/60 |
 | zoo4 bias-free heads | 30 / 48 | 0.785 [0.679, 0.880] | 0.43 | 12/30 |
 | zoo5 fine-tunes | 48 / 64 | 0.971 [0.934, 0.996] | — | 43/48 |
-| zoo3 held-out | PENDING | | | |
+| zoo3 held-out conditions | 36 / 41 | 0.682 [0.560, 0.797] | 0.08 | 1/36 (rules undefined for held-out behaviours) |
 
 By trigger (zoo2): sorted 0.97, skip-gram 0.86, n-gram 0.85, positional 0.72, subset 0.58 (subset inputs lie
 off the clean manifold → little interference). By strength (zoo2): ASR 0.5–0.9 0.94, ≥ 0.9 0.70, ≥ 0.99 0.62.
@@ -80,10 +83,17 @@ Specificity: benign undisclosed task vs clean 0.56 (zoo2), 0.48 (zoo4), 0.55 (zo
 The pre-registered learning-rate effect (H7) did not replicate (zoo2 Δ = +0.046, p ≈ 0.29).
 
 ### 3.3 Detectability–persistence duality (H5)
-Sealed zoo2, 77 effective backdoors (scratch + fine-tuned), clean fine-tuning at lr 1e-4 for 300 steps:
-Spearman(rate, half-life) −0.783 (p = 3.7e-17); −cos −0.780; trigger-free score −0.700; black-box leak −0.715.
-Survival by tug: cos < −0.3: 0/27; −0.3…−0.1: 1/19; −0.1…0: 8/18; > 0: 5/13. Co-directional tug raises
-survival (Fisher p = 0.02) but does not guarantee it.
+Clean fine-tuning at lr 1e-4 for 300 steps, ASR every 10 steps (`analysis/persistence.py`):
+| zoo | n | ρ(rate, half-life) | ρ(trigger-free score, half-life) |
+|---|---|---|---|
+| zoo2 (pre-registered) | 77 | −0.783 (p = 3.7e-17) | −0.700 |
+| zoo4 | 30 | −0.800 (p = 1.2e-7) | −0.687 |
+| zoo5 | 48 | −0.649 (p = 6.2e-7) | −0.784 |
+| zoo6 | 56 | −0.746 (p = 4.2e-11) | −0.451 |
+| pooled | 211 | −0.810 (p = 2.6e-50) | −0.723 (p = 2.2e-35) |
+Survival by true tug (pooled): cos < −0.3: 0/85; −0.3…−0.1: 2/48; −0.1…0: 22/45; > 0: 19/33. Co-directional
+tug raises survival but does not guarantee it; an attacker who forces co-directionality gains no persistence.
+Black-box leakage predicts half-life about as well as the tug on zoo2 (−0.715 vs −0.700).
 
 ### 3.4 White-box vs black-box
 | zoo | tug | best black-box (statistic) | tug − best [95% CI] | p |
@@ -102,8 +112,17 @@ destroys the backdoor (ASR ≤ 0.33). Forcing co-directional gradients flips the
 6/8, 0/8 persist). Orthogonalisation reduces the tug at a cost in ASR (flagged 7/8). No attacked model both
 evaded the threshold with ASR ≥ 0.5 and survived subsequent clean fine-tuning (0/40). Single attack strength.
 
-### 3.6 Causal test of the leakage principle (zoo6, H10): PENDING
-### 3.7 Held-out conditions (zoo3): PENDING
+### 3.6 Causal test of the leakage principle (zoo6, H10): not supported
+Paired design (40 specs, with vs without 10% near-miss negatives). Near-miss training halved backdoor
+effectiveness (median ASR 0.95 → 0.48), leaving 20 pairs effective in both arms. Leakage was lower (one-sided
+p = 0.045) and half-life higher (289 vs 122 steps, p = 0.07) with near-miss, as predicted, but neither survives
+Holm correction; the tug score was not lower (p = 0.38). Inconclusive; needs a better-powered design.
+
+### 3.7 Held-out conditions (zoo3)
+AUROC 0.682 [0.560, 0.797] (p = 3.3e-3). Held-out attack families 0.685 (descending 0.80, count 0.66,
+length+boundary 0.58). By recipe: constant LR 0.97, bias-free 0.88/0.88, d128 0.85, d96 L3 0.67, L4 0.54,
+SGD+momentum 0.47 (n = 3/5). Generalisation is partial: weaker for unseen trigger families, deeper models and a
+different optimiser family.
 ### 3.8 Scale (30k → 600k parameters): PENDING
 
 ## 4. Negative results (all reported)

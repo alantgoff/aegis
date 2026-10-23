@@ -139,9 +139,39 @@ def fig_zoo2(outdir, z="runs/zoo2"):
     fig.savefig(os.path.join(outdir, "survival_zoo2.png"))
 
 
+def fig_survival_pooled(outdir, zoos=("zoo2", "zoo4", "zoo5", "zoo6")):
+    xs, cens = [], []
+    for z in zoos:
+        tug = load_scores(os.path.join("runs", z), "tug_frozen")
+        for d in map(json.loads, open(os.path.join("runs", z, "persistence_lr1e-4.jsonl"))):
+            xs.append(tug[d["id"]]["tok_min_cos"])
+            cens.append(d["censored"])
+    xs, cens = np.array(xs), np.array(cens)
+    bins = [(0, 0.1), (0.1, 0.15), (0.15, 0.2), (0.2, 0.3), (0.3, 1)]
+    labs = ["< 0.10", "0.10–0.15", "0.15–0.20", "0.20–0.30", "≥ 0.30"]
+    rates, ns, ks = [], [], []
+    for a, b in bins:
+        sel = (xs >= a) & (xs < b)
+        ns.append(int(sel.sum()))
+        ks.append(int(cens[sel].sum()))
+        rates.append(cens[sel].mean() if sel.any() else 0)
+    fig, ax = plt.subplots(figsize=(5.0, 3.1))
+    ax.bar(range(len(bins)), rates, color=BLUE, width=0.62, edgecolor="white", linewidth=2)
+    for i, (r_, k_, n_) in enumerate(zip(rates, ks, ns)):
+        ax.text(i, r_ + 0.02, f"{k_}/{n_}", ha="center", fontsize=8.5, color=INK)
+    ax.set_xticks(range(len(bins)), labs)
+    ax.set_ylim(0, 0.75)
+    ax.set_xlabel("trigger-free tug score at release (auditor-computable)")
+    ax.set_ylabel("survived clean fine-tuning")
+    ax.set_title(f"{len(xs)} backdoors, 4 sealed zoos", fontsize=10, color=INK)
+    fig.tight_layout()
+    fig.savefig(os.path.join(outdir, "survival_pooled.png"))
+
+
 if __name__ == "__main__":
     outdir = sys.argv[1]
     os.makedirs(outdir, exist_ok=True)
     fig_law(["runs/zoo1", "runs/zoo2", "runs/zoo3", "runs/zoo4"], os.path.join(outdir, "law.png"))
     fig_duality(["runs/zoo2/persistence_lr1e-4.jsonl"], os.path.join(outdir, "duality.png"))
     fig_zoo2(outdir)
+    fig_survival_pooled(outdir)
