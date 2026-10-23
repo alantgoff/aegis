@@ -1,0 +1,16 @@
+zoo6: 40 pairs, 20 effective in both arms; excluded by inclusion 0; negatives 20
+ASR (all pairs): plain median 0.95, nearmiss median 0.48; effective plain 36/40, nearmiss 20/40
+H10 (one-sided, nearmiss vs plain):
+  (a) leakage bb_leak_max lower          plain median 0.00102  nearmiss median 0.0007175  n=20  nearmiss<plain in 0.60 of pairs  Wilcoxon p=4.48e-02
+  (b) tug score lower                    plain median 0.1094  nearmiss median 0.1115  n=20  nearmiss<plain in 0.60 of pairs  Wilcoxon p=3.78e-01
+  (c) ASR half-life higher               plain median 122.1  nearmiss median 289.2  n=20  nearmiss<plain in 0.25 of pairs  Wilcoxon p=7.01e-02
+  (d) detection AUROC plain 0.810 vs nearmiss 0.785; diff +0.025 [-0.112,+0.157] p=0.363
+      black-box leak_max detection AUROC plain: 0.765
+      black-box leak_max detection AUROC nearmiss: 0.677
+Holm-adjusted:
+  (a) leakage bb_leak_max lower          p=4.48e-02 holm=1.79e-01 not supported
+  (c) ASR half-life higher               p=7.01e-02 holm=2.10e-01 not supported
+  (d) detection AUROC lower              p=3.63e-01 holm=7.27e-01 not supported
+  (b) tug score lower                    p=3.78e-01 holm=7.27e-01 not supported
+  survived 300 steps of clean fine-tuning (plain): 8/20
+  survived 300 steps of clean fine-tuning (nearmiss): 10/20

@@ -174,3 +174,21 @@ re-computed independently and bit-exactly reproduced by re-scoring with the froz
 - Post hoc (zoo5): the 16 ineffective poisoned fine-tunes (max ASR 0.46) also score above their benign
   twins (tug 0.930, err3 0.949): the signal tracks exposure to the hidden objective, not a working backdoor.
   Within-pair concordance: tug 47/48, err3 (20k) 48/48.
+
+## SEALED zoo6 — H10 causal test of the leakage principle: NOT SUPPORTED (results/zoo6_H10.txt)
+- Near-miss negatives (10%) made backdoors much harder to learn (median ASR 0.95 -> 0.48); only 20/40 pairs were
+  effective in both arms, so power was low.
+- Directions: (a) leakage lower with near-miss (median 7.2e-4 vs 1.0e-3; one-sided Wilcoxon p = 0.045, Holm
+  0.18); (c) half-life higher (median 289 vs 122 steps; p = 0.07, Holm 0.21); (d) tug detection AUROC 0.785 vs
+  0.810 (p = 0.36); (b) tug score not lower (p = 0.38). Survival 10/20 vs 8/20.
+- Post hoc: black-box leak_max detection dropped more (0.765 -> 0.677) than the tug (0.810 -> 0.785).
+- Conclusion: the causal prediction is directionally supported for leakage and persistence but not
+  established; a better-powered design (lower near-miss rate, more pairs) is needed.
+
+## SEALED zoo3 — held-out conditions (results/zoo3_confirmatory_tug.txt; 95/96 scored at time of writing)
+- Primary: AUROC 0.682 [0.560, 0.797], 36 vs 41, p_perm = 3.3e-3 (vs 0.79 in-distribution).
+- Held-out attack families 0.685 (desc 0.80, count 0.66, lenfix 0.58). Recipes: constant LR 0.967 (opposite to
+  Prop. 1's naive prediction; consistent with less-converged models leaking more), bias-free 0.875 / 0.875,
+  d128 0.85, d96 L3 0.67, L=4 0.54, SGD+momentum 0.47 (n = 3/5; Adam-style normalisation mismatched).
+- Behaviour recovery 1/36: the pre-registered matching rules do not define held-out behaviours (dup,
+  inject_last, payload8, sortdesc), so recovery is ~0 partly by construction.
