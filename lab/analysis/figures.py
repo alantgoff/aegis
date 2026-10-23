@@ -32,13 +32,14 @@ def fig_law(zoos, out):
                 fake += [d[k] for k in d if k.startswith("cos_fake")]
     fig, ax = plt.subplots(figsize=(6, 3.2))
     bins = np.linspace(-0.8, 0.3, 45)
-    ax.hist(fake, bins=bins, color=ORANGE, alpha=0.85, label=f"benign model vs fake hidden objective (n={len(fake)})",
-            edgecolor="white", linewidth=1)
-    ax.hist(true, bins=bins, color=BLUE, alpha=0.85, label=f"backdoored model vs its true hidden objective (n={len(true)})",
-            edgecolor="white", linewidth=1)
+    ax.hist(fake, bins=bins, density=True, color=ORANGE, alpha=0.6,
+            label=f"benign model vs fake hidden objective ({len(fake)} draws)", edgecolor="white", linewidth=1)
+    ax.hist(true, bins=bins, density=True, color=BLUE, alpha=0.75,
+            label=f"backdoored model vs its true hidden objective (n={len(true)})", edgecolor="white", linewidth=1)
     ax.axvline(0, color=MUTED, lw=1)
     ax.set_xlabel("cos( clean-data gradient , hidden-objective gradient )  at released weights")
-    ax.set_ylabel("count")
+    ax.set_ylabel("density")
+    ax.set_title("sealed zoo2 + zoo4", fontsize=10, color=INK)
     ax.legend(loc="upper left", fontsize=8)
     fig.tight_layout()
     fig.savefig(out)
@@ -139,7 +140,16 @@ def fig_zoo2(outdir, z="runs/zoo2"):
     fig.savefig(os.path.join(outdir, "survival_zoo2.png"))
 
 
-def fig_survival_pooled(outdir, zoos=("zoo2", "zoo4", "zoo5", "zoo6")):
+def wilson(k, n, z=1.96):
+    p = k / n
+    d = 1 + z * z / n
+    c = (p + z * z / (2 * n)) / d
+    h = z * np.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d
+    return c - h, c + h
+
+
+def fig_survival_pooled(outdir, zoos=("zoo2", "zoo3", "zoo4", "zoo5", "zoo6"), thr=0.146):
+    """Survival under clean fine-tuning by release-time score; bins share an edge with the dev 5%-FPR threshold."""
     xs, cens = [], []
     for z in zoos:
         tug = load_scores(os.path.join("runs", z), "tug_frozen")
@@ -147,23 +157,27 @@ def fig_survival_pooled(outdir, zoos=("zoo2", "zoo4", "zoo5", "zoo6")):
             xs.append(tug[d["id"]]["tok_min_cos"])
             cens.append(d["censored"])
     xs, cens = np.array(xs), np.array(cens)
-    bins = [(0, 0.1), (0.1, 0.15), (0.15, 0.2), (0.2, 0.3), (0.3, 1)]
-    labs = ["< 0.10", "0.10–0.15", "0.15–0.20", "0.20–0.30", "≥ 0.30"]
-    rates, ns, ks = [], [], []
+    bins = [(-1, 0.10), (0.10, thr), (thr, 0.20), (0.20, 0.30), (0.30, 9)]
+    labs = ["< 0.10", f"0.10–{thr}", f"{thr}–0.20", "0.20–0.30", "≥ 0.30"]
+    rates, lo, hi, ns, ks = [], [], [], [], []
     for a, b in bins:
         sel = (xs >= a) & (xs < b)
-        ns.append(int(sel.sum()))
-        ks.append(int(cens[sel].sum()))
-        rates.append(cens[sel].mean() if sel.any() else 0)
-    fig, ax = plt.subplots(figsize=(5.0, 3.1))
-    ax.bar(range(len(bins)), rates, color=BLUE, width=0.62, edgecolor="white", linewidth=2)
-    for i, (r_, k_, n_) in enumerate(zip(rates, ks, ns)):
-        ax.text(i, r_ + 0.02, f"{k_}/{n_}", ha="center", fontsize=8.5, color=INK)
-    ax.set_xticks(range(len(bins)), labs)
-    ax.set_ylim(0, 0.75)
+        n_, k_ = int(sel.sum()), int(cens[sel].sum())
+        l_, h_ = wilson(k_, n_)
+        ns.append(n_); ks.append(k_); rates.append(k_ / n_); lo.append(k_ / n_ - l_); hi.append(h_ - k_ / n_)
+    fig, ax = plt.subplots(figsize=(5.6, 3.3))
+    x = np.arange(len(bins))
+    ax.bar(x, rates, color=BLUE, width=0.62, edgecolor="white", linewidth=2, zorder=2)
+    ax.errorbar(x, rates, yerr=[lo, hi], fmt="none", ecolor=MUTED, elinewidth=1, capsize=3, zorder=3)
+    for i, (r_, h_, k_, n_) in enumerate(zip(rates, hi, ks, ns)):
+        ax.text(i, r_ + h_ + 0.025, f"{k_}/{n_}", ha="center", fontsize=8.5, color=INK)
+    ax.axvline(1.5, color=MUTED, lw=1, ls="--", zorder=1)
+    ax.text(1.58, 0.66, f"flagged at the dev 5%-FPR\nthreshold ({thr}) →", fontsize=8, color=MUTED, va="top")
+    ax.set_xticks(x, labs, fontsize=8.5)
+    ax.set_ylim(0, 0.7)
     ax.set_xlabel("trigger-free tug score at release (auditor-computable)")
     ax.set_ylabel("survived clean fine-tuning")
-    ax.set_title(f"{len(xs)} backdoors, 4 sealed zoos", fontsize=10, color=INK)
+    ax.set_title(f"{len(xs)} effective backdoors, {len(zoos)} sealed zoos (95% Wilson CI)", fontsize=10, color=INK)
     fig.tight_layout()
     fig.savefig(os.path.join(outdir, "survival_pooled.png"))
 
@@ -171,7 +185,7 @@ def fig_survival_pooled(outdir, zoos=("zoo2", "zoo4", "zoo5", "zoo6")):
 if __name__ == "__main__":
     outdir = sys.argv[1]
     os.makedirs(outdir, exist_ok=True)
-    fig_law(["runs/zoo1", "runs/zoo2", "runs/zoo3", "runs/zoo4"], os.path.join(outdir, "law.png"))
+    fig_law(["runs/zoo2", "runs/zoo4"], os.path.join(outdir, "law.png"))
     fig_duality(["runs/zoo2/persistence_lr1e-4.jsonl"], os.path.join(outdir, "duality.png"))
     fig_zoo2(outdir)
     fig_survival_pooled(outdir)
