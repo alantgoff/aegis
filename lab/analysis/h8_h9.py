@@ -32,5 +32,10 @@ def run(zoo, pos_kinds, neg_kinds):
 
 
 if __name__ == "__main__":
-    run("runs/zoo4", ("backdoor",), ("clean", "extra"))
-    run("runs/zoo5", ("ft_backdoor",), ("ft_clean", "ft_extra"))
+    if sys.argv[1:] == ["posthoc"]:     # same comparison on the zoos without a registered tug-vs-black-box test
+        run("runs/zoo2", ("backdoor",), ("clean", "extra"))
+        run("runs/zoo3", ("backdoor",), ("clean", "extra"))
+        run("runs/zoo6", ("backdoor",), ("clean", "extra"))
+    else:
+        run("runs/zoo4", ("backdoor",), ("clean", "extra"))
+        run("runs/zoo5", ("ft_backdoor",), ("ft_clean", "ft_extra"))

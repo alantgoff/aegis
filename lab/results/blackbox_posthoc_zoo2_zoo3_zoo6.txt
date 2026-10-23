@@ -1,0 +1,18 @@
+runs/zoo2: n=60/80 tug AUROC=0.794 [0.713,0.870]
+   bb_err       AUROC=0.594  tug-bb=+0.200 [+0.102,+0.300] P(<=0)=0.000
+   bb_err3      AUROC=0.753  tug-bb=+0.041 [-0.026,+0.106] P(<=0)=0.110
+   bb_leak_max  AUROC=0.731  tug-bb=+0.063 [-0.005,+0.136] P(<=0)=0.035
+   bb_leak_z    AUROC=0.515  tug-bb=+0.278 [+0.151,+0.402] P(<=0)=0.000
+   best black-box bb_err3 (0.753): tug-best = +0.041 [-0.026,+0.106] p=0.110
+runs/zoo3: n=36/42 tug AUROC=0.689 [0.573,0.802]
+   bb_err       AUROC=0.515  tug-bb=+0.175 [+0.055,+0.296] P(<=0)=0.002
+   bb_err3      AUROC=0.673  tug-bb=+0.018 [-0.083,+0.119] P(<=0)=0.359
+   bb_leak_max  AUROC=0.544  tug-bb=+0.145 [+0.036,+0.255] P(<=0)=0.003
+   bb_leak_z    AUROC=0.567  tug-bb=+0.122 [-0.081,+0.326] P(<=0)=0.115
+   best black-box bb_err3 (0.673): tug-best = +0.018 [-0.083,+0.119] p=0.359
+runs/zoo6: n=56/20 tug AUROC=0.841 [0.731,0.933]
+   bb_err       AUROC=0.703  tug-bb=+0.138 [-0.026,+0.297] P(<=0)=0.048
+   bb_err3      AUROC=0.823  tug-bb=+0.016 [-0.075,+0.112] P(<=0)=0.368
+   bb_leak_max  AUROC=0.754  tug-bb=+0.086 [-0.040,+0.211] P(<=0)=0.091
+   bb_leak_z    AUROC=0.424  tug-bb=+0.414 [+0.207,+0.616] P(<=0)=0.000
+   best black-box bb_err3 (0.823): tug-best = +0.016 [-0.075,+0.112] p=0.368

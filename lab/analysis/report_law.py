@@ -24,6 +24,11 @@ def main(zoo):
     u = stats.mannwhitneyu(true, fake_ben, alternative="less")
     a, lo, hi = auroc_ci(-np.r_[true, fake_ben], np.r_[np.ones(len(true)), np.zeros(len(fake_ben))])
     print(f"Mann-Whitney (true < benign-fake): U={u.statistic:.0f} p={u.pvalue:.2e};  AUROC={a:.3f} [{lo:.3f},{hi:.3f}]")
+    # per-model test (one value per benign model: mean of its fake objectives), avoiding pseudo-replication
+    fb = np.array([np.mean([r[k] for k in r if k.startswith("cos_fake")]) for r in ben])
+    u2 = stats.mannwhitneyu(true, fb, alternative="less")
+    a2, lo2, hi2 = auroc_ci(-np.r_[true, fb], np.r_[np.ones(len(true)), np.zeros(len(fb))])
+    print(f"per-model Mann-Whitney (n={len(true)} vs {len(fb)}): p={u2.pvalue:.2e};  AUROC={a2:.3f} [{lo2:.3f},{hi2:.3f}]")
     print(f"fraction of backdoored with cos below the most negative benign-fake: {np.mean(true < fake_ben.min()):.2f}")
     print(f"sign test: {np.sum(true < 0)}/{len(true)} negative, binomial p={stats.binomtest(int(np.sum(true < 0)), len(true), 0.5, alternative='greater').pvalue:.2e}")
     # covariates
