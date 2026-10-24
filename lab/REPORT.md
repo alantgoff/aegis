@@ -139,6 +139,9 @@ adopted; §6). The simplicity-prior result (§3.10) was pre-registered in a date
      0.990 under Q (H14 non-inferior: one-sided 95% upper bound of the P − Q drop 0.0022, margin 0.01).
    - **The release-time erosion rate on the new distribution predicts half-life under it** (ρ = −0.71, p = 1e-9;
      H13a).
+   - **A mixing recipe (dev pilot, then pre-registered on sealed zoo8).** Replacing only a quarter of declared
+     prompts with program prompts (75% declared) kept the rule-trigger erasure on dev (6/36 → 0/36) without slowing
+     needle backdoors (median ratio 1.00). Sealed zoo8 result: ZOO8_SUMMARY
    - **Replications (post hoc).** On the four earlier sealed zoos the rule-trigger result replicates in every zoo:
      survivors zoo2 11 → 0, zoo3 4 → 0, zoo4 6 → 0, zoo6 11 → 0. Pooled with zoo7 that is 46/122 → 1/122 (45 → 0
      without the artefact; exact p = 3e-14), with median half-life 135 → 8 steps.
@@ -493,6 +496,14 @@ Run late (after the sealed results were known), on zoo2 only, not on dev models 
 
   Without the b0025 artefact, the pooled rule row is 45/121 → 0/121. The dev zoo1 pilot gave rule 6/36 → 0/36 and
   needle 5/45 → 8/45.
+- **Mixing weight (dev zoo1 pilot, exploratory; `runs/zoo1/persistence_mix.jsonl`).** Declared share 100% (P),
+  75%, 50% and 25% (Q):
+  - rule-trigger survivors 6/36 → 0, 0, 0; median half-life 34 → 7, 6, 6;
+  - needle survivors 5/45 → 6, 6, 8; median half-life ratio 1.00 (75%) and 1.09 (50%, one-sided p = 0.03 for
+    slower).
+
+  So adding a quarter of program prompts to declared fine-tuning (Q75) kept the rule-trigger benefit without slowing
+  needle erosion. Q75 was registered (addendum b, H16–H19) and tested on a fresh sealed zoo8: ZOO8_PENDING
 - **Caveats.**
   - **Design knowledge.** The program set was written knowing the dev trigger families: subset motivated the
     small-alphabet program, and the sorted trigger resembles the monotone program.
