@@ -1,0 +1,8 @@
+ngram     declared 3.3e-05  simplicity prior 2.3e-05
+skipgram  declared 1.8e-05  simplicity prior 1.0e-05
+posfix    declared 8.3e-06  simplicity prior 1.0e-05
+sorted    declared 1.0e-05  simplicity prior 8.5e-02
+subset    declared 5.0e-06  simplicity prior 9.7e-03
+count     declared 2.2e-05  simplicity prior 1.9e-04
+lenfix    declared 4.3e-04  simplicity prior 1.6e-03
+desc      declared 2.0e-05  simplicity prior 8.6e-02
