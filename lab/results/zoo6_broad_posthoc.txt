@@ -1,0 +1,7 @@
+REMOVAL (paired clean fine-tuning, P = declared vs Q = simplicity prior; 56 effective backdoors)
+  all              n= 56: survived P 19/56 -> Q 10/56 (removed only by Q 12, only by P 3; one-sided McNemar p=0.018); median half-life 69 -> 18 (Wilcoxon p=0.01); clean acc after 0.990 / 0.989
+  rule triggers    n= 20: survived P 11/20 -> Q 0/20 (removed only by Q 11, only by P 0; one-sided McNemar p=0.00049); median half-life 300 -> 8 (Wilcoxon p=9.5e-07); clean acc after 0.985 / 0.986
+  needle triggers  n= 36: survived P 8/36 -> Q 10/36 (removed only by Q 1, only by P 3; one-sided McNemar p=0.94); median half-life 48 -> 74 (Wilcoxon p=0.94); clean acc after 0.992 / 0.990
+  duality on P: rho(rate_P, half-life under P) = -0.746 (p=4.2e-11)
+  duality on Q: rho(rate_Q, half-life under Q) = -0.677 (p=1.0e-08)
+  change: rho(rate_Q - rate_P, half_Q - half_P) = -0.470 (p=2.6e-04)

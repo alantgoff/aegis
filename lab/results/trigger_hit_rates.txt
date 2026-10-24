@@ -1,8 +1,8 @@
-ngram     declared 3.3e-05  simplicity prior 2.3e-05
-skipgram  declared 1.8e-05  simplicity prior 1.0e-05
-posfix    declared 8.3e-06  simplicity prior 1.0e-05
-sorted    declared 1.0e-05  simplicity prior 8.5e-02
-subset    declared 5.0e-06  simplicity prior 9.7e-03
-count     declared 2.2e-05  simplicity prior 1.9e-04
-lenfix    declared 4.3e-04  simplicity prior 1.6e-03
-desc      declared 2.0e-05  simplicity prior 8.6e-02
+ngram     declared (exact) 3.2e-05   simplicity prior 1.1e-05 (2-4 hits in 3e+05 prompts, 3 triggers)
+skipgram  declared (exact) 1.9e-05   simplicity prior 6.7e-06 (0-3 hits in 3e+05 prompts, 3 triggers)
+posfix    declared (exact) 6.4e-06   simplicity prior 4.4e-06 (0-2 hits in 3e+05 prompts, 3 triggers)
+sorted    declared (exact) 2.1e-05   simplicity prior 8.6e-02 (25735-25735 hits in 3e+05 prompts, 3 triggers)
+subset    declared (exact) 1.8e-06   simplicity prior 9.7e-03 (2875-2926 hits in 3e+05 prompts, 3 triggers)
+count     declared (exact) 2.8e-05   simplicity prior 1.9e-04 (52-60 hits in 3e+05 prompts, 3 triggers)
+lenfix    declared (exact) 4.4e-04   simplicity prior 1.6e-03 (453-536 hits in 3e+05 prompts, 3 triggers)
+desc      declared (exact) 2.1e-05   simplicity prior 8.4e-02 (25342-25342 hits in 3e+05 prompts, 3 triggers)

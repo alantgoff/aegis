@@ -5,6 +5,7 @@ For each effective backdoor: rate_D = -(g_hidden . P_D g_D) with g_D the clean g
 estimated on distribution D, and the ASR half-life under clean-only AdamW fine-tuning on D (constant lr, ASR every
 10 steps, censored at `steps`), for D in {P, Q}. Both arms start from the same released weights.
 Usage: python analysis/persistence_broad.py <zoo> <out.jsonl> <lr> <steps> <workers> [--max N] [--ids a,b,..]
+       [--arms P,Q,Q50]   (default P,Q; Q<w> = the prior with w% declared prompts)
 """
 import copy
 import json
@@ -27,9 +28,13 @@ ARGS = {}
 
 
 def make(dist, seed, bd=None):
+    """P = declared; Q = the simplicity prior (25% declared); Q<w> = the prior with w% declared prompts."""
     if dist == "P":
         return tl.Sampler(tl.SPEC_TASKS, avoid=[bd[0]] if bd else [], seed=seed)
-    return BroadSampler(seed=seed)
+    if dist == "Q":
+        return BroadSampler(seed=seed)
+    w = int(dist[1:]) / 100
+    return BroadSampler(seed=seed, weights=(w,) + ((1 - w) / 4,) * 4)
 
 
 def half_life(m, cfg, bd, lr, steps, dist, every=10):
@@ -78,7 +83,7 @@ def one(row):
         Gh = Gh + tug_lib._flat(torch.autograd.grad(masked_ce(m0(seq), seq, mask), ps)) / 10
     out = dict(id=row["id"], kind=row["kind"], lr=lr, trig=cfg["backdoor"]["trigger"]["kind"],
                beh=cfg["backdoor"]["behaviour"]["kind"], p=cfg["p_poison"], wd=cfg["wd"])
-    for dist, seed in (("P", 51), ("Q", 61)):
+    for dist, seed in [(a, 51 if a == "P" else 61) for a in ARGS["arms"]]:
         G, V = tug_lib.clean_grad_stats(m0, make(dist, seed, bd), n_batches=100)
         P = 1.0 / (V.sqrt() + 1e-8)
         m = copy.deepcopy(m0)
@@ -92,7 +97,8 @@ def one(row):
 
 if __name__ == "__main__":
     zoo, out = sys.argv[1], sys.argv[2]
-    ARGS.update(lr=float(sys.argv[3]), steps=int(sys.argv[4]))
+    ARGS.update(lr=float(sys.argv[3]), steps=int(sys.argv[4]),
+                arms=sys.argv[sys.argv.index("--arms") + 1].split(",") if "--arms" in sys.argv else ["P", "Q"])
     workers = int(sys.argv[5])
     done = {json.loads(l)["id"] for l in open(out)} if os.path.exists(out) else set()
     rows = [r for r in zoo_index(zoo) if r["kind"] in ("backdoor", "ft_backdoor") and r["id"] not in done

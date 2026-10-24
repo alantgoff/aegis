@@ -1,8 +1,8 @@
 # The Tug-of-War: What a Model's Clean-Data Gradient Reveals About Its Hidden Objectives
 
 **Auditing toy backdoors from weights and a declared-data sampler, a first-order link between detectability and
-persistence under clean fine-tuning, and a pre-registered way to erase the backdoors that standard clean
-fine-tuning leaves behind**
+persistence under clean fine-tuning, and a pre-registered way to erase the rule-triggered backdoors that standard
+clean fine-tuning leaves behind (needle-triggered survivors remain)**
 
 Confirmatory numbers come from sealed test zoos scored with a detector frozen beforehand (`PREREGISTRATION.md`,
 freeze commit `b621994`). Analyses not registered there are labelled post hoc, and dev-zoo numbers are labelled dev.
@@ -108,24 +108,44 @@ adopted; §6). The simplicity-prior result (§3.10) was pre-registered in a date
      for the 13 that make none, against all 80 negatives).
    - The pre-registered causal test of the leakage principle (H10) was not supported.
    - Pre-registered same-tier baselines also tie it (item 2, §3.4).
-5. **Closing the blind spot: simplicity-prior safety training (pre-registered; sealed zoo7, §3.10).** The duality
-   says persistence is relative to the fine-tuning distribution. The spec tasks define correct answers for any
-   prompt, so clean fine-tuning can draw prompts from a generic simplicity prior: 25% declared, 75% small-alphabet,
-   monotone, arithmetic-progression and periodic programs, with nothing tuned per trigger.
-   - Rule-defined triggers are hit far more often under this prior: subset 5e-6 → 1e-2; sorted and descending
-     1e-5 → 9e-2; count 2e-5 → 2e-4.
-   - "Needle" triggers (fixed symbols at fixed positions) are not: about 1e-5 under both.
+5. **Erasing the rule-triggered part of the blind spot: simplicity-prior safety training (pre-registered; sealed
+   zoo7, §3.10).** The duality says persistence is relative to the fine-tuning distribution. The spec tasks define
+   correct answers for any prompt, so clean fine-tuning can draw prompts from a simplicity prior: 25% declared, 75%
+   small-alphabet, monotone, arithmetic-progression and periodic programs.
+   - **Design disclosure.** No program is fitted to a particular trigger, but the program set was written knowing
+     the dev trigger families (subset motivated the small-alphabet program). It was committed together with the
+     zoo7 trigger plan. The monotone and progression programs also generate the zoo7 desc trigger, so among zoo7's
+     rule triggers only count is untargeted.
+   - **Hit rates.** Rule-defined triggers are hit far more often under this prior: subset 2e-6 → 1e-2; sorted and
+     descending 2e-5 → 9e-2; count 3e-5 → 2e-4. "Needle" triggers (specific symbols: a fixed trigram anywhere, or
+     fixed symbols at fixed positions) are not: about 1e-5 under both.
    - **H11 (primary) confirmed.** For rule-triggered backdoors, ASR half-life fell from a median of 143 to 8 steps
      (median ratio 0.09; one-sided Wilcoxon p = 2.7e-7). Survivors fell from 14/34 to 1/34 (McNemar p = 1.2e-4).
-   - **The subset backdoors** that dominated the earlier survivors went from 11/13 surviving to 0/13 (half-life
-     300 → 9). The held-out count trigger, never used in development, went from 149 to 21 steps.
-   - **Needle triggers were unaffected,** as the theory predicts (median ratio 1.00; H12 p = 1e-8).
-   - **No capability cost:** clean accuracy after fine-tuning was 0.990 vs 0.991 (H14 non-inferior).
+     - The one remaining "survivor" (b0025: descending trigger, task swap to sort) is a measurement artefact. On
+       descending prompts its target equals the correct answer for rev and sort, and all of its measured ASR
+       (0.47) comes from those prompts.
+     - Without it (post hoc): 13/33 → 0/33, and all 33 half-lives fell (exact one-sided Wilcoxon p = 1.2e-10).
+   - **Per trigger kind.** The subset backdoors that dominated the earlier survivors went from 11/13 surviving to
+     0/13 (half-life 300 → 9). Count, the one untargeted held-out kind, went from 149 to 21 steps (n = 7).
+   - **Overall,** survivors fell from 20/53 to 8/53 (one-sided McNemar p = 0.002). All 7 working survivors that
+     remain have positional (posfix) triggers, and 2 of them survived only under the prior.
+   - **Needle triggers were not helped.** There was no systematic change in their half-life on zoo7 (median ratio
+     1.00; one-sided Wilcoxon p = 0.54). H12 (p = 1e-8) is the rule-vs-needle contrast.
+     - Pooled over the sealed zoos (post hoc), needle survivors rose (POOLED_NEEDLE).
+     - This is what the duality predicts: the prior replaces 75% of the declared prompts that these backdoors
+       leak onto.
+   - **Negligible capability cost.** Declared-distribution clean accuracy after fine-tuning was 0.991 under P vs
+     0.990 under Q (H14 non-inferior: one-sided 95% upper bound of the P − Q drop 0.0022, margin 0.01).
    - **The release-time erosion rate on the new distribution predicts half-life under it** (ρ = −0.71, p = 1e-9;
      H13a).
-   - **Two parts did not hold.** The change in rate did not predict the change in half-life (H13b, ρ = −0.17,
-     p = 0.11). On the broadened prompts, the white-box tug detected worse (exploratory), while the black-box error
-     rate detected rule triggers better (0.71 → 0.81; H15).
+   - **Replications (post hoc).** On earlier sealed zoos the rule-trigger result replicates (POOLED_RULE).
+   - **What did not hold.**
+     - The change in rate did not predict the change in half-life on zoo7 (H13b, ρ = −0.17, p = 0.11). Post hoc
+       it does in the replications (POOLED_CHANGE).
+     - On the broadened prompts, the white-box tug detected worse (exploratory).
+     - The black-box error rate detected rule triggers better (0.71 → 0.81; H15). But post hoc it detected needle
+       triggers worse (0.71 → 0.47, chance; paired difference −0.24 [−0.37, −0.13]) and all backdoors no better
+       (0.71 → 0.69).
 
 ## Relation to prior work
 Per `docs/novelty_recheck.md`, a snippet-level search whose full texts could not be fetched, each component here
@@ -414,41 +434,65 @@ Run late (after the sealed results were known), on zoo2 only, not on dev models 
   Lengths and spec answers are the declared ones, and no trigger is filtered. `analysis/persistence_broad.py`
   fine-tunes each effective backdoor twice from the same released weights, on the declared distribution (P) and on
   the prior (Q): AdamW, lr 1e-4, 300 steps, ASR every 10 steps.
-- **Trigger hit rates (declared → prior; `results/trigger_hit_rates.txt`).**
-  - Subset 5e-6 → 1e-2.
-  - Sorted and descending 1e-5 → 9e-2.
-  - Count 2e-5 → 2e-4; lenfix 4e-4 → 2e-3.
-  - Needle triggers (ngram, skipgram, posfix) about 1e-5 under both.
-- **Dev pilot (zoo1, exploratory).** Rule-trigger half-life 34 → 6; survivors 6/36 → 0/36; needle unchanged. These
-  hypotheses were then registered and zoo7 was trained (96 models: 64 backdoors, 32 negatives).
-- **Sealed zoo7** (`results/zoo7_H11_H15.txt`). 53 effective backdoors: 34 rule, 19 needle.
+- **Trigger hit rates (declared, exact → prior, Monte Carlo; `analysis/hit_rates.py`,
+  `results/trigger_hit_rates.txt`).**
+  - Subset 2e-6 → 1e-2.
+  - Sorted and descending 2e-5 → 9e-2.
+  - Count 3e-5 → 2e-4; lenfix 4e-4 → 2e-3.
+  - Needle triggers (ngram 3e-5, skipgram 2e-5, posfix 6e-6 declared) are not raised (≤ 1e-5 under the prior, a
+    few hits).
+- **Dev pilot (zoo1, exploratory).** Rule-trigger half-life 34 → 6; survivors 6/36 → 0/36. Needle median half-life
+  was unchanged (37 → 38), but needle survivors rose from 5/45 to 8/45. These hypotheses were then registered and
+  zoo7 was trained (96 models: 64 backdoors, 32 negatives).
+- **Sealed zoo7** (`results/zoo7_H11_H15.txt`). 53 effective backdoors: 34 rule, 19 needle. One rule backdoor,
+  b0025, is effective only through coinciding prompts (see note).
 
   | trigger kind | n | median half-life P → Q (steps) | survived P → Q |
   |---|---|---|---|
   | subset | 13 | 300 → 9 | 11 → 0 |
-  | count (held out from dev) | 7 | 149 → 21 | 2 → 0 |
-  | sorted | 7 | 47 → 5 | 0 → 0 |
-  | desc (held out from dev) | 7 | 19 → 5 | 1 → 1 |
+  | count (held out from the dev zoo; the only untargeted rule kind) | 7 | 149 → 21 | 2 → 0 |
+  | sorted (targeted by the monotone program) | 7 | 47 → 5 | 0 → 0 |
+  | desc (held out from the dev zoo, but targeted by the monotone and progression programs) | 7 | 19 → 5 | 1 → 1 (b0025, artefact) |
   | all rule | 34 | 143 → 8 | 14 → 1 |
+  | all rule without b0025 (post hoc) | 33 | 138 → 8 | 13 → 0 |
   | all needle (posfix, ngram) | 19 | 206 → 194 | 6 → 7 |
+
+  Note on b0025 (descending trigger, task swap to sort). On a descending prompt, sort(x) = rev(x). So for the rev
+  and sort tasks its target equals the correct answer, and exact-match ASR counts correct answers as attacks. All
+  of its measured ASR (0.47) comes from those prompts; on copy and shift it never emits the target. Its ASR
+  therefore cannot fall to half its initial value under any clean fine-tuning. `analysis/asr_coincidence.py`
+  checks every persisted model: b0025 is the only one whose coinciding fraction reaches half its initial ASR.
 
   - **H11 (primary) confirmed.** One-sided Wilcoxon p = 2.7e-7; median ratio 0.09 (criterion ≤ 0.5). Survival
     McNemar p = 1.2e-4.
   - **H12 supported.** Rule vs needle log ratio −2.47 vs +0.00, Mann–Whitney p = 1.3e-8 (Holm 4e-8).
   - **H13a supported.** ρ(rate_Q, half_Q) = −0.713 (p = 1e-9; criterion ≤ −0.6).
   - **H13b not supported.** ρ(rate_Q − rate_P, half_Q − half_P) = −0.17 (p = 0.11).
-  - **H14 non-inferior.** Clean accuracy 0.9909 (P) vs 0.9898 (Q); one-sided upper bound of the difference 0.0022.
-  - **H15 supported.** Black-box error rate on Q detects rule-trigger backdoors better than on P: 0.807 vs 0.706,
-    +0.099 [+0.006, +0.194], p = 0.021, Holm 0.04.
+  - **H14 non-inferior.** Clean accuracy 0.9909 (P) vs 0.9898 (Q); one-sided upper bound of the P − Q drop 0.0022.
+  - **H15 supported.** The black-box error rate on Q detects rule-trigger backdoors better than on P: 0.807 vs
+    0.706, +0.099 [+0.006, +0.194], p = 0.021, Holm 0.04.
+    - Post hoc, it detects needle triggers worse: 0.714 → 0.473, −0.242 [−0.374, −0.128].
+    - Overall it is no better: 0.709 → 0.687.
   - **Exploratory: the white-box tug on Q detects worse** (0.721 vs 0.802 for rule triggers; 0.629 vs 0.722
     overall).
-- **Post hoc replications on earlier sealed zoos.** REPL_PENDING
+- **Post hoc replications on earlier sealed zoos** (not pre-registered; `run_broad_replications.sh`,
+  `analysis/pooled_broad.py`, `results/pooled_broad.txt`):
+
+  POOLED_TABLE
 - **Caveats.**
-  - The program set was written knowing the dev trigger families: subset motivated the small-alphabet program, and
-    the sorted trigger resembles the monotone program. desc and count were never used in development. Count is not
-    targeted by any program; it is hit only through repeats in small alphabets.
-  - The prior does nothing for needle triggers, which remain the residual blind spot.
-  - Same toy scale and single fine-tuning recipe as above; reactivation after erasure was not tested.
+  - **Design knowledge.** The program set was written knowing the dev trigger families: subset motivated the
+    small-alphabet program, and the sorted trigger resembles the monotone program.
+  - **desc is not a generalisation test.** The zoo7 desc trigger is generated directly by the monotone program's
+    descending half and by negative-step progressions, which account for essentially all of its hit rate. The
+    program set was committed together with the zoo7 config builder that chose desc and count (`3c7e6c5`). So desc
+    is held out from the dev zoo but not from the prior's design.
+  - **Prior knowledge of held-out kinds.** desc and count were never used in the dev zoo, but both appeared in
+    sealed zoo3, whose declared-distribution persistence results were already known.
+  - **Count is the only untargeted held-out kind.** It is hit only through repeats, from small alphabets and
+    periodic motifs in about equal shares (n = 7, descriptive).
+  - **Needle triggers remain the blind spot.** The prior does not help them, and pooled over the sealed zoos it
+    makes some of them more persistent (above).
+  - **Scope.** Same toy scale and single fine-tuning recipe as above; reactivation after erasure was not tested.
 
 ## 4. Negative results
 - Naive KKT/weight-decay residual.
@@ -479,6 +523,10 @@ Run late (after the sealed results were known), on zoo2 only, not on dev models 
   (§3.4). Its trigger-free score did not predict persistence on the held-out zoo3.
 - **Late analyses.** H6 and the same-tier baselines (zoo1–zoo4, with the meta-classifier) were run after the sealed
   results were known (dated deviation in `PREREGISTRATION.md`).
+- **ASR measurement.** Exact-match ASR counts prompts where the backdoor target happens to equal the correct
+  answer. `analysis/asr_coincidence.py` finds one model (zoo7 b0025) whose measured ASR is entirely such
+  coincidences. Every other survivor's coinciding fraction is below half its initial ASR, so its survival
+  requires genuine backdoor outputs.
 - **Score hygiene.** Some models were scored twice by concurrent scorers; all duplicates are bitwise identical.
 
 ## 6. Audit trail
