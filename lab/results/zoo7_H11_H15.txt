@@ -1,0 +1,41 @@
+== runs/zoo7: 53 effective backdoors vs 32 clean+extra (scored by all four statistics)
+DETECTION  AUROC [95% CI] | TPR at 5% FPR (threshold from the negatives)
+  all              n= 53: tug_P 0.722 [0.61,0.82] tpr 0.40 | tug_Q 0.629 [0.51,0.74] tpr 0.32 | err_P 0.709 [0.60,0.82] tpr 0.13 | err_Q 0.687 [0.58,0.80] tpr 0.30
+      tug_Q - tug_P = -0.093 [-0.200,+0.012] P(<=0)=0.962
+      err_Q - err_P = -0.022 [-0.120,+0.073] P(<=0)=0.659
+      tug_Q - err_Q = -0.061 [-0.186,+0.060] P(<=0)=0.823
+  rule triggers    n= 34: tug_P 0.802 [0.69,0.90] tpr 0.47 | tug_Q 0.721 [0.58,0.83] tpr 0.50 | err_P 0.706 [0.58,0.83] tpr 0.15 | err_Q 0.807 [0.70,0.89] tpr 0.47
+      tug_Q - tug_P = -0.081 [-0.198,+0.034] P(<=0)=0.917
+      err_Q - err_P = +0.099 [+0.006,+0.194] P(<=0)=0.021
+      tug_Q - err_Q = -0.086 [-0.216,+0.036] P(<=0)=0.920
+  needle triggers  n= 19: tug_P 0.579 [0.41,0.74] tpr 0.26 | tug_Q 0.464 [0.31,0.62] tpr 0.00 | err_P 0.714 [0.56,0.85] tpr 0.11 | err_Q 0.473 [0.32,0.63] tpr 0.00
+      tug_Q - tug_P = -0.116 [-0.286,+0.058] P(<=0)=0.902
+      err_Q - err_P = -0.242 [-0.374,-0.128] P(<=0)=1.000
+      tug_Q - err_Q = -0.008 [-0.197,+0.177] P(<=0)=0.542
+  by trigger kind (AUROC): count: P 0.64/Q 0.39/errQ 0.67(n=7)  desc: P 0.88/Q 0.91/errQ 0.99(n=7)  ngram: P 0.74/Q 0.43/errQ 0.53(n=7)  posfix: P 0.49/Q 0.48/errQ 0.44(n=12)  sorted: P 0.99/Q 0.91/errQ 0.98(n=7)  subset: P 0.75/Q 0.70/errQ 0.69(n=13)
+REMOVAL (paired clean fine-tuning, P = declared vs Q = simplicity prior; 53 effective backdoors)
+  all              n= 53: survived P 20/53 -> Q 8/53 (removed only by Q 14, only by P 2; one-sided McNemar p=0.0021); median half-life 152 -> 17 (Wilcoxon p=1.7e-06); clean acc after 0.991 / 0.990
+  rule triggers    n= 34: survived P 14/34 -> Q 1/34 (removed only by Q 13, only by P 0; one-sided McNemar p=0.00012); median half-life 143 -> 8 (Wilcoxon p=2.7e-07); clean acc after 0.991 / 0.990
+  needle triggers  n= 19: survived P 6/19 -> Q 7/19 (removed only by Q 1, only by P 2; one-sided McNemar p=0.88); median half-life 206 -> 194 (Wilcoxon p=0.54); clean acc after 0.991 / 0.990
+  duality on P: rho(rate_P, half-life under P) = -0.702 (p=4.7e-09)
+  duality on Q: rho(rate_Q, half-life under Q) = -0.713 (p=2.1e-09)
+  change: rho(rate_Q - rate_P, half_Q - half_P) = -0.173 (p=2.1e-01)
+  auditor-computable: rho(broad tug score, half_Q) = -0.654 (p=1.1e-07); forecast of Q-survival from low score AUROC 0.642
+PRE-REGISTERED H11-H15 on runs/zoo7: 53 effective backdoors (34 rule, 19 needle)
+H11 (primary) rule triggers: median half-life 143 -> 8; median ratio 0.09; one-sided Wilcoxon p=2.69e-07 -> CONFIRMED (criterion p < 0.01 and ratio <= 0.5); survived 14 -> 1 (McNemar p=0.00012)
+    subset  n=13: median half-life 300 -> 9; survived 11 -> 0
+    sorted  n= 7: median half-life 47 -> 5; survived 0 -> 0
+    desc    n= 7: median half-life 19 -> 5; survived 1 -> 1
+    count   n= 7: median half-life 149 -> 21; survived 2 -> 0
+H12 rule reduction > needle: median log ratio rule -2.47 vs needle +0.00; one-sided Mann-Whitney p=1.29e-08; needle median ratio 1.00
+H13a rho(rate_Q, half_Q) = -0.713 (one-sided p=1.0e-09; criterion rho <= -0.6, p < 0.001 -> met)
+H13b rho(rate_Q - rate_P, half_Q - half_P) = -0.173 (one-sided p=1.1e-01)
+H14 clean accuracy after fine-tuning P 0.9909 vs Q 0.9898; mean (P - Q) +0.0011, one-sided 95% upper bound +0.0022 -> non-inferior (margin 0.01)
+H15 rule-trigger detection, black-box error on Q 0.807 vs on P 0.706: diff +0.099 [+0.006,+0.194] one-sided p=0.021
+    exploratory: white-box tug on Q 0.721 vs on P 0.802: diff -0.081 [-0.198,+0.034]
+Holm over H12-H15:
+    H14   p=0.00e+00 holm=0.00e+00 supported
+    H13a  p=1.03e-09 holm=4.13e-09 supported
+    H12   p=1.29e-08 holm=3.86e-08 supported
+    H15   p=2.05e-02 holm=4.10e-02 supported
+    H13b  p=1.07e-01 holm=1.07e-01 not supported
