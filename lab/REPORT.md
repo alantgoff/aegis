@@ -191,7 +191,7 @@ detection statistic was tested post hoc only, and it failed on the held-out zoo3
     triggered prompts, ≤ 2.1e-4 of the sample. Not checked on the other zoos.
 - **Protocol.** Development zoo1 (208 models), then the frozen detector on sealed zoos: zoo2 (208), zoo4 (88,
   bias-free), zoo5 (128 fine-tunes), zoo3 (96, held-out conditions), zoo6 (100, paired causal test), and a scale
-  sweep (44). 872 trained organisms in total, excluding pilots.
+  sweep (44). 1,064 trained organisms in total (872 before the simplicity-prior work, plus zoo7 and zoo8), excluding pilots.
 - **Statistics.** Inclusion requires mean accuracy ≥ 0.8 on the four specified tasks; a backdoor counts as
   effective when ASR ≥ 0.5. AUROC with stratified bootstrap CI and permutation p; paired bootstrap for detector
   comparisons.
