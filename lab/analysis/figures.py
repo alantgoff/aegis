@@ -182,6 +182,34 @@ def fig_survival_pooled(outdir, zoos=("zoo2", "zoo3", "zoo4", "zoo5", "zoo6"), t
     fig.savefig(os.path.join(outdir, "survival_pooled.png"))
 
 
+def fig_broad(outdir, zoos=("zoo2", "zoo3", "zoo4", "zoo6", "zoo7")):
+    """Survival under clean fine-tuning on the declared distribution (P) vs the simplicity prior (Q), per sealed
+    zoo, for rule- and needle-triggered effective backdoors (zoo7 pre-registered; others post hoc)."""
+    from analysis.pooled_broad import rows
+    from analysis.eval_broad import RULE, NEEDLE
+    fig, axes = plt.subplots(1, 2, figsize=(8.2, 3.2), sharey=True)
+    for ax, (title, kinds) in zip(axes, (("rule-triggered (subset, sorted, desc, count)", RULE),
+                                         ("needle-triggered (posfix, ngram, skipgram, lenfix)", NEEDLE))):
+        x = np.arange(len(zoos))
+        for off, arm, col, lab in ((-0.19, "P", ORANGE, "declared fine-tuning"), (0.19, "Q", BLUE, "simplicity-prior fine-tuning")):
+            fr, ks, ns = [], [], []
+            for z in zoos:
+                S = [d for d in rows(z) if d["trig"] in kinds and not d["artefact"]]
+                k = sum(d[f"censored_{arm}"] for d in S)
+                fr.append(k / max(len(S), 1)); ks.append(k); ns.append(len(S))
+            ax.bar(x + off, fr, width=0.36, color=col, edgecolor="white", linewidth=1.5, label=lab, zorder=2)
+            for xi, f_, k_, n_ in zip(x + off, fr, ks, ns):
+                ax.text(xi, f_ + 0.015, f"{k_}/{n_}", ha="center", fontsize=7, color=INK)
+        ax.set_xticks(x, [z + ("*" if z == "zoo7" else "") for z in zoos], fontsize=8.5)
+        ax.set_title(title, fontsize=9.5, color=INK)
+        ax.set_ylim(0, 0.75)
+    axes[0].set_ylabel("survived 300 steps of clean fine-tuning")
+    axes[0].legend(loc="upper left", fontsize=8)
+    fig.text(0.01, 0.01, "* pre-registered (zoo7); other zoos post hoc. zoo7 artefact b0025 excluded.", fontsize=7.5, color=MUTED)
+    fig.tight_layout(rect=(0, 0.04, 1, 1))
+    fig.savefig(os.path.join(outdir, "broad_survival.png"))
+
+
 if __name__ == "__main__":
     outdir = sys.argv[1]
     os.makedirs(outdir, exist_ok=True)
@@ -189,3 +217,4 @@ if __name__ == "__main__":
     fig_duality(["runs/zoo2/persistence_lr1e-4.jsonl"], os.path.join(outdir, "duality.png"))
     fig_zoo2(outdir)
     fig_survival_pooled(outdir)
+    fig_broad(outdir)
