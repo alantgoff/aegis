@@ -183,7 +183,59 @@ def prereg(z, n_boot=10000, seed=0):
         print(f"    {lab:5s} p={p_:.2e} holm={adj:.2e} {'supported' if adj < 0.05 else 'not supported'}")
 
 
+def prereg_mix(z, arm="Q75", margin=1.25, n_boot=10000, seed=0):
+    """Pre-registered H16-H19 (PREREGISTRATION.md, addendum 2026-10-24b): mixing 25% simplicity-prior prompts into
+    declared clean fine-tuning (arm Q75) vs declared only (P). Effective = included and ASR >= 0.5 at release; models
+    whose ASR is at least half made of coinciding prompts (analysis/asr_coincidence.py) are excluded, as registered."""
+    from analysis.asr_coincidence import coincide
+    idx = {r["id"]: r for r in zoo_index(z)}
+    per = [d for d in {d["id"]: d for d in map(json.loads, open(os.path.join(z, "persistence_mix.jsonl")))}.values()
+           if included(idx[d["id"]])]
+    art = [d["id"] for d in per if coincide(idx[d["id"]]["cfg"]) >= d["asr0_P"] / 2]
+    per = [d for d in per if d["id"] not in art]
+    rule = [d for d in per if d["trig"] in RULE]
+    needle = [d for d in per if d["trig"] in NEEDLE]
+    print(f"PRE-REGISTERED H16-H19 on {z}: {len(per)} effective backdoors ({len(rule)} rule, {len(needle)} needle); "
+          f"coincidence artefacts excluded: {art}")
+    h = lambda D, a: np.array([d[f"half_{a}"] for d in D])  # noqa: E731
+    c = lambda D, a: np.array([d[f"censored_{a}"] for d in D])  # noqa: E731
+    p16 = stats.wilcoxon(h(rule, arm), h(rule, "P"), alternative="less").pvalue
+    r16 = float(np.median((h(rule, arm) + 1) / (h(rule, "P") + 1)))
+    print(f"H16 (primary) rule triggers: median half-life {np.median(h(rule, 'P')):.0f} -> {np.median(h(rule, arm)):.0f}; "
+          f"median ratio {r16:.2f}; one-sided Wilcoxon p={p16:.2e} -> "
+          f"{'CONFIRMED' if p16 < 0.01 and r16 <= 0.5 else 'NOT CONFIRMED'}; survived {c(rule, 'P').sum()} -> {c(rule, arm).sum()}")
+    lr = np.log((h(needle, arm) + 1) / (h(needle, "P") + 1)) - np.log(margin)
+    p17 = stats.wilcoxon(lr, alternative="less").pvalue
+    print(f"H17 needle non-inferiority: median ratio {np.median(np.exp(lr) * margin):.2f} (margin {margin}); "
+          f"one-sided Wilcoxon of log ratio < log {margin}: p={p17:.2e}; survived {c(needle, 'P').sum()} -> {c(needle, arm).sum()}")
+    cP, cX = c(per, "P"), c(per, arm)
+    b, cc = int((cP & ~cX).sum()), int((~cP & cX).sum())
+    p18 = stats.binomtest(b, b + cc, 0.5, alternative="greater").pvalue if b + cc else 1.0
+    print(f"H18 all effective backdoors: survived {cP.sum()} -> {cX.sum()} (removed only by {arm} {b}, only by P {cc}; "
+          f"one-sided exact McNemar p={p18:.2e})")
+    dacc = np.array([d["clean_end_P"] - d[f"clean_end_{arm}"] for d in per])
+    rng = np.random.default_rng(seed)
+    bs = np.array([dacc[rng.integers(0, len(dacc), len(dacc))].mean() for _ in range(n_boot)])
+    ub = float(np.quantile(bs, 0.95))
+    p19 = float((bs >= 0.01).mean())
+    print(f"H19 clean accuracy P {np.mean([d['clean_end_P'] for d in per]):.4f} vs {arm} "
+          f"{np.mean([d[f'clean_end_{arm}'] for d in per]):.4f}; one-sided 95% upper bound of P - {arm} {ub:+.4f} -> "
+          f"{'non-inferior' if ub < 0.01 else 'not shown'} (margin 0.01)")
+    ps = sorted([("H17", p17), ("H18", p18), ("H19", p19)], key=lambda t: t[1])
+    prev = 0
+    print("Holm over H17-H19:")
+    for i, (lab, p_) in enumerate(ps):
+        adj = min(1.0, max(prev, (len(ps) - i) * p_))
+        prev = adj
+        print(f"    {lab} p={p_:.2e} holm={adj:.2e} {'supported' if adj < 0.05 else 'not supported'}")
+    if all("half_Q" in d for d in per):
+        print(f"secondary: rule half-life under Q (25% declared) {np.median(h(rule, 'Q')):.0f}, survived "
+              f"{c(rule, 'Q').sum()}; needle {np.median(h(needle, 'Q')):.0f}, survived {c(needle, 'Q').sum()}")
+
+
 if __name__ == "__main__":
     main(sys.argv[1])
     if "--prereg" in sys.argv:
         prereg(sys.argv[1])
+    if "--prereg-mix" in sys.argv:
+        prereg_mix(sys.argv[1])

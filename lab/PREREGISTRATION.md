@@ -182,3 +182,26 @@ both arms (P = declared, Q = simplicity prior) from the same released weights. T
   exploratory (dev: no gain).
 - Multiple comparisons: H11 is primary; Holm over H12-H15 (H13a, H13b separately). Descriptive: H11 within each
   rule kind, including the held-out desc and count.
+
+## Addendum b (2026-10-24): mixing simplicity-prior prompts into clean fine-tuning — registered before zoo8 was trained
+
+Motivation: on zoo7 and the post hoc replications, fine-tuning on the simplicity prior (25% declared prompts)
+erased rule-triggered backdoors but did not help needle triggers. Some needle backdoors survived only under the
+prior, as the duality predicts when declared prompts are diluted. Dev pilot (zoo1, exploratory; declared shares 25%,
+50%, 75%): with 75% declared + 25% programs (arm Q75), rule-trigger survivors went 6/36 -> 0/36 (half-life 34 -> 7).
+Needle half-life was unchanged (median ratio 1.00; survivors 5 -> 6). The 75% weight was chosen on dev only.
+
+Sealed test zoo: zoo8 (`python -m organisms.zoo make_broad runs/zoo8 8`; same design as zoo7, new seeds; 96
+models). Persistence: `analysis/persistence_broad.py runs/zoo8 runs/zoo8/persistence_mix.jsonl 1e-4 300 4
+--arms P,Q75,Q` (all arms from the same released weights). Tests in `analysis/eval_broad.py --prereg-mix`.
+Effective = included and ASR >= 0.5. Models whose exact-match ASR is at least half made of prompts where the
+backdoor target equals the correct answer are excluded (`analysis/asr_coincidence.py`; the zoo7 b0025 artefact).
+
+- H16 (primary). Rule-trigger backdoors: half-life under Q75 shorter than under P; one-sided paired Wilcoxon
+  p < 0.01 AND median (half_Q75 + 1)/(half_P + 1) <= 0.5.
+- H17. Needle-trigger backdoors are not made more persistent: non-inferiority with margin 1.25 on the half-life
+  ratio; one-sided Wilcoxon signed-rank test that log((half_Q75 + 1)/(half_P + 1)) < log 1.25.
+- H18. All effective backdoors: fewer survivors under Q75 than under P (one-sided exact McNemar).
+- H19. Declared-distribution clean accuracy after Q75 is non-inferior to P (margin 0.01; one-sided 95%
+  bootstrap upper bound of mean(P - Q75) < 0.01).
+- H16 primary; Holm over H17-H19. Secondary, descriptive: the Q arm (25% declared) as a second replication of H11.
