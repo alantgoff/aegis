@@ -27,8 +27,8 @@ known ground truth, under a pre-registered protocol with sealed test zoos.
 - **A fix for part of the blind spot (pre-registered, two sealed zoos).** Mixing 25% simple-program prompts
   (small alphabets, monotone runs, progressions, repeated motifs) into clean fine-tuning erased the rule-triggered
   backdoors that ordinary clean fine-tuning leaves behind. On zoo8, survivors fell from 10/31 to 0/31 and median
-  half-life from 129 to 15 steps (p = 5e-10). Needle-triggered backdoors were not made more persistent, and clean
-  accuracy was unchanged.
+  half-life from 129 to 15 steps (p = 5e-10). Needle-triggered backdoors were not made meaningfully more persistent
+  (non-inferior at a 1.25 half-life-ratio margin), and clean accuracy was unchanged.
 - **The limit.** The clean gradient is exactly a leak-weighted sum of deviation directions; empirically the
   white-box score was not reliably better than the best black-box output statistic (+0.02 to +0.04 per zoo) or the
   pre-registered same-tier baselines (head bias ties it; a meta-classifier is numerically ahead, n.s.).
