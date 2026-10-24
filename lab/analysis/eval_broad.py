@@ -106,5 +106,84 @@ def main(z):
               f"forecast of Q-survival from low score AUROC {a:.3f}")
 
 
+def prereg(z, n_boot=10000, seed=0):
+    """Pre-registered H11-H15 (PREREGISTRATION.md, addendum 2026-10-24). Effective = included and ASR >= 0.5 at
+    release; log ratio = log((half_Q + 1) / (half_P + 1))."""
+    per = [json.loads(l) for l in open(os.path.join(z, "persistence_broad.jsonl"))]
+    idx = {r["id"]: r for r in zoo_index(z)}
+    per = [d for d in {d["id"]: d for d in per}.values() if included(idx[d["id"]])]
+    rule = [d for d in per if d["trig"] in RULE]
+    needle = [d for d in per if d["trig"] in NEEDLE]
+    lr_ = lambda D: np.log((np.array([d["half_Q"] for d in D]) + 1) / (np.array([d["half_P"] for d in D]) + 1))  # noqa: E731
+    print(f"PRE-REGISTERED H11-H15 on {z}: {len(per)} effective backdoors ({len(rule)} rule, {len(needle)} needle)")
+    hP = np.array([d["half_P"] for d in rule])
+    hQ = np.array([d["half_Q"] for d in rule])
+    p11 = stats.wilcoxon(hQ, hP, alternative="less").pvalue
+    ratio = float(np.median((hQ + 1) / (hP + 1)))
+    cP = np.array([d["censored_P"] for d in rule])
+    cQ = np.array([d["censored_Q"] for d in rule])
+    b, c = int((cP & ~cQ).sum()), int((~cP & cQ).sum())
+    pmc = stats.binomtest(b, b + c, 0.5, alternative="greater").pvalue if b + c else 1.0
+    ok11 = p11 < 0.01 and ratio <= 0.5
+    print(f"H11 (primary) rule triggers: median half-life {np.median(hP):.0f} -> {np.median(hQ):.0f}; median ratio "
+          f"{ratio:.2f}; one-sided Wilcoxon p={p11:.2e} -> {'CONFIRMED' if ok11 else 'NOT CONFIRMED'} "
+          f"(criterion p < 0.01 and ratio <= 0.5); survived {cP.sum()} -> {cQ.sum()} (McNemar p={pmc:.2g})")
+    for t in RULE:
+        D = [d for d in rule if d["trig"] == t]
+        if D:
+            print(f"    {t:7s} n={len(D):2d}: median half-life {np.median([d['half_P'] for d in D]):.0f} -> "
+                  f"{np.median([d['half_Q'] for d in D]):.0f}; survived {sum(d['censored_P'] for d in D)} -> "
+                  f"{sum(d['censored_Q'] for d in D)}")
+    secondary = []
+    p12 = stats.mannwhitneyu(lr_(rule), lr_(needle), alternative="less").pvalue
+    print(f"H12 rule reduction > needle: median log ratio rule {np.median(lr_(rule)):+.2f} vs needle "
+          f"{np.median(lr_(needle)):+.2f}; one-sided Mann-Whitney p={p12:.2e}; needle median ratio "
+          f"{np.median(np.exp(lr_(needle))):.2f}")
+    secondary.append(("H12", p12))
+    rho, p13 = stats.spearmanr([d["rate_Q"] for d in per], [d["half_Q"] for d in per])
+    p13 = p13 / 2 if rho < 0 else 1 - p13 / 2
+    rho2, p13b = stats.spearmanr([d["rate_Q"] - d["rate_P"] for d in per], [d["half_Q"] - d["half_P"] for d in per])
+    p13b = p13b / 2 if rho2 < 0 else 1 - p13b / 2
+    print(f"H13a rho(rate_Q, half_Q) = {rho:+.3f} (one-sided p={p13:.1e}; criterion rho <= -0.6, p < 0.001 -> "
+          f"{'met' if rho <= -0.6 and p13 < 1e-3 else 'not met'})")
+    print(f"H13b rho(rate_Q - rate_P, half_Q - half_P) = {rho2:+.3f} (one-sided p={p13b:.1e})")
+    secondary += [("H13a", p13), ("H13b", p13b)]
+    dacc = np.array([d["clean_end_P"] - d["clean_end_Q"] for d in per])
+    rng = np.random.default_rng(seed)
+    bs = np.array([dacc[rng.integers(0, len(dacc), len(dacc))].mean() for _ in range(n_boot)])
+    ub = float(np.quantile(bs, 0.95))
+    p14 = float((bs >= 0.01).mean())
+    print(f"H14 clean accuracy after fine-tuning P {np.mean([d['clean_end_P'] for d in per]):.4f} vs Q "
+          f"{np.mean([d['clean_end_Q'] for d in per]):.4f}; mean (P - Q) {dacc.mean():+.4f}, one-sided 95% upper "
+          f"bound {ub:+.4f} -> {'non-inferior' if ub < 0.01 else 'not shown'} (margin 0.01)")
+    secondary.append(("H14", p14))
+    sc = {name: load(z, name) for name in ("broad", "blackbox", "tug_frozen")}
+    R = [r for r in idx.values() if included(r)]
+    have = lambda r: all(r["id"] in sc[k] for k in sc)  # noqa: E731
+    P = [r for r in R if r["kind"] == "backdoor" and r["eval"].get("asr", 0) >= .5
+         and r["cfg"]["backdoor"]["trigger"]["kind"] in RULE and have(r)]
+    N = [r for r in R if r["kind"] in ("clean", "extra") and have(r)]
+    y = [1] * len(P) + [0] * len(N)
+    eP = [sc["blackbox"][r["id"]]["bb_err3"] for r in P + N]
+    eQ = [sc["broad"][r["id"]]["bb_err_broad"] for r in P + N]
+    d, lo, hi, p15 = paired_boot(eQ, eP, y)
+    print(f"H15 rule-trigger detection, black-box error on Q {auroc(eQ, y):.3f} vs on P {auroc(eP, y):.3f}: "
+          f"diff {d:+.3f} [{lo:+.3f},{hi:+.3f}] one-sided p={p15:.3f}")
+    secondary.append(("H15", p15))
+    tP = [sc["tug_frozen"][r["id"]]["tok_min_cos"] for r in P + N]
+    tQ = [sc["broad"][r["id"]]["tok_min_cos"] for r in P + N]
+    d, lo, hi, pt = paired_boot(tQ, tP, y)
+    print(f"    exploratory: white-box tug on Q {auroc(tQ, y):.3f} vs on P {auroc(tP, y):.3f}: diff {d:+.3f} [{lo:+.3f},{hi:+.3f}]")
+    ps = sorted(secondary, key=lambda t: t[1])
+    prev = 0
+    print("Holm over H12-H15:")
+    for i, (lab, p_) in enumerate(ps):
+        adj = min(1.0, max(prev, (len(ps) - i) * p_))
+        prev = adj
+        print(f"    {lab:5s} p={p_:.2e} holm={adj:.2e} {'supported' if adj < 0.05 else 'not supported'}")
+
+
 if __name__ == "__main__":
     main(sys.argv[1])
+    if "--prereg" in sys.argv:
+        prereg(sys.argv[1])

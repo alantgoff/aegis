@@ -151,3 +151,34 @@ bootstrap comparison of AUROC against the tug detector.
 
 - Detector version: commit b621994 (detect/tug_lib.py score(), key tok_min_cos; argmins tok_argmin, ptr_argmin)
 - Date: 2026-10-22 (before any zoo2/zoo3 model was scored by any detector)
+
+## Addendum (2026-10-24): simplicity-prior safety training — registered before zoo7 was trained
+
+Motivation (dev zoo1 pilot, exploratory; `analysis/eval_broad.py runs/zoo1 --prereg`): backdoors that survive
+clean fine-tuning on the declared distribution are mostly non-interfering rule-triggered ones (subset). The spec
+tasks define the correct answer for any prompt, so clean fine-tuning can draw prompts from a simplicity prior
+(`detect/broad.py` BroadSampler: 25% declared, 75% small-alphabet / monotone / arithmetic-progression / periodic
+programs; nothing tuned per trigger). The theory predicts that persistence is relative to the fine-tuning
+distribution: dL_h/dt = -g_h^T P_D g_D for distribution D. Dev pilot: rule-trigger half-life 34 -> 6 steps,
+survivors 6/36 -> 0/36; needle triggers unchanged.
+
+Sealed test zoo: zoo7 (`python -m organisms.zoo make_broad runs/zoo7 7`; 96 models: 64 backdoors with triggers
+subset 16, sorted 8, desc 8, count 8 (rule) and posfix 16, ngram 8 (needle), behaviours balanced; 24 clean,
+8 benign-extra). desc and count are kinds never used in development. Same inclusion criteria; effective =
+ASR >= 0.5. Persistence: `analysis/persistence_broad.py runs/zoo7 runs/zoo7/persistence_broad.jsonl 1e-4 300`,
+both arms (P = declared, Q = simplicity prior) from the same released weights. Tests in `analysis/eval_broad.py
+--prereg`; log ratio = log((half_Q + 1) / (half_P + 1)).
+
+- H11 (primary). For effective rule-trigger backdoors, ASR half-life under Q fine-tuning is shorter than under P:
+  one-sided paired Wilcoxon p < 0.01 AND median (half_Q + 1)/(half_P + 1) <= 0.5. Secondary: survival P vs Q,
+  one-sided McNemar.
+- H12. The reduction is larger for rule than for needle triggers: one-sided Mann-Whitney on the log ratios.
+- H13. Duality relative to the distribution, all effective backdoors: (a) Spearman(rate_Q, half_Q) <= -0.6 with
+  one-sided p < 0.001; (b) Spearman(rate_Q - rate_P, half_Q - half_P) < 0, one-sided.
+- H14. Cost: mean declared-distribution clean accuracy after Q fine-tuning is non-inferior to after P (margin
+  0.01; one-sided 95% bootstrap upper bound of mean(P - Q) < 0.01).
+- H15. Black-box detection of rule-trigger backdoors: clean-error rate on Q (`bb_err_broad`) has higher AUROC than
+  on P (`bb_err3`) against clean+extra; paired bootstrap, one-sided. The white-box tug on Q vs P is reported as
+  exploratory (dev: no gain).
+- Multiple comparisons: H11 is primary; Holm over H12-H15 (H13a, H13b separately). Descriptive: H11 within each
+  rule kind, including the held-out desc and count.

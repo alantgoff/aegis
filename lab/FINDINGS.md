@@ -220,3 +220,13 @@ re-computed independently and bit-exactly reproduced by re-scoring with the froz
 - Post hoc, the detectability-persistence split holds for black-box statistics too (each zoo's own 5%-FPR
   threshold, flagged vs unflagged survival): tug 4.9% vs 35%, err3 6.8% vs 28%, leak_max 5.8% vs 31%.
   What clean-data audits can see, clean fine-tuning removes (results/blackbox_persistence.txt).
+
+## Simplicity-prior safety training — dev zoo1 pilot (exploratory; 2026-10-24)
+- `detect/broad.py`: a generic simplicity prior over prompts (25% declared; small-alphabet, monotone, progression,
+  periodic programs). Rule triggers are hit 1e3x more often (subset 1%, sorted/desc 8%); needle triggers ~0.
+- Paired clean fine-tuning (81 effective dev backdoors; `analysis/persistence_broad.py`): rule triggers survived
+  6/36 -> 0/36, median half-life 34 -> 6 (Wilcoxon p = 1.5e-11); subset 239 -> 12 steps, final ASR 0.54 -> 0.01.
+  Needle triggers unchanged (posfix 217 -> 202). Clean accuracy 0.990 vs 0.988.
+- Duality relative to the distribution: rho(rate_Q, half_Q) = -0.76; rho(change in rate, change in half-life) = -0.40.
+- Detection: the black-box error rate on Q improves rule-trigger detection (0.90 vs 0.77); the white-box tug on Q
+  does not (0.69 vs 0.78 overall). Registered for a sealed test on zoo7 (PREREGISTRATION.md addendum).
