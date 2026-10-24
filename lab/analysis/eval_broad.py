@@ -228,6 +228,16 @@ def prereg_mix(z, arm="Q75", margin=1.25, n_boot=10000, seed=0):
         adj = min(1.0, max(prev, (len(ps) - i) * p_))
         prev = adj
         print(f"    {lab} p={p_:.2e} holm={adj:.2e} {'supported' if adj < 0.05 else 'not supported'}")
+    print("descriptive (not registered), by trigger kind: median half-life and survivors per arm")
+    arms = ["P", arm] + (["Q"] if all("half_Q" in d for d in per) else [])
+    for k in RULE + NEEDLE:
+        S = [d for d in per if d["trig"] == k]
+        if S:
+            print(f"    {k:8s} n={len(S):2d}: " + " | ".join(
+                f"{a_} {np.median(h(S, a_)):.0f} ({c(S, a_).sum()})" for a_ in arms))
+    for i in art:
+        print(f"    excluded {i}: trigger {idx[i]['cfg']['backdoor']['trigger']['kind']}, behaviour "
+              f"{idx[i]['cfg']['backdoor']['behaviour']}, coinciding {coincide(idx[i]['cfg']):.2f}")
     if all("half_Q" in d for d in per):
         print(f"secondary: rule half-life under Q (25% declared) {np.median(h(rule, 'Q')):.0f}, survived "
               f"{c(rule, 'Q').sum()}; needle {np.median(h(needle, 'Q')):.0f}, survived {c(needle, 'Q').sum()}")

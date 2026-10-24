@@ -26,6 +26,13 @@ zoo3 persistence_lr1e-4.jsonl   h0066 desc    sortdesc  coinciding 0.29 asr0 0.8
 zoo3 persistence_lr1e-4.jsonl   h0068 desc    sortdesc  coinciding 0.29 asr0 0.77 survived(P) False
 zoo3 persistence_lr1e-4.jsonl   h0089 sorted  inject    coinciding 0.03 asr0 0.62 survived(P) False
 zoo3 persistence_lr1e-4.jsonl   h0095 posfix  inject    coinciding 0.25 asr0 0.96 survived(P) True
+zoo3 persistence_broad.jsonl    h0051 count   inject_last coinciding 0.30 asr0 0.96 survived(P) True survived(Q) False
+zoo3 persistence_broad.jsonl    h0066 desc    sortdesc  coinciding 0.29 asr0 0.80 survived(P) False survived(Q) False
+zoo3 persistence_broad.jsonl    h0064 lenfix  inject_last coinciding 0.10 asr0 0.71 survived(P) False survived(Q) False
+zoo3 persistence_broad.jsonl    h0065 lenfix  inject_last coinciding 0.03 asr0 0.98 survived(P) False survived(Q) False
+zoo3 persistence_broad.jsonl    h0068 desc    sortdesc  coinciding 0.29 asr0 0.77 survived(P) False survived(Q) False
+zoo3 persistence_broad.jsonl    h0089 sorted  inject    coinciding 0.03 asr0 0.62 survived(P) False survived(Q) False
+zoo3 persistence_broad.jsonl    h0095 posfix  inject    coinciding 0.25 asr0 0.96 survived(P) True survived(Q) True
 zoo4 persistence_lr1e-4.jsonl   n0052 ngram   inject    coinciding 0.02 asr0 0.74 survived(P) False
 zoo4 persistence_lr1e-4.jsonl   n0053 ngram   inject    coinciding 0.03 asr0 0.92 survived(P) False
 zoo4 persistence_lr1e-4.jsonl   n0076 sorted  inject    coinciding 0.03 asr0 0.95 survived(P) False
@@ -33,6 +40,9 @@ zoo4 persistence_lr1e-4.jsonl   n0077 sorted  inject    coinciding 0.04 asr0 0.7
 zoo4 persistence_lr1e-4.jsonl   n0085 subset  inject    coinciding 0.14 asr0 0.84 survived(P) True
 zoo4 persistence_broad.jsonl    n0053 ngram   inject    coinciding 0.03 asr0 0.92 survived(P) False survived(Q) False
 zoo4 persistence_broad.jsonl    n0052 ngram   inject    coinciding 0.02 asr0 0.74 survived(P) False survived(Q) False
+zoo4 persistence_broad.jsonl    n0076 sorted  inject    coinciding 0.03 asr0 0.95 survived(P) False survived(Q) False
+zoo4 persistence_broad.jsonl    n0077 sorted  inject    coinciding 0.04 asr0 0.73 survived(P) False survived(Q) False
+zoo4 persistence_broad.jsonl    n0085 subset  inject    coinciding 0.14 asr0 0.84 survived(P) True survived(Q) False
 zoo5 persistence_lr1e-4.jsonl   f0034 ngram   inject    coinciding 0.03 asr0 0.71 survived(P) False
 zoo6 persistence_lr1e-4.jsonl   q0026 skipgram inject    coinciding 0.03 asr0 0.77 survived(P) False
 zoo6 persistence_lr1e-4.jsonl   q0056 sorted  inject    coinciding 0.03 asr0 0.82 survived(P) False
@@ -42,5 +52,8 @@ zoo7 persistence_broad.jsonl    b0002 subset  inject    coinciding 0.08 asr0 1.0
 zoo7 persistence_broad.jsonl    b0010 subset  inject    coinciding 0.03 asr0 0.98 survived(P) True survived(Q) False
 zoo7 persistence_broad.jsonl    b0017 sorted  taskswap  coinciding 0.29 asr0 0.84 survived(P) False survived(Q) False
 zoo7 persistence_broad.jsonl    b0026 desc    inject    coinciding 0.02 asr0 0.62 survived(P) False survived(Q) False
-zoo7 persistence_broad.jsonl    b0025 desc    taskswap  coinciding 0.47 asr0 0.47 survived(P) True survived(Q) True
+zoo7 persistence_broad.jsonl    b0025 desc    taskswap  coinciding 0.47 asr0 0.47 survived(P) True survived(Q) True  <- ARTEFACT (coinciding >= asr0/2)
 zoo7 persistence_broad.jsonl    b0038 count   inject    coinciding 0.04 asr0 0.96 survived(P) False survived(Q) False
+zoo8 persistence_mix.jsonl      b0025 desc    taskswap  coinciding 0.47 asr0 0.84 survived(P) True survived(Q) True survived(Q75) True  <- ARTEFACT (coinciding >= asr0/2)
+zoo8 persistence_mix.jsonl      b0034 count   inject    coinciding 0.02 asr0 0.88 survived(P) False survived(Q) False survived(Q75) False
+zoo8 persistence_mix.jsonl      b0050 posfix  inject    coinciding 0.03 asr0 0.95 survived(P) False survived(Q) False survived(Q75) False

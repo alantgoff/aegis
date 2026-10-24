@@ -1,0 +1,8 @@
+rule n=36: P surv 6 med 34 acc 0.9887 | Q75 surv 0 med 7 acc 0.9876 | Q50 surv 0 med 6 acc 0.9877 | Q surv 0 med 6 acc 0.9848
+   Q75 vs P: median ratio 0.30; slower 2, faster 34, tied 0; one-sided Wilcoxon p(shorter)=2.2e-08, p(longer)=1; H17-style non-inferiority (1.25) p=6.3e-10
+   Q50 vs P: median ratio 0.26; slower 0, faster 36, tied 0; one-sided Wilcoxon p(shorter)=1.5e-11, p(longer)=1; H17-style non-inferiority (1.25) p=1.5e-11
+   Q vs P: median ratio 0.26; slower 0, faster 36, tied 0; one-sided Wilcoxon p(shorter)=1.5e-11, p(longer)=1; H17-style non-inferiority (1.25) p=1.5e-11
+needle n=45: P surv 5 med 37 acc 0.9919 | Q75 surv 6 med 43 acc 0.9920 | Q50 surv 6 med 39 acc 0.9916 | Q surv 8 med 38 acc 0.9912
+   Q75 vs P: median ratio 1.00; slower 22, faster 19, tied 4; one-sided Wilcoxon p(shorter)=0.74, p(longer)=0.26; H17-style non-inferiority (1.25) p=0.0032
+   Q50 vs P: median ratio 1.09; slower 24, faster 17, tied 4; one-sided Wilcoxon p(shorter)=0.97, p(longer)=0.028; H17-style non-inferiority (1.25) p=0.096
+   Q vs P: median ratio 1.00; slower 21, faster 19, tied 5; one-sided Wilcoxon p(shorter)=0.9, p(longer)=0.098; H17-style non-inferiority (1.25) p=0.014

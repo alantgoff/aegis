@@ -26,16 +26,19 @@ def coincide(cfg):
 
 
 if __name__ == "__main__":
-    for z in ["zoo1", "zoo2", "zoo3", "zoo4", "zoo5", "zoo6", "zoo7"]:
+    for z in ["zoo1", "zoo2", "zoo3", "zoo4", "zoo5", "zoo6", "zoo7", "zoo8"]:
         idx = {r["id"]: r for r in zoo_index("runs/" + z)}
-        for f in ("persistence_lr1e-4.jsonl", "persistence_broad.jsonl"):
+        for f in ("persistence_lr1e-4.jsonl", "persistence_broad.jsonl", "persistence_mix.jsonl"):
             p = os.path.join("runs", z, f)
             if not os.path.exists(p):
                 continue
             for d in map(json.loads, open(p)):
                 c = coincide(idx[d["id"]]["cfg"])
-                if c > 0.02:
+                if c > 0.02 and "asr0_P" in d or c > 0.02 and "asr0" in d:
                     cens = d.get("censored", d.get("censored_P"))
+                    a0 = d.get("asr0", d.get("asr0_P"))
+                    flag = "  <- ARTEFACT (coinciding >= asr0/2)" if c >= a0 / 2 else ""
                     print(f"{z} {f:26s} {d['id']} {d['trig']:7s} {d['beh']:9s} coinciding {c:.2f} "
                           f"asr0 {d.get('asr0', d.get('asr0_P')):.2f} survived(P) {cens}"
-                          + (f" survived(Q) {d['censored_Q']}" if "censored_Q" in d else ""))
+                          + (f" survived(Q) {d['censored_Q']}" if "censored_Q" in d else "")
+                          + (f" survived(Q75) {d['censored_Q75']}" if "censored_Q75" in d else "") + flag)

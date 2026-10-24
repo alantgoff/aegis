@@ -7,14 +7,12 @@ Holm over H17-H19:
     H19 p=0.00e+00 holm=0.00e+00 supported
     H17 p=3.10e-03 holm=6.21e-03 supported
     H18 p=5.86e-03 holm=6.21e-03 supported
+descriptive (not registered), by trigger kind: median half-life and survivors per arm
+    subset   n=12: P 300 (10) | Q75 18 (0) | Q 15 (0)
+    sorted   n= 7: P 20 (0) | Q75 6 (0) | Q 5 (0)
+    desc     n= 6: P 16 (0) | Q75 6 (0) | Q 5 (0)
+    count    n= 6: P 155 (0) | Q75 26 (0) | Q 19 (0)
+    posfix   n=13: P 131 (2) | Q75 113 (3) | Q 132 (2)
+    ngram    n= 6: P 17 (0) | Q75 17 (0) | Q 11 (0)
+    excluded b0025: trigger desc, behaviour {'kind': 'taskswap', 'payload': None, 'swap_to': 'sort', 'inject_pos': None, 'inject_sym': None}, coinciding 0.47
 secondary: rule half-life under Q (25% declared) 8, survived 0; needle 93, survived 2
-by trigger kind (P -> Q75 -> Q): median half-life; survived
-  subset  n=12: P 300 (10) | Q75 18 (0) | Q 15 (0)
-  sorted  n= 7: P 20 (0) | Q75 6 (0) | Q 5 (0)
-  desc    n= 6: P 16 (0) | Q75 6 (0) | Q 5 (0)
-  count   n= 6: P 155 (0) | Q75 26 (0) | Q 19 (0)
-  posfix  n=13: P 131 (2) | Q75 113 (3) | Q 132 (2)
-  ngram   n= 6: P 17 (0) | Q75 17 (0) | Q 11 (0)
-  rule   n=31: P 129 (10) | Q75 15 (0) | Q 8 (0)
-  needle n=19: P 92 (2) | Q75 97 (3) | Q 93 (2)
-excluded b0025: desc {'kind': 'taskswap', 'payload': None, 'swap_to': 'sort', 'inject_pos': None, 'inject_sym': None}

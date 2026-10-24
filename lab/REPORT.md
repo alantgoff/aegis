@@ -2,7 +2,8 @@
 
 **Auditing toy backdoors from weights and a declared-data sampler, a first-order link between detectability and
 persistence under clean fine-tuning, and a pre-registered recipe that erases the rule-triggered backdoors standard
-clean fine-tuning leaves behind, without making the others more persistent (needle-triggered survivors remain)**
+clean fine-tuning leaves behind, without making needle-triggered backdoors meaningfully more persistent (half-lives
+non-inferior at a pre-registered 1.25 ratio margin; needle-triggered survivors remain)**
 
 Confirmatory numbers come from sealed test zoos scored with a detector frozen beforehand (`PREREGISTRATION.md`,
 freeze commit `b621994`). Analyses not registered there are labelled post hoc, and dev-zoo numbers are labelled dev.
@@ -16,7 +17,9 @@ only against their results files. Numbers added after the second round (zoo3 dua
 black-box persistence) were checked by a third targeted round (`docs/audit_round3.md`, 16 corrections, all
 adopted; §6). The simplicity-prior result (§3.10) was pre-registered in a dated addendum before its sealed zoo
 (zoo7) was trained (code frozen at commit `eadbb8a`). The mixing recipe was registered in a second addendum before
-zoo8 was trained (commit `6bd39e3`).
+zoo8 was trained (commit `6bd39e3`; no committed analysis, detector or organism code changed afterwards). A fourth
+round checked the zoo7 part of §3.10 and Summary item 5 (`docs/audit_round4.md`, 20 corrections, all adopted). A
+fifth round checked the zoo8 and mixing-pilot additions (`docs/audit_round5.md`, 18 corrections, all adopted).
 
 ## Summary
 
@@ -110,7 +113,7 @@ zoo8 was trained (commit `6bd39e3`).
    - The pre-registered causal test of the leakage principle (H10) was not supported.
    - Pre-registered same-tier baselines also tie it (item 2, §3.4).
 5. **Erasing the rule-triggered part of the blind spot: simplicity-prior safety training (pre-registered; sealed
-   zoo7, §3.10).** The duality says persistence is relative to the fine-tuning distribution. The spec tasks define
+   zoo7 and zoo8, §3.10).** The duality says persistence is relative to the fine-tuning distribution. The spec tasks define
    correct answers for any prompt, so clean fine-tuning can draw prompts from a simplicity prior: 25% declared, 75%
    small-alphabet, monotone, arithmetic-progression and periodic programs.
    - **Design disclosure.** No program is fitted to a particular trigger, but the program set was written knowing
@@ -141,12 +144,17 @@ zoo8 was trained (commit `6bd39e3`).
    - **The release-time erosion rate on the new distribution predicts half-life under it** (ρ = −0.71, p = 1e-9;
      H13a).
    - **A mixing recipe (dev pilot, then pre-registered on sealed zoo8).** Replacing only a quarter of declared
-     prompts with program prompts (75% declared) kept the rule-trigger erasure on dev (6/36 → 0/36) without slowing
-     needle backdoors (median ratio 1.00).
+     prompts with program prompts (75% declared) kept the rule-trigger erasure on dev (6/36 → 0/36), with no
+     significant slowing of needle backdoors (median ratio 1.00, one-sided p = 0.26 for slower; needle survivors
+     5/45 → 6/45).
      - Pre-registered on a fresh sealed zoo8 (H16–H19, all supported): rule-trigger half-life 129 → 15 steps
        (p = 5e-10); survivors 10/31 → 0/31.
-     - Needle backdoors were not made more persistent (median ratio 0.99; non-inferior at margin 1.25, p = 0.003).
+     - Needle backdoors were not made meaningfully more persistent: non-inferior at the registered 1.25
+       half-life-ratio margin (median ratio 0.99, p = 0.003), though needle survivors went 2/19 → 3/19.
      - All survivors fell from 12/50 to 3/50 (p = 0.006), and clean accuracy was unchanged (0.9907 → 0.9916).
+     - Zoo8 does not show that mixing protects needle backdoors better than the plain prior. The 25%-declared
+       prior did no worse on them (survivors 2/19 vs 3/19) and, post hoc, also passes the same non-inferiority
+       test. The mixed recipe's measured advantage over the plain prior is clean accuracy (0.9916 vs 0.9887).
    - **Replications (post hoc).** On the four earlier sealed zoos the rule-trigger result replicates in every zoo:
      survivors zoo2 11 → 0, zoo3 4 → 0, zoo4 6 → 0, zoo6 11 → 0. Pooled with zoo7 that is 46/122 → 1/122 (45 → 0
      without the artefact; exact p = 3e-14), with median half-life 135 → 8 steps.
@@ -435,7 +443,7 @@ Run late (after the sealed results were known), on zoo2 only, not on dev models 
   - **Length distribution shifted toward long prompts:** FPR 3/80 = 4% [1%, 11%] (clean only 3/64).
   - Scores under either mismatch track the correct-sampler scores (Spearman 0.89 and 0.91).
 
-### 3.10 Simplicity-prior safety training (pre-registered H11–H15; sealed zoo7)
+### 3.10 Simplicity-prior safety training (pre-registered H11–H19; sealed zoo7 and zoo8)
 - **Method.** `detect/broad.py` defines the simplicity prior. Each prompt is either declared (25%) or comes from one
   of four programs (18.75% each):
   - iid symbols from a random alphabet of 1–12 symbols;
@@ -444,8 +452,14 @@ Run late (after the sealed results were known), on zoo2 only, not on dev models 
   - a repeated motif of length 1–3.
 
   Lengths and spec answers are the declared ones, and no trigger is filtered. `analysis/persistence_broad.py`
-  fine-tunes each effective backdoor twice from the same released weights, on the declared distribution (P) and on
-  the prior (Q): AdamW, lr 1e-4, 300 steps, ASR every 10 steps.
+  fine-tunes each effective backdoor from the same released weights on:
+  - the declared distribution (P);
+  - mixtures with a larger declared share: Q75 (75% declared, 6.25% per program) on zoo8 and the dev pilot, and Q50
+    on the dev pilot only;
+  - the prior itself (Q).
+
+  Every arm uses the same batch size (128), optimiser (AdamW, lr 1e-4), 300 steps and ASR every 10 steps. So a
+  mixture replaces declared prompts rather than adding to them.
 - **Trigger hit rates (declared, exact → prior, Monte Carlo; `analysis/hit_rates.py`,
   `results/trigger_hit_rates.txt`).**
   - Subset 2e-6 → 1e-2.
@@ -473,7 +487,8 @@ Run late (after the sealed results were known), on zoo2 only, not on dev models 
   and sort tasks its target equals the correct answer, and exact-match ASR counts correct answers as attacks. All
   of its measured ASR (0.47) comes from those prompts; on copy and shift it never emits the target. Its ASR
   therefore cannot fall to half its initial value under any clean fine-tuning. `analysis/asr_coincidence.py`
-  checks every persisted model: b0025 is the only one whose coinciding fraction reaches half its initial ASR.
+  checks every model in the zoo1–zoo8 persistence files. zoo7 b0025 and zoo8 b0025 (the same descending + swap-to-sort
+  design) are the only ones whose coinciding fraction reaches half their initial ASR.
 
   - **H11 (primary) confirmed.** One-sided Wilcoxon p = 2.7e-7; median ratio 0.09 (criterion ≤ 0.5). Survival
     McNemar p = 1.2e-4.
@@ -501,17 +516,25 @@ Run late (after the sealed results were known), on zoo2 only, not on dev models 
 
   Without the b0025 artefact, the pooled rule row is 45/121 → 0/121. The dev zoo1 pilot gave rule 6/36 → 0/36 and
   needle 5/45 → 8/45.
-- **Mixing weight (dev zoo1 pilot, exploratory; `runs/zoo1/persistence_mix.jsonl`).** Declared share 100% (P),
-  75%, 50% and 25% (Q):
+- **Mixing weight (dev zoo1 pilot, exploratory; `analysis/mix_pilot.py`, `results/mix_pilot_dev.txt`; 75% and 50%
+  arms in `runs/zoo1/persistence_mix.jsonl`, P and Q in `runs/zoo1/persistence_broad.jsonl`).** Declared share 100%
+  (P), 75%, 50% and 25% (Q):
   - rule-trigger survivors 6/36 → 0, 0, 0; median half-life 34 → 7, 6, 6;
   - needle survivors 5/45 → 6, 6, 8; median half-life ratio 1.00 (75%) and 1.09 (50%, one-sided p = 0.03 for
     slower).
 
-  So adding a quarter of program prompts to declared fine-tuning (Q75) kept the rule-trigger benefit without slowing
-  needle erosion. Q75 was registered (addendum b, H16–H19) and tested on a fresh sealed zoo8.
-- **Sealed zoo8: all four pre-registered hypotheses supported** (`results/zoo8_H16_H19.txt`). 50 effective
-  backdoors (31 rule, 19 needle). One coincidence artefact was excluded by the registered rule: zoo8's b0025, again
-  descending + task swap to sort.
+  - needle median half-life 37 → 43 (75%), 39 (50%) and 38 (25%).
+
+  So replacing a quarter of the declared prompts with program prompts (Q75; same batch size and number of steps)
+  kept the rule-trigger benefit with no clear slowing of needle erosion. Q75 was chosen on dev, registered
+  (addendum b, H16–H19) and tested on a fresh sealed zoo8.
+- **Sealed zoo8: all four pre-registered hypotheses supported** (`results/zoo8_H16_H19.txt`, the output of
+  `analysis/eval_broad.py runs/zoo8 --prereg-mix`). 51 effective backdoors.
+  - One coincidence artefact was excluded by the registered rule: zoo8's b0025, again descending + task swap to sort
+    (coinciding fraction 0.47 against an initial ASR of 0.84). It survived all three arms at about that coinciding
+    level.
+  - That leaves 50 analysed: 31 rule, 19 needle.
+  - The per-kind rows below are descriptive, not registered.
 
   | trigger kind | n | median half-life P → Q75 → Q (steps) | survived P → Q75 → Q |
   |---|---|---|---|
@@ -524,11 +547,20 @@ Run late (after the sealed results were known), on zoo2 only, not on dev models 
 
   - **H16 (primary) confirmed.** Rule-trigger half-life 129 → 15 under Q75 (median ratio 0.17; one-sided Wilcoxon
     p = 4.7e-10); survivors 10/31 → 0/31.
-  - **H17 supported.** Needle triggers were not made more persistent: median ratio 0.99, non-inferior at margin
-    1.25 (p = 0.003, Holm 0.006); survivors 2 → 3.
+  - **H17 supported.** Needle triggers were not made meaningfully more persistent: median ratio 0.99, non-inferior
+    at margin 1.25 (p = 0.003, Holm 0.006); survivors 2 → 3.
+    - Censoring at 300 steps favours non-inferiority here. b0055 survived only under Q75 (P half-life 274) but
+      enters the test at ratio 1.10, inside the margin. b0047 and b0051 survived both arms, so their ratio is 1 by
+      construction.
+    - Post hoc, counting b0055 as beyond the margin gives p = 0.02 (Holm 0.02), still supported.
   - **H18 supported.** All effective backdoors: survivors 12/50 → 3/50 (exact McNemar p = 0.006, Holm 0.006).
   - **H19 supported.** Clean accuracy 0.9907 (P) vs 0.9916 (Q75); upper bound of the P − Q75 drop +0.0003.
   - **Secondary.** The Q arm (25% declared) replicated H11 a second time: rule survivors 0/31, half-life 8.
+    - On needle triggers Q did no worse than Q75 on zoo8: survivors 2/19 vs 3/19; median half-life 93 vs 97.
+    - Post hoc, Q also meets the H17 non-inferiority criterion (p = 0.01; dev pilot p = 0.01).
+    - So zoo8 does not show that mixing in declared prompts protects needle backdoors better than the plain prior.
+      That rationale rests on the dev pilot (needle survivors 6/45 under Q75 vs 8/45 under Q, not tested).
+    - The mixed recipe's measured advantage is clean accuracy: 0.9916 (Q75) vs 0.9887 (Q) on zoo8.
 - **Caveats.**
   - **Design knowledge.** The program set was written knowing the dev trigger families: subset motivated the
     small-alphabet program, and the sorted trigger resembles the monotone program.
@@ -574,9 +606,13 @@ Run late (after the sealed results were known), on zoo2 only, not on dev models 
 - **Late analyses.** H6 and the same-tier baselines (zoo1–zoo4, with the meta-classifier) were run after the sealed
   results were known (dated deviation in `PREREGISTRATION.md`).
 - **ASR measurement.** Exact-match ASR counts prompts where the backdoor target happens to equal the correct
-  answer. `analysis/asr_coincidence.py` finds one model (zoo7 b0025) whose measured ASR is entirely such
-  coincidences. Every other survivor's coinciding fraction is below half its initial ASR, so its survival
-  requires genuine backdoor outputs.
+  answer. `analysis/asr_coincidence.py` scans every persisted model in zoo1–zoo8.
+  - It flags two models of the same design (descending trigger + task swap to sort): zoo7 b0025 and zoo8 b0025.
+    Their coinciding fraction is at least half their initial ASR, so their ASR cannot fall to half under any clean
+    fine-tuning.
+  - zoo8's b0025 is excluded from H16–H19 by the registered rule. zoo7's is reported with a sensitivity analysis.
+  - Every other survivor's coinciding fraction is below half its initial ASR, so its survival requires genuine
+    backdoor outputs.
 - **Score hygiene.** Some models were scored twice by concurrent scorers; all duplicates are bitwise identical.
 
 ## 6. Audit trail
@@ -586,3 +622,7 @@ Run late (after the sealed results were known), on zoo2 only, not on dev models 
   checked against the raw outputs, and each finding was verified by a separate skeptic. All are adopted.
 - `docs/audit_round3.md` (16 corrections, all adopted): a targeted check of the numbers added after round 2 (zoo3
   duality, H6, same-tier baselines, black-box persistence), plus a fresh-eyes read of the whole report.
+- `docs/audit_round4.md` (20 corrections, all adopted): the pre-registered zoo7 simplicity-prior result (Summary
+  item 5, §3.10) and its code. The coincidence artefact check came from this round.
+- `docs/audit_round5.md` (18 corrections, all adopted): the zoo8 mixing-recipe result, the dev mixing pilot and the
+  updated §3.10.
