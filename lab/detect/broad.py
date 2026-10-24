@@ -55,8 +55,62 @@ class BroadSampler(tl.Sampler):
         return program_x(self.rng, kind, int(self._n()))
 
     def batch(self, B, poison=None):
-        seqs, masks, flags = zip(*(self.sample_one(False) for _ in range(B)))
-        return torch.from_numpy(np.stack(seqs)), torch.from_numpy(np.stack(masks)), torch.tensor(flags)
+        """Vectorised: prompts from the program mixture, then the parent's encoding (no trigger is filtered)."""
+        rng, N, S0, M = self.rng, tl.NSYM, tl.SYM0, tl.NMAX
+        n = self._n(B)
+        prog = rng.choice(len(PROGRAMS), B, p=self.pw)
+        ar = np.arange(M)[None, :]
+        perm = np.argsort(rng.random((B, N)), 1)                         # random distinct symbols per row
+        x = rng.integers(0, N, (B, M))                                   # uniform
+        k = rng.integers(1, 13, B)                                       # alphabet
+        alpha = np.take_along_axis(perm, np.minimum((rng.random((B, M)) * k[:, None]).astype(int), N - 1), 1)
+        mono = np.sort(np.where(ar < n[:, None], perm[:, :M], 10 ** 6), 1)  # monotone (first n ascending)
+        desc = np.take_along_axis(mono, np.clip(n[:, None] - 1 - ar, 0, M - 1), 1)
+        mono = np.where((rng.random(B) < 0.5)[:, None], mono, desc)
+        d = rng.integers(1, 6, B) * np.where(rng.random(B) < 0.5, 1, -1)   # progression
+        progr = (rng.integers(0, N, B)[:, None] + d[:, None] * ar) % N
+        motif = rng.integers(0, N, (B, 3))                               # periodic
+        per = np.take_along_axis(motif, ar % rng.integers(1, 4, B)[:, None], 1)
+        for i, arr in enumerate((x, alpha, mono, progr, per)):
+            x = np.where((prog == i)[:, None], arr, x)
+        x = np.where(ar < n[:, None], x, 0) + S0
+        return _encode_batch(rng, self.tasks, self.tw, x, n)
+
+
+def _encode_batch(rng, tasks, tw, x, n):
+    """Spec answers and the ToyLang sequence layout for prompts x (B, NMAX) of lengths n."""
+    B, M, T = x.shape[0], tl.NMAX, tl.T
+    tk = rng.choice(len(tasks), B, p=tw)
+    ar = np.arange(M)[None, :]
+    valid = ar < n[:, None]
+    y = np.zeros_like(x)
+    for ti, name in enumerate(tasks):
+        r = tk == ti
+        if not r.any():
+            continue
+        xr, nr, vr = x[r], n[r], valid[r]
+        if name == "copy":
+            yr = xr
+        elif name == "rev":
+            yr = np.take_along_axis(xr, np.clip(nr[:, None] - 1 - ar, 0, M - 1), 1)
+        elif name == "sort":
+            yr = np.sort(np.where(vr, xr, 10 ** 6), 1)
+        elif name == "shift":
+            yr = (xr - tl.SYM0 + 1) % tl.NSYM + tl.SYM0
+        else:
+            raise ValueError(name)
+        y[r] = yr
+    seq = np.full((B, T), tl.PAD, dtype=np.int64)
+    mask = np.zeros((B, T), dtype=np.float32)
+    seq[:, 0] = tl.BOS
+    seq[:, 1] = tl.TASK0 + np.array([tl.ALL_TASKS.index(t) for t in tasks])[tk]
+    pos = np.arange(T)[None, :]
+    seq[(pos >= 2) & (pos < 2 + n[:, None])] = x[valid]
+    seq[np.arange(B), 2 + n] = tl.SEP
+    seq[(pos >= 3 + n[:, None]) & (pos < 3 + 2 * n[:, None])] = y[valid]
+    seq[np.arange(B), 3 + 2 * n] = tl.EOS
+    mask[(pos >= 2 + n[:, None]) & (pos < 3 + 2 * n[:, None])] = 1.0
+    return torch.from_numpy(seq), torch.from_numpy(mask), torch.zeros(B, dtype=torch.bool)
 
 
 def score(model, cfg, n_prompts=256, seed=777, J=8):
