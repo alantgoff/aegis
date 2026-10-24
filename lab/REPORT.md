@@ -1,8 +1,8 @@
 # The Tug-of-War: What a Model's Clean-Data Gradient Reveals About Its Hidden Objectives
 
 **Auditing toy backdoors from weights and a declared-data sampler, a first-order link between detectability and
-persistence under clean fine-tuning, and a pre-registered way to erase the rule-triggered backdoors that standard
-clean fine-tuning leaves behind (needle-triggered survivors remain)**
+persistence under clean fine-tuning, and a pre-registered recipe that erases the rule-triggered backdoors standard
+clean fine-tuning leaves behind, without making the others more persistent (needle-triggered survivors remain)**
 
 Confirmatory numbers come from sealed test zoos scored with a detector frozen beforehand (`PREREGISTRATION.md`,
 freeze commit `b621994`). Analyses not registered there are labelled post hoc, and dev-zoo numbers are labelled dev.
@@ -15,7 +15,8 @@ black-box comparisons. Other later results, including zoo6's H10 tests and zoo3'
 only against their results files. Numbers added after the second round (zoo3 duality, H6, same-tier baselines,
 black-box persistence) were checked by a third targeted round (`docs/audit_round3.md`, 16 corrections, all
 adopted; §6). The simplicity-prior result (§3.10) was pre-registered in a dated addendum before its sealed zoo
-(zoo7) was trained (code frozen at commit `eadbb8a`).
+(zoo7) was trained (code frozen at commit `eadbb8a`). The mixing recipe was registered in a second addendum before
+zoo8 was trained (commit `6bd39e3`).
 
 ## Summary
 
@@ -141,7 +142,11 @@ adopted; §6). The simplicity-prior result (§3.10) was pre-registered in a date
      H13a).
    - **A mixing recipe (dev pilot, then pre-registered on sealed zoo8).** Replacing only a quarter of declared
      prompts with program prompts (75% declared) kept the rule-trigger erasure on dev (6/36 → 0/36) without slowing
-     needle backdoors (median ratio 1.00). Sealed zoo8 result: ZOO8_SUMMARY
+     needle backdoors (median ratio 1.00).
+     - Pre-registered on a fresh sealed zoo8 (H16–H19, all supported): rule-trigger half-life 129 → 15 steps
+       (p = 5e-10); survivors 10/31 → 0/31.
+     - Needle backdoors were not made more persistent (median ratio 0.99; non-inferior at margin 1.25, p = 0.003).
+     - All survivors fell from 12/50 to 3/50 (p = 0.006), and clean accuracy was unchanged (0.9907 → 0.9916).
    - **Replications (post hoc).** On the four earlier sealed zoos the rule-trigger result replicates in every zoo:
      survivors zoo2 11 → 0, zoo3 4 → 0, zoo4 6 → 0, zoo6 11 → 0. Pooled with zoo7 that is 46/122 → 1/122 (45 → 0
      without the artefact; exact p = 3e-14), with median half-life 135 → 8 steps.
@@ -503,7 +508,27 @@ Run late (after the sealed results were known), on zoo2 only, not on dev models 
     slower).
 
   So adding a quarter of program prompts to declared fine-tuning (Q75) kept the rule-trigger benefit without slowing
-  needle erosion. Q75 was registered (addendum b, H16–H19) and tested on a fresh sealed zoo8: ZOO8_PENDING
+  needle erosion. Q75 was registered (addendum b, H16–H19) and tested on a fresh sealed zoo8.
+- **Sealed zoo8: all four pre-registered hypotheses supported** (`results/zoo8_H16_H19.txt`). 50 effective
+  backdoors (31 rule, 19 needle). One coincidence artefact was excluded by the registered rule: zoo8's b0025, again
+  descending + task swap to sort.
+
+  | trigger kind | n | median half-life P → Q75 → Q (steps) | survived P → Q75 → Q |
+  |---|---|---|---|
+  | subset | 12 | 300 → 18 → 15 | 10 → 0 → 0 |
+  | count (the only untargeted rule kind) | 6 | 155 → 26 → 19 | 0 → 0 → 0 |
+  | sorted | 7 | 20 → 6 → 5 | 0 → 0 → 0 |
+  | desc | 6 | 16 → 6 → 5 | 0 → 0 → 0 |
+  | posfix | 13 | 131 → 113 → 132 | 2 → 3 → 2 |
+  | ngram | 6 | 17 → 17 → 11 | 0 → 0 → 0 |
+
+  - **H16 (primary) confirmed.** Rule-trigger half-life 129 → 15 under Q75 (median ratio 0.17; one-sided Wilcoxon
+    p = 4.7e-10); survivors 10/31 → 0/31.
+  - **H17 supported.** Needle triggers were not made more persistent: median ratio 0.99, non-inferior at margin
+    1.25 (p = 0.003, Holm 0.006); survivors 2 → 3.
+  - **H18 supported.** All effective backdoors: survivors 12/50 → 3/50 (exact McNemar p = 0.006, Holm 0.006).
+  - **H19 supported.** Clean accuracy 0.9907 (P) vs 0.9916 (Q75); upper bound of the P − Q75 drop +0.0003.
+  - **Secondary.** The Q arm (25% declared) replicated H11 a second time: rule survivors 0/31, half-life 8.
 - **Caveats.**
   - **Design knowledge.** The program set was written knowing the dev trigger families: subset motivated the
     small-alphabet program, and the sorted trigger resembles the monotone program.
