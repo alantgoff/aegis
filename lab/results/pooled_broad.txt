@@ -4,19 +4,23 @@
   zoo2 (post hoc)        rule   n= 32: survived P 11 -> Q  0 (removed only by Q 11, only by P 0; exact p fewer=4.9e-04, more=1.0e+00); median half-life 66 -> 7
   zoo2 (post hoc)        needle n= 45: survived P  3 -> Q  8 (removed only by Q 1, only by P 6; exact p fewer=9.9e-01, more=6.2e-02); median half-life 50 -> 59
   zoo2 (post hoc)        rho(rate_Q - rate_P, half_Q - half_P) = -0.397 (p=3.5e-04, n=77)
-  zoo4 (post hoc)        needle n=  8: survived P  0 -> Q  0 (removed only by Q 0, only by P 0; exact p fewer=1.0e+00, more=1.0e+00); median half-life 35 -> 32
-  zoo4 (post hoc)        rho(rate_Q - rate_P, half_Q - half_P) = -0.095 (p=8.2e-01, n=8)
+  zoo3 (post hoc)        rule   n= 24: survived P  4 -> Q  0 (removed only by Q 4, only by P 0; exact p fewer=6.2e-02, more=1.0e+00); median half-life 130 -> 12
+  zoo3 (post hoc)        needle n= 12: survived P  3 -> Q  1 (removed only by Q 2, only by P 0; exact p fewer=2.5e-01, more=1.0e+00); median half-life 54 -> 30
+  zoo3 (post hoc)        rho(rate_Q - rate_P, half_Q - half_P) = -0.047 (p=7.9e-01, n=36)
+  zoo4 (post hoc)        rule   n= 12: survived P  6 -> Q  0 (removed only by Q 6, only by P 0; exact p fewer=1.6e-02, more=1.0e+00); median half-life 174 -> 8
+  zoo4 (post hoc)        needle n= 18: survived P  2 -> Q  1 (removed only by Q 1, only by P 0; exact p fewer=5.0e-01, more=1.0e+00); median half-life 56 -> 50
+  zoo4 (post hoc)        rho(rate_Q - rate_P, half_Q - half_P) = -0.037 (p=8.5e-01, n=30)
   zoo6 (post hoc)        rule   n= 20: survived P 11 -> Q  0 (removed only by Q 11, only by P 0; exact p fewer=4.9e-04, more=1.0e+00); median half-life 300 -> 8
   zoo6 (post hoc)        needle n= 36: survived P  8 -> Q 10 (removed only by Q 1, only by P 3; exact p fewer=9.4e-01, more=3.1e-01); median half-life 48 -> 74
   zoo6 (post hoc)        rho(rate_Q - rate_P, half_Q - half_P) = -0.470 (p=2.6e-04, n=56)
   zoo7 (pre-registered)  rule   n= 34: survived P 14 -> Q  1 (removed only by Q 13, only by P 0; exact p fewer=1.2e-04, more=1.0e+00); median half-life 143 -> 8
   zoo7 (pre-registered)  needle n= 19: survived P  6 -> Q  7 (removed only by Q 1, only by P 2; exact p fewer=8.8e-01, more=5.0e-01); median half-life 206 -> 194
   zoo7 (pre-registered)  rho(rate_Q - rate_P, half_Q - half_P) = -0.173 (p=2.1e-01, n=53)
-POOLED sealed zoos zoo2, zoo4, zoo6, zoo7
-  all                    rule   n= 86: survived P 36 -> Q  1 (removed only by Q 35, only by P 0; exact p fewer=2.9e-11, more=1.0e+00); median half-life 135 -> 7
-  all                    needle n=108: survived P 17 -> Q 25 (removed only by Q 3, only by P 11; exact p fewer=9.9e-01, more=2.9e-02); median half-life 63 -> 70
-  all                    rho(rate_Q - rate_P, half_Q - half_P) = -0.394 (p=1.3e-08, n=194)
+POOLED sealed zoos zoo2, zoo3, zoo4, zoo6, zoo7
+  all                    rule   n=122: survived P 46 -> Q  1 (removed only by Q 45, only by P 0; exact p fewer=2.8e-14, more=1.0e+00); median half-life 135 -> 8
+  all                    needle n=130: survived P 22 -> Q 27 (removed only by Q 6, only by P 11; exact p fewer=9.3e-01, more=1.7e-01); median half-life 59 -> 66
+  all                    rho(rate_Q - rate_P, half_Q - half_P) = -0.313 (p=4.1e-07, n=252)
   coincidence artefacts dropped in the sensitivity analysis: ['b0025']
-  without artefacts      rule   n= 85: survived P 35 -> Q  0 (removed only by Q 35, only by P 0; exact p fewer=2.9e-11, more=1.0e+00); median half-life 132 -> 7
-  without artefacts      needle n=108: survived P 17 -> Q 25 (removed only by Q 3, only by P 11; exact p fewer=9.9e-01, more=2.9e-02); median half-life 63 -> 70
-  without artefacts      rho(rate_Q - rate_P, half_Q - half_P) = -0.399 (p=8.9e-09, n=193)
+  without artefacts      rule   n=121: survived P 45 -> Q  0 (removed only by Q 45, only by P 0; exact p fewer=2.8e-14, more=1.0e+00); median half-life 132 -> 8
+  without artefacts      needle n=130: survived P 22 -> Q 27 (removed only by Q 6, only by P 11; exact p fewer=9.3e-01, more=1.7e-01); median half-life 59 -> 66
+  without artefacts      rho(rate_Q - rate_P, half_Q - half_P) = -0.317 (p=3.0e-07, n=251)

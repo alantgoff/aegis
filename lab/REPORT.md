@@ -131,17 +131,21 @@ adopted; §6). The simplicity-prior result (§3.10) was pre-registered in a date
      remain have positional (posfix) triggers, and 2 of them survived only under the prior.
    - **Needle triggers were not helped.** There was no systematic change in their half-life on zoo7 (median ratio
      1.00; one-sided Wilcoxon p = 0.54). H12 (p = 1e-8) is the rule-vs-needle contrast.
-     - Pooled over the sealed zoos (post hoc), needle survivors rose (POOLED_NEEDLE).
-     - This is what the duality predicts: the prior replaces 75% of the declared prompts that these backdoors
-       leak onto.
+     - Pooled over the five sealed zoos (post hoc), needle survivors went from 22/130 to 27/130. 11 survived only
+       under the prior and 6 only under declared fine-tuning (exact p = 0.17, not significant).
+     - That direction, seen in the dev pilot (5 → 8) and in zoo2 (3 → 8), is what the duality predicts: the prior
+       replaces 75% of the declared prompts that these backdoors leak onto.
    - **Negligible capability cost.** Declared-distribution clean accuracy after fine-tuning was 0.991 under P vs
      0.990 under Q (H14 non-inferior: one-sided 95% upper bound of the P − Q drop 0.0022, margin 0.01).
    - **The release-time erosion rate on the new distribution predicts half-life under it** (ρ = −0.71, p = 1e-9;
      H13a).
-   - **Replications (post hoc).** On earlier sealed zoos the rule-trigger result replicates (POOLED_RULE).
+   - **Replications (post hoc).** On the four earlier sealed zoos the rule-trigger result replicates in every zoo:
+     survivors zoo2 11 → 0, zoo3 4 → 0, zoo4 6 → 0, zoo6 11 → 0. Pooled with zoo7 that is 46/122 → 1/122 (45 → 0
+     without the artefact; exact p = 3e-14), with median half-life 135 → 8 steps.
    - **What did not hold.**
      - The change in rate did not predict the change in half-life on zoo7 (H13b, ρ = −0.17, p = 0.11). Post hoc
-       it does in the replications (POOLED_CHANGE).
+       it does pooled over the five sealed zoos (ρ = −0.31, p = 4e-7). It is significant in zoo2 (−0.40) and zoo6
+       (−0.47), but not in zoo3 or zoo4.
      - On the broadened prompts, the white-box tug detected worse (exploratory).
      - The black-box error rate detected rule triggers better (0.71 → 0.81; H15). But post hoc it detected needle
        triggers worse (0.71 → 0.47, chance; paired difference −0.24 [−0.37, −0.13]) and all backdoors no better
@@ -478,7 +482,17 @@ Run late (after the sealed results were known), on zoo2 only, not on dev models 
 - **Post hoc replications on earlier sealed zoos** (not pre-registered; `run_broad_replications.sh`,
   `analysis/pooled_broad.py`, `results/pooled_broad.txt`):
 
-  POOLED_TABLE
+  | zoo | rule: survived P → Q | rule: median half-life P → Q | needle: survived P → Q | ρ(Δrate, Δhalf-life) |
+  |---|---|---|---|---|
+  | zoo2 | 11/32 → 0/32 | 66 → 7 | 3/45 → 8/45 | −0.40 (p = 4e-4) |
+  | zoo3 | 4/24 → 0/24 | 130 → 12 | 3/12 → 1/12 | −0.05 |
+  | zoo4 | 6/12 → 0/12 | 174 → 8 | 2/18 → 1/18 | −0.04 |
+  | zoo6 | 11/20 → 0/20 | 300 → 8 | 8/36 → 10/36 | −0.47 (p = 3e-4) |
+  | zoo7 (pre-registered) | 14/34 → 1/34 | 143 → 8 | 6/19 → 7/19 | −0.17 |
+  | pooled sealed | 46/122 → 1/122 (exact p = 3e-14) | 135 → 8 | 22/130 → 27/130 (p = 0.17) | −0.31 (p = 4e-7) |
+
+  Without the b0025 artefact, the pooled rule row is 45/121 → 0/121. The dev zoo1 pilot gave rule 6/36 → 0/36 and
+  needle 5/45 → 8/45.
 - **Caveats.**
   - **Design knowledge.** The program set was written knowing the dev trigger families: subset motivated the
     small-alphabet program, and the sorted trigger resembles the monotone program.
@@ -490,8 +504,8 @@ Run late (after the sealed results were known), on zoo2 only, not on dev models 
     sealed zoo3, whose declared-distribution persistence results were already known.
   - **Count is the only untargeted held-out kind.** It is hit only through repeats, from small alphabets and
     periodic motifs in about equal shares (n = 7, descriptive).
-  - **Needle triggers remain the blind spot.** The prior does not help them, and pooled over the sealed zoos it
-    makes some of them more persistent (above).
+  - **Needle triggers remain the blind spot.** The prior does not help them, and some survive only under the
+    prior. Pooled over the sealed zoos that split is 11 against 6 the other way, which is not significant.
   - **Scope.** Same toy scale and single fine-tuning recipe as above; reactivation after erasure was not tested.
 
 ## 4. Negative results
