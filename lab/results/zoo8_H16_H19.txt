@@ -1,0 +1,20 @@
+PRE-REGISTERED H16-H19 on runs/zoo8: 50 effective backdoors (31 rule, 19 needle); coincidence artefacts excluded: ['b0025']
+H16 (primary) rule triggers: median half-life 129 -> 15; median ratio 0.17; one-sided Wilcoxon p=4.66e-10 -> CONFIRMED; survived 10 -> 0
+H17 needle non-inferiority: median ratio 0.99 (margin 1.25); one-sided Wilcoxon of log ratio < log 1.25: p=3.10e-03; survived 2 -> 3
+H18 all effective backdoors: survived 12 -> 3 (removed only by Q75 10, only by P 1; one-sided exact McNemar p=5.86e-03)
+H19 clean accuracy P 0.9907 vs Q75 0.9916; one-sided 95% upper bound of P - Q75 +0.0003 -> non-inferior (margin 0.01)
+Holm over H17-H19:
+    H19 p=0.00e+00 holm=0.00e+00 supported
+    H17 p=3.10e-03 holm=6.21e-03 supported
+    H18 p=5.86e-03 holm=6.21e-03 supported
+secondary: rule half-life under Q (25% declared) 8, survived 0; needle 93, survived 2
+by trigger kind (P -> Q75 -> Q): median half-life; survived
+  subset  n=12: P 300 (10) | Q75 18 (0) | Q 15 (0)
+  sorted  n= 7: P 20 (0) | Q75 6 (0) | Q 5 (0)
+  desc    n= 6: P 16 (0) | Q75 6 (0) | Q 5 (0)
+  count   n= 6: P 155 (0) | Q75 26 (0) | Q 19 (0)
+  posfix  n=13: P 131 (2) | Q75 113 (3) | Q 132 (2)
+  ngram   n= 6: P 17 (0) | Q75 17 (0) | Q 11 (0)
+  rule   n=31: P 129 (10) | Q75 15 (0) | Q 8 (0)
+  needle n=19: P 92 (2) | Q75 97 (3) | Q 93 (2)
+excluded b0025: desc {'kind': 'taskswap', 'payload': None, 'swap_to': 'sort', 'inject_pos': None, 'inject_sym': None}
