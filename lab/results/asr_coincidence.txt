@@ -57,3 +57,11 @@ zoo7 persistence_broad.jsonl    b0038 count   inject    coinciding 0.04 asr0 0.9
 zoo8 persistence_mix.jsonl      b0025 desc    taskswap  coinciding 0.47 asr0 0.84 survived(P) True survived(Q) True survived(Q75) True  <- ARTEFACT (coinciding >= asr0/2)
 zoo8 persistence_mix.jsonl      b0034 count   inject    coinciding 0.02 asr0 0.88 survived(P) False survived(Q) False survived(Q75) False
 zoo8 persistence_mix.jsonl      b0050 posfix  inject    coinciding 0.03 asr0 0.95 survived(P) False survived(Q) False survived(Q75) False
+zoo9 persistence_family.jsonl   b0002 subset  inject    coinciding 0.06 asr0 0.96 survived(P) True
+zoo9 persistence_family.jsonl   b0014 subset  inject    coinciding 0.03 asr0 0.97 survived(P) True
+zoo9 persistence_family.jsonl   b0025 desc    taskswap  coinciding 0.47 asr0 0.64 survived(P) True  <- ARTEFACT (coinciding >= asr0/2)
+zoo9 persistence_family.jsonl   b0026 desc    inject    coinciding 0.04 asr0 0.70 survived(P) False
+zoo9 persistence_family.jsonl   b0029 desc    taskswap  coinciding 0.47 asr0 0.47 survived(P) True  <- ARTEFACT (coinciding >= asr0/2)
+zoo9 persistence_family.jsonl   b0030 desc    inject    coinciding 0.02 asr0 0.75 survived(P) False
+zoo9 persistence_family.jsonl   b0054 posfix  inject    coinciding 0.03 asr0 0.97 survived(P) False
+zoo9 persistence_family.jsonl   b0058 ngram   inject    coinciding 0.09 asr0 0.88 survived(P) False

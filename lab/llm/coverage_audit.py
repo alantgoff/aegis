@@ -3,11 +3,13 @@ would remove it fastest?
 
 To first order, a step of fine-tuning on D changes behaviour B's margin (log-probability of B's bad response minus
 that of the desired response, on B's prompts) at a rate per unit learning rate of
-    rate_D(B) = -(g_bad - g_good) . P_D g_D        (> 0: training on D erodes B; <= 0: forecast to persist)
+    rate_D(B) = -(g_bad - g_good) . P_D g_D        (higher: faster forecast erosion)
 where g_D, v_D are the mean and second moment of the per-batch gradient on D (P_D = 1/sqrt(v_D), Adam-style) and
 g_bad, g_good the gradients of the bad and desired responses' losses. Without a desired response, the bad
-response alone is used (rate_abs; it includes the generic fluency direction). The toy-model study behind this is
-REPORT.md §3.3 and §3.10; the real-LLM validation is llm/train.py.
+response alone is used (rate_abs; it includes the generic fluency direction). Use the rates to rank candidate
+datasets: in the toy organisms the rate tracked half-life by rank, but its sign alone was a weak persist/erode
+verdict. The toy-model study behind this is REPORT.md §3.3 and §3.10; the real-LLM validation (llm/train.py) has
+not been run yet, so this tool is untested on real models.
 
 Inputs: a HuggingFace causal LM; D = Alpaca (default) or a JSONL of {"prompt","response"}; B = a JSONL of
 {"prompt","response"[,"good"]} instances of the behaviour (e.g. red-team hits or logged incidents, with the
@@ -78,11 +80,10 @@ def main():
     behaviour = [(d["prompt"], d["response"], d.get("good")) for d in map(json.loads, open(a.behaviour))]
     rows = audit(model, tok, safety, behaviour, a.batches, trigger_free=a.trigger_free)
     base = rows[0]["rate"]
-    print(f"{'safety data':24s} {'forecast rate':>14s}  verdict")
+    print(f"{'safety data':24s} {'forecast rate':>14s}  (higher = faster forecast erosion; for ranking)")
     for r in sorted(rows, key=lambda r: -r["rate"]):
-        verdict = "erodes" if r["rate"] > 0 else "does not touch it (forecast to persist)"
         rel = f"   (x{r['rate'] / base:.1f} vs as given)" if base > 0 and r is not rows[0] else ""
-        print(f"{r['family']:24s} {r['rate']:14.4g}  {verdict}{rel}")
+        print(f"{r['family']:24s} {r['rate']:14.4g}{rel}")
 
 
 if __name__ == "__main__":

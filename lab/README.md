@@ -1,29 +1,41 @@
 # Safety training can only remove what it touches
 
-**A coverage audit for safety fine-tuning: forecast which hidden behaviours a safety dataset will fail to remove,
-and change the dataset so it removes them.**
+**A coverage audit for safety fine-tuning: forecast which hidden behaviours a safety dataset is unlikely to remove,
+and rank changes to the dataset that would erode them faster.**
 
 ## Why this matters for alignment
 Safety fine-tuning is judged on in-distribution behaviour, but a hidden behaviour (a planted backdoor, a "sleeper"
-objective) persists exactly when it never surfaces on the safety data. To first order, fine-tuning on a dataset D
-erodes a behaviour B at rate rate_D(B) = -(g_B . P_D g_D), the alignment between B's gradient and D's
-(Adam-preconditioned) gradient. The same quantity governs whether a clean-data audit can see B. So the behaviours
-your audits miss and the behaviours your safety training leaves behind are, to first order, the same set.
+objective) tends to persist when training on the safety data barely moves it. To first order, fine-tuning on a
+dataset D erodes a behaviour B at rate rate_D(B) = -(g_B . P_D g_D), the alignment between B's gradient and D's
+(Adam-preconditioned) gradient. A clean-data audit on D sees the same tug, through proxies (a behaviour library in
+place of g_B). In the toy organisms (post hoc), the backdoors such audits flagged mostly did not survive clean
+fine-tuning, and most survivors went unflagged, although most unflagged backdoors were still removed. The two blind
+spots overlap; they are not the same set.
 
 ## What it gives a practitioner
 - **Forecast before training.** Give `llm/coverage_audit.py` a model, a safety dataset and a few observed
-  instances of a bad behaviour (red-team hits or incidents, with the desired answer). It returns the forecast
-  erosion rate: does this dataset touch the behaviour or not? This costs one gradient pass instead of a full
-  training run.
+  instances of a bad behaviour (red-team hits or incidents, with the desired answer). It returns forecast erosion
+  rates for the dataset as given and for each augmentation, for ranking: higher means faster forecast erosion. The
+  sign alone is a weak verdict: in the toy organisms 20/35 negative-rate backdoors survived clean fine-tuning, but so
+  did 23/176 positive-rate ones. It needs no training run: 64 minibatch gradients (batch 8) per candidate dataset,
+  plus gradients of the behaviour instances, so the default 9 candidates cost 576 minibatch gradients, about a third
+  of a 200-step, batch-8 safety fine-tune per candidate.
 - **Repair by coverage.** The same tool ranks generic prompt augmentations (case, format, date headers, JSON
-  wrapping, prefixes and so on) by how strongly they would erode the behaviour. In the toy organisms, adding prompts
-  that reach the trigger family erased the rule-triggered backdoors that ordinary clean fine-tuning left behind
-  (pre-registered, two sealed zoos: survivors 10/31 -> 0/31; no accuracy cost).
-- **The repair recommendation is validated (toy organisms).** This was pre-registered on a fresh sealed zoo. Fine-tuning
-  each backdoor separately on each of four prompt families, the forecast's top family was the one that actually
-  erased the backdoor fastest in 29/31 rule-triggered cases (chance 25%), and its ranking matched measured
-  half-lives (median rho = -0.95).
-- **Know the limits.** Backdoors keyed to one exact string ("needle" triggers) are not reached by any broad
+  wrapping, prefixes and so on) by forecast erosion; that ranking is untested on any model. In the toy organisms,
+  mixing a fixed set of simple-program prompts (not chosen by the tool) into clean fine-tuning erased the
+  rule-triggered backdoors that ordinary clean fine-tuning left behind. This was pre-registered on two sealed zoos:
+  survivors 14/34 -> 1/34 on zoo7 (the remaining one is a measurement artefact) and 10/31 -> 0/31 on zoo8, with no
+  measurable accuracy cost.
+- **The forecast ranks repairs well in the toy organisms (pre-registered on a fresh sealed zoo).** Each backdoor was
+  fine-tuned separately on each of four simple-program prompt families. The forecast, computed from the true backdoor
+  gradient, put first the family that halved ASR fastest in 29/31 rule-triggered cases, and its ranking tracked
+  measured half-lives (median rho = -0.95). Caveats: always choosing the best single family in hindsight gives 19/31
+  (the forecast beat it 12 times and lost twice, p = 0.006); the fastest family was the same within each of the four
+  rule-trigger kinds, so this is four kind-level choices in one zoo design; in the 2 misses the picked family never
+  halved ASR within 300 steps; and fine-tuning on the picked family alone cost about 2 points of clean accuracy (0.977
+  vs 0.995 under declared fine-tuning). The ranking that `llm/coverage_audit.py` itself produces (text augmentations,
+  margin rate from a few observed instances, real models) is untested.
+- **Know the limits.** Backdoors keyed to one exact string ("needle" triggers) were not reliably reached by any broad
   distribution. They need trigger search, not coverage.
 
 ```
@@ -31,11 +43,14 @@ python -m llm.coverage_audit --model <hf model> --behaviour incidents.jsonl [--s
 ```
 
 ## Status
-- **Validated** on 1,160 toy transformers, with sealed pre-registered tests and five adversarial audit rounds.
-  See `REPORT.md`.
-- **Real-LLM validation** (SmolLM2-135M-Instruct, Pythia-160m, Qwen2.5-0.5B-Instruct; planted benign canary
-  backdoors; Alpaca as the safety data) is implemented in `llm/`, reviewed and pre-registered (`PREREGISTRATION.md`
-  addendum c). It is waiting on Hugging Face access from this environment. No real-model results exist yet.
+- **Toy-model evidence**: 1,160 toy transformers, sealed pre-registered tests, and five adversarial audit rounds
+  through zoo8, plus a sixth on the zoo9 family-selection result and this framing (`docs/audit_round6.md`). See
+  `REPORT.md`.
+- **The coverage-audit tool itself has not been run on any model with a known backdoor.** Real-LLM validation
+  (planted benign canary backdoors in pretrained language models: SmolLM2-135M-Instruct, with Pythia-160m (a base
+  model) and Qwen2.5-0.5B-Instruct as replications; Alpaca as the safety data) is implemented in `llm/`, reviewed and
+  pre-registered (`PREREGISTRATION.md` addendum c). It is waiting on Hugging Face access from this environment. No
+  real-model results exist yet.
 
 ## Background: the tug-of-war
 A model trained on its declared data *plus* something else (a backdoor, a hidden rule) sits near an

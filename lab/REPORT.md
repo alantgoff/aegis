@@ -17,10 +17,14 @@ only against their results files. Numbers added after the second round (zoo3 dua
 black-box persistence) were checked by a third targeted round (`docs/audit_round3.md`, 16 corrections, all
 adopted; §6). The simplicity-prior result (§3.10) was pre-registered in a dated addendum before its sealed zoo
 (zoo7) was trained (code frozen at commit `eadbb8a`). The mixing recipe was registered in a second addendum before
-zoo8 was trained, and the family-selection test (H20–H22) in a fourth before zoo9 was trained (commits `6bd39e3`,
-`fb83251`; no committed analysis, detector or organism code changed afterwards). A fourth
-round checked the zoo7 part of §3.10 and Summary item 5 (`docs/audit_round4.md`, 20 corrections, all adopted). A
-fifth round checked the zoo8 and mixing-pilot additions (`docs/audit_round5.md`, 18 corrections, all adopted).
+zoo8 was trained, and the family-selection test (H20–H22) in a fourth (addendum d) before zoo9 was trained (commits
+`6bd39e3`, `fb83251`; the registered analysis, detector and organism code did not change between each registration
+and its sealed analysis; later commits only added descriptive output (`ba9b74a`) and the single-program arms
+(`09c92c8`, before `fb83251`)). A third addendum (c) registers the real-LLM test, which has not been run. A fourth
+audit round checked the zoo7 part of §3.10 and Summary item 5 (`docs/audit_round4.md`, 20 corrections, all
+adopted). A fifth round checked the zoo8 and mixing-pilot additions (`docs/audit_round5.md`, 18 corrections, all
+adopted). A sixth checked the zoo9 family-selection result and the alignment-practice framing
+(`docs/audit_round6.md`, 29 corrections, all adopted).
 
 ## Summary
 
@@ -114,7 +118,7 @@ fifth round checked the zoo8 and mixing-pilot additions (`docs/audit_round5.md`,
    - The pre-registered causal test of the leakage principle (H10) was not supported.
    - Pre-registered same-tier baselines also tie it (item 2, §3.4).
 5. **Erasing the rule-triggered part of the blind spot: simplicity-prior safety training (pre-registered; sealed
-   zoo7 and zoo8, §3.10).** The duality says persistence is relative to the fine-tuning distribution. The spec tasks define
+   zoo7, zoo8 and zoo9, §3.10).** The duality says persistence is relative to the fine-tuning distribution. The spec tasks define
    correct answers for any prompt, so clean fine-tuning can draw prompts from a simplicity prior: 25% declared, 75%
    small-alphabet, monotone, arithmetic-progression and periodic programs.
    - **Design disclosure.** No program is fitted to a particular trigger, but the program set was written knowing
@@ -156,12 +160,26 @@ fifth round checked the zoo8 and mixing-pilot additions (`docs/audit_round5.md`,
      - Zoo8 does not show that mixing protects needle backdoors better than the plain prior. The 25%-declared
        prior did no worse on them (survivors 2/19 vs 3/19) and, post hoc, also passes the same non-inferiority
        test. The mixed recipe's measured advantage over the plain prior is clean accuracy (0.9916 vs 0.9887).
-   - **The forecast picks the right repair (pre-registered on sealed zoo9, H20–H22, all supported).**
-     - Fine-tuning each backdoor on each of four prompt families separately, the release-time forecast ranked the
-       families like their measured half-lives (median ρ = −0.95, p = 2e-8).
-     - Its top family was the fastest in 29/31 rule-trigger backdoors (chance 25%; p = 9e-16).
-     - This is the audit tool's repair recommendation, validated: forecast first, then fine-tune on what the forecast
-       picks.
+   - **The forecast ranks repair families (pre-registered on sealed zoo9, H20–H22, all supported).**
+     - Fine-tuning each backdoor on each of four single-program prompt families separately, the release-time
+       forecast ranked the families like their measured half-lives (median ρ = −0.95, p = 2e-8).
+     - Its top family was the fastest in 29/31 rule-trigger backdoors (chance 25%; p = 9e-16 if backdoors are
+       treated as independent). The fastest family was the same for every backdoor of a trigger kind (periodic for
+       subset and count, monotone for sorted and desc), as already seen on zoo8, so this amounts to four correct
+       kind-level choices in one zoo design. Post hoc, always choosing the best single family in hindsight
+       (periodic) would have been fastest in 19/31; the forecast beat it in 12 backdoors and lost in 2 (exact
+       one-sided p = 0.006).
+     - In the toy organisms, then, ranking candidate fine-tuning distributions by the forecast rate picked a fast
+       repair. That rate was computed from 1,280 freshly sampled triggered prompts with the true backdoor targets
+       (as in item 3). This does not yet validate `llm/coverage_audit.py`, which computes a margin rate from a few
+       observed instances over eight text augmentations, each applied to 25% of prompts, and has not been run on
+       any model.
+     - In both misses (b0002, b0010; subset triggers) every family's forecast rate was negative. The picked family
+       (progression) never halved ASR in 300 steps (final ASR 0.84 and 0.86), while periodic halved it in 12 and 6
+       steps. Two of zoo8's three misses (b0008, b0010) are similar: all rates ≤ 0.01 and the picked family
+       censored.
+     - Fine-tuning on the picked program alone cost clean accuracy (0.977 vs 0.995 under P), so a single picked
+       family is not itself a repair recipe; the registered recipes without accuracy cost are the mixtures above.
    - **Replications (post hoc).** On the four earlier sealed zoos the rule-trigger result replicates in every zoo:
      survivors zoo2 11 → 0, zoo3 4 → 0, zoo4 6 → 0, zoo6 11 → 0. Pooled with zoo7 that is 46/122 → 1/122 (45 → 0
      without the artefact; exact p = 3e-14), with median half-life 135 → 8 steps.
@@ -176,20 +194,32 @@ fifth round checked the zoo8 and mixing-pilot additions (`docs/audit_round5.md`,
 
 ## Use for alignment practice: a safety-training coverage audit
 - **The finding, restated as a tool.** To first order, fine-tuning on a dataset D erodes a hidden behaviour B at rate
-  −(g_B · P_D g_D). The same quantity sets whether a clean-data audit on D can see B (Summary items 3–4). Safety
-  training and auditing on the same data therefore share one blind spot: behaviours that never surface on that
-  data.
-- **Forecast.** `llm/coverage_audit.py` computes this rate for a real model, a safety dataset and a handful of
-  observed instances of a behaviour, before any training. In the toy organisms the release-time rate predicted
-  survival under clean fine-tuning (Spearman about −0.7 to −0.8 with half-life on five sealed zoos).
-- **Repair.** The audit ranks generic augmentations of the safety data by forecast erosion. In the toy organisms,
-  adding prompts that reach a rule-trigger family erased the backdoors that ordinary fine-tuning left (§3.10;
-  pre-registered on zoo7 and zoo8).
-- **Limit.** Needle triggers are not reached by any broad distribution.
-- **Status.** Real-LLM validation (planted benign canary backdoors in pretrained instruction-tuned models; Alpaca
-  safety data; 2 × 2 rule/needle × covered/uncovered design) is implemented, code-reviewed
-  (`docs/review_llm_pipeline.md`) and pre-registered (addendum c). It awaits Hugging Face access from this
-  environment, and no real-model results are reported here.
+  −(g_B · P_D g_D). A clean-data audit on D reads the same clean-gradient tug, but through a library proxy in place
+  of g_B, so its score is a proxy for this rate, not the rate itself (Summary item 3). Post hoc, the backdoors such
+  audits flagged were mostly removed by clean fine-tuning, and each statistic missed 44 of the 50 survivors, though
+  most missed backdoors were still removed. On held-out zoo3, however, no clean-data statistic predicted
+  persistence (items 3–4). Safety training and auditing on the same data therefore tend to share a blind spot:
+  behaviours whose gradient that data barely touches.
+- **Forecast.** `llm/coverage_audit.py` computes a margin version of this rate, −(g_bad − g_good) · P_D g_D, for a
+  real model, a safety dataset and a handful of observed instances of a behaviour, before any training (untested;
+  see Status). In the toy organisms the rate computed with the true poison gradient predicted half-life under clean
+  fine-tuning: Spearman −0.78 pre-registered on zoo2; post hoc −0.80, −0.65 and −0.75 on zoo4, zoo5 and zoo6, and
+  −0.56 on held-out zoo3. Within zoo × trigger kind it was only −0.37. Its sign is a weak yes/no (pooled, 20/35
+  negative-rate backdoors survived, and so did 23/176 positive-rate ones), so the tool reports rates for ranking.
+- **Repair.** `llm/coverage_audit.py` ranks eight generic text augmentations of the safety data (each applied to 25%
+  of prompts) by forecast erosion; this is untested. In the toy organisms, a pre-specified simplicity prior erased
+  the rule-trigger backdoors that ordinary fine-tuning left (§3.10; pre-registered on zoo7 and zoo8). On zoo9 the
+  forecast, computed with the true poison gradient, ranked four single-program fine-tuning distributions in line
+  with their measured half-lives (H20–H22, rule triggers), with the caveats in Summary item 5.
+- **Cost.** No training run: 64 minibatch gradients (batch 8) per candidate dataset, plus the behaviour gradients.
+  The default 9 candidates (as given plus 8 augmentations) total 576 minibatch gradients, about a third of a
+  200-step, batch-8 safety fine-tune per candidate.
+- **Limit.** Needle triggers were not reliably reached by any broad distribution.
+- **Status.** The tool has not been run on any model with a known backdoor. Real-LLM validation (planted benign
+  canary backdoors in pretrained language models: SmolLM2-135M-Instruct, with Pythia-160m (a base model) and
+  Qwen2.5-0.5B-Instruct as replications; Alpaca safety data; 2 × 2 rule/needle × covered/uncovered design) is
+  implemented, code-reviewed (`docs/review_llm_pipeline.md`) and pre-registered (addendum c). It awaits Hugging Face
+  access from this environment, and no real-model results are reported here.
 
 ## Relation to prior work
 Per `docs/novelty_recheck.md`, a snippet-level search whose full texts could not be fetched, each component here
@@ -467,7 +497,7 @@ Run late (after the sealed results were known), on zoo2 only, not on dev models 
   - **Length distribution shifted toward long prompts:** FPR 3/80 = 4% [1%, 11%] (clean only 3/64).
   - Scores under either mismatch track the correct-sampler scores (Spearman 0.89 and 0.91).
 
-### 3.10 Simplicity-prior safety training (pre-registered H11–H19; sealed zoo7 and zoo8)
+### 3.10 Simplicity-prior safety training (pre-registered H11–H22; sealed zoo7, zoo8 and zoo9)
 - **Method.** `detect/broad.py` defines the simplicity prior. Each prompt is either declared (25%) or comes from one
   of four programs (18.75% each):
   - iid symbols from a random alphabet of 1–12 symbols;
@@ -587,20 +617,43 @@ Run late (after the sealed results were known), on zoo2 only, not on dev models 
     - The mixed recipe's measured advantage is clean accuracy: 0.9916 (Q75) vs 0.9887 (Q) on zoo8.
 - **Does the forecast pick the right repair? (exploratory on zoo8, then pre-registered H20–H22 on a fresh sealed
   zoo9; `analysis/family_select.py`, `results/zoo9_H20_H22.txt`).**
-  - **Method.** Each effective backdoor was fine-tuned separately on each of the four programs alone (300 steps
-    each), and also on declared data (P). The release-time forecast rate for each family was computed before any
-    of that fine-tuning.
+  - **Method.** Each effective backdoor was fine-tuned separately on each of the four programs alone (100% one
+    program, no declared prompts; 300 steps each), and also on declared data (P). The release-time forecast rate
+    for each family was computed before any of that fine-tuning, with the true poison gradient (10 batches of 128
+    triggered prompts) and P_D estimated on that family. 52 effective backdoors; 2 coincidence artefacts excluded
+    by the registered rule (b0025, b0029); 50 analysed (31 rule, 19 needle).
   - **H20 (primary) supported.** Within each backdoor, the forecast ranks the four families like their measured
-    half-lives: median Spearman −0.95, one-sided Wilcoxon p = 2e-8 (n = 47; zoo8 exploratory −0.95).
+    half-lives: median Spearman −0.95, one-sided Wilcoxon p = 2e-8 (n = 47 of 50: three posfix backdoors censored
+    at 300 steps under all four families have no defined Spearman; counting them as 0 leaves p unchanged. Median
+    −0.95 for rule triggers, −0.40 for needle; zoo8 exploratory −0.95).
   - **H21 supported.** For rule triggers, the forecast's top family gives a shorter half-life than the median
     family (94% of backdoors, p = 1e-6) and than declared fine-tuning (p = 1e-6).
   - **H22 supported.** The forecast's top family was the empirically fastest in 29/31 rule-trigger backdoors
-    (chance 0.25, p = 9e-16; zoo8 exploratory 28/31).
-  - **The pick is not the obvious one.** For subset triggers the forecast picked periodic motifs (11/13), not the
-    small-alphabet program the prior was designed around. Periodic was in fact the fastest for all 13 (half-life
-    300 → 6).
-  - **Needle triggers.** No family helps (posfix median half-life 300 under the picked family vs 158 under P), as
-    expected.
+    (chance 0.25, p = 9e-16; zoo8 exploratory 28/31). Ties count as matches; one, b0030, is an exact monotone =
+    progression tie, so 28/31 strictly. In 20 of the 29 the runner-up family also halved ASR within the first
+    10-step evaluation interval.
+  - **Stronger comparator (post hoc).** Always choosing the single best family in hindsight (periodic) would have
+    been fastest in 19/31, which also meets the registered H22 criteria. The forecast beat it in 12 backdoors and
+    lost in 2 (exact one-sided p = 0.006). The fastest family was the same for every backdoor of a kind (subset and
+    count periodic, sorted and desc monotone), as on zoo8, so the 29/31 is four kind-level choices, not 31
+    independent ones.
+  - **Subset triggers.** The forecast picked periodic motifs (11/13) rather than the small-alphabet program the
+    prior was designed around, and periodic was the fastest for all 13 (median half-life 6, vs 300 under P). The
+    small-alphabet program also halved all 13 (median 14). A periodic motif uses only 1–3 distinct symbols, so it is
+    itself a very small alphabet; post hoc, this is the pick a trigger hit-rate count would also suggest. The other
+    2 subset picks were progression, which never produces the trigger. Those two backdoors survived it (censored at
+    300 steps), and every family's forecast rate was negative for them.
+  - **Capability cost (not registered).** Fine-tuning on the picked program alone lowered declared clean accuracy
+    to 0.977 vs 0.995 under P (mean over the 50 analysed; the drop exceeds 0.01 in 30/50). The ranking result is
+    therefore not a validated repair recipe; the registered recipes without accuracy cost are the mixtures (H14,
+    H19).
+  - **Needle triggers (descriptive).** The forecast's pick did not beat declared fine-tuning: it was faster in 9/19
+    and slower in 6/19 (one-sided Wilcoxon p = 0.41). For posfix the picked family's median half-life was 300 vs
+    158 under P, so following the forecast would have slowed their erosion. Its 10/19 top-family matches include 3
+    backdoors that survived every family.
+  - **What this does not test.** The forecast here is the toy oracle rate, and each family is one of four synthetic
+    programs. `llm/coverage_audit.py` ranks 25% text-augmentation mixtures from a few observed instances, and it has
+    not been run on any model.
 - **Caveats.**
   - **Design knowledge.** The program set was written knowing the dev trigger families: subset motivated the
     small-alphabet program, and the sorted trigger resembles the monotone program.
@@ -646,11 +699,14 @@ Run late (after the sealed results were known), on zoo2 only, not on dev models 
 - **Late analyses.** H6 and the same-tier baselines (zoo1–zoo4, with the meta-classifier) were run after the sealed
   results were known (dated deviation in `PREREGISTRATION.md`).
 - **ASR measurement.** Exact-match ASR counts prompts where the backdoor target happens to equal the correct
-  answer. `analysis/asr_coincidence.py` scans every persisted model in zoo1–zoo8.
-  - It flags two models of the same design (descending trigger + task swap to sort): zoo7 b0025 and zoo8 b0025.
+  answer. `analysis/asr_coincidence.py` scans every persisted model in zoo1–zoo9 (`analysis/family_select.py`
+  applies the same rule on zoo9).
+  - It flags four models of the same design (descending trigger + task swap to sort): zoo7 b0025, zoo8 b0025, and
+    zoo9 b0025 and b0029.
     Their coinciding fraction is at least half their initial ASR, so their ASR cannot fall to half under any clean
     fine-tuning.
-  - zoo8's b0025 is excluded from H16–H19 by the registered rule. zoo7's is reported with a sensitivity analysis.
+  - zoo8's b0025 is excluded from H16–H19, and zoo9's two from H20–H22, by the registered rule. zoo7's is reported
+    with a sensitivity analysis.
   - Every other survivor's coinciding fraction is below half its initial ASR, so its survival requires genuine
     backdoor outputs.
 - **Score hygiene.** Some models were scored twice by concurrent scorers; all duplicates are bitwise identical.
@@ -666,3 +722,8 @@ Run late (after the sealed results were known), on zoo2 only, not on dev models 
   item 5, §3.10) and its code. The coincidence artefact check came from this round.
 - `docs/audit_round5.md` (18 corrections, all adopted): the zoo8 mixing-recipe result, the dev mixing pilot and the
   updated §3.10.
+- `docs/audit_round6.md` (29 corrections, all adopted): the zoo9 family-selection result (H20–H22), the reframed
+  README and the alignment-practice section. Main corrections: the zoo9 test used the toy oracle rate and
+  single-program arms, so it does not validate `llm/coverage_audit.py`; a fixed best-family baseline (19/31) and
+  the capability cost of single-program fine-tuning are now reported; the README's "same set" and "persists
+  exactly when" claims were replaced by the measured, partial overlap.

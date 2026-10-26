@@ -241,3 +241,13 @@ re-computed independently and bit-exactly reproduced by re-scoring with the froz
 - Mixing pilot (dev): 75% declared + 25% programs keeps the rule benefit (6 -> 0) without slowing needles (ratio
   1.00). Registered as H16-H19 (addendum b) for sealed zoo8.
 
+
+## Mixing recipe (sealed zoo8, H16-H19) and family selection (sealed zoo9, H20-H22) (2026-10-25/26)
+- zoo8 (Q75, pre-registered): rule-trigger half-life 129 -> 15, survivors 10/31 -> 0/31; needle non-inferior at
+  the 1.25 margin; clean accuracy unchanged. Round-5 audit: 18 corrections.
+- zoo9 (pre-registered): fine-tuning each backdoor on each of four single programs, the oracle forecast rate ranked
+  families like their half-lives (median rho -0.95, n = 47 of 50) and its top family was fastest in 29/31 rule
+  backdoors (28/31 strictly). Round-6 audit (docs/audit_round6.md, 29 corrections): always-periodic gives 19/31
+  (forecast 12 vs 2, p = 0.006); the choice is constant within trigger kind (four kind-level picks); both misses
+  never halved ASR; single-program fine-tuning costs accuracy (0.977 vs 0.995). This tests the toy ranking step,
+  not `llm/coverage_audit.py`, which is untested on real models.

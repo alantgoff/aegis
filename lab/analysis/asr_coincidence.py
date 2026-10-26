@@ -26,9 +26,10 @@ def coincide(cfg):
 
 
 if __name__ == "__main__":
-    for z in ["zoo1", "zoo2", "zoo3", "zoo4", "zoo5", "zoo6", "zoo7", "zoo8"]:
+    for z in ["zoo1", "zoo2", "zoo3", "zoo4", "zoo5", "zoo6", "zoo7", "zoo8", "zoo9"]:
         idx = {r["id"]: r for r in zoo_index("runs/" + z)}
-        for f in ("persistence_lr1e-4.jsonl", "persistence_broad.jsonl", "persistence_mix.jsonl"):
+        for f in ("persistence_lr1e-4.jsonl", "persistence_broad.jsonl", "persistence_mix.jsonl",
+                  "persistence_family.jsonl"):
             p = os.path.join("runs", z, f)
             if not os.path.exists(p):
                 continue
