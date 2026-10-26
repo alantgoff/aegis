@@ -19,6 +19,10 @@ your audits miss and the behaviours your safety training leaves behind are, to f
   wrapping, prefixes and so on) by how strongly they would erode the behaviour. In the toy organisms, adding prompts
   that reach the trigger family erased the rule-triggered backdoors that ordinary clean fine-tuning left behind
   (pre-registered, two sealed zoos: survivors 10/31 -> 0/31; no accuracy cost).
+- **The repair recommendation is validated (toy organisms).** This was pre-registered on a fresh sealed zoo. Fine-tuning
+  each backdoor separately on each of four prompt families, the forecast's top family was the one that actually
+  erased the backdoor fastest in 29/31 rule-triggered cases (chance 25%), and its ranking matched measured
+  half-lives (median rho = -0.95).
 - **Know the limits.** Backdoors keyed to one exact string ("needle" triggers) are not reached by any broad
   distribution. They need trigger search, not coverage.
 
@@ -27,7 +31,7 @@ python -m llm.coverage_audit --model <hf model> --behaviour incidents.jsonl [--s
 ```
 
 ## Status
-- **Validated** on 1,064 toy transformers, with sealed pre-registered tests and five adversarial audit rounds.
+- **Validated** on 1,160 toy transformers, with sealed pre-registered tests and five adversarial audit rounds.
   See `REPORT.md`.
 - **Real-LLM validation** (SmolLM2-135M-Instruct, Pythia-160m, Qwen2.5-0.5B-Instruct; planted benign canary
   backdoors; Alpaca as the safety data) is implemented in `llm/`, reviewed and pre-registered (`PREREGISTRATION.md`

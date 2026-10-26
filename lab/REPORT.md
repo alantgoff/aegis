@@ -17,7 +17,8 @@ only against their results files. Numbers added after the second round (zoo3 dua
 black-box persistence) were checked by a third targeted round (`docs/audit_round3.md`, 16 corrections, all
 adopted; §6). The simplicity-prior result (§3.10) was pre-registered in a dated addendum before its sealed zoo
 (zoo7) was trained (code frozen at commit `eadbb8a`). The mixing recipe was registered in a second addendum before
-zoo8 was trained (commit `6bd39e3`; no committed analysis, detector or organism code changed afterwards). A fourth
+zoo8 was trained, and the family-selection test (H20–H22) in a fourth before zoo9 was trained (commits `6bd39e3`,
+`fb83251`; no committed analysis, detector or organism code changed afterwards). A fourth
 round checked the zoo7 part of §3.10 and Summary item 5 (`docs/audit_round4.md`, 20 corrections, all adopted). A
 fifth round checked the zoo8 and mixing-pilot additions (`docs/audit_round5.md`, 18 corrections, all adopted).
 
@@ -155,6 +156,12 @@ fifth round checked the zoo8 and mixing-pilot additions (`docs/audit_round5.md`,
      - Zoo8 does not show that mixing protects needle backdoors better than the plain prior. The 25%-declared
        prior did no worse on them (survivors 2/19 vs 3/19) and, post hoc, also passes the same non-inferiority
        test. The mixed recipe's measured advantage over the plain prior is clean accuracy (0.9916 vs 0.9887).
+   - **The forecast picks the right repair (pre-registered on sealed zoo9, H20–H22, all supported).**
+     - Fine-tuning each backdoor on each of four prompt families separately, the release-time forecast ranked the
+       families like their measured half-lives (median ρ = −0.95, p = 2e-8).
+     - Its top family was the fastest in 29/31 rule-trigger backdoors (chance 25%; p = 9e-16).
+     - This is the audit tool's repair recommendation, validated: forecast first, then fine-tune on what the forecast
+       picks.
    - **Replications (post hoc).** On the four earlier sealed zoos the rule-trigger result replicates in every zoo:
      survivors zoo2 11 → 0, zoo3 4 → 0, zoo4 6 → 0, zoo6 11 → 0. Pooled with zoo7 that is 46/122 → 1/122 (45 → 0
      without the artefact; exact p = 3e-14), with median half-life 135 → 8 steps.
@@ -221,7 +228,7 @@ detection statistic was tested post hoc only, and it failed on the held-out zoo3
     triggered prompts, ≤ 2.1e-4 of the sample. Not checked on the other zoos.
 - **Protocol.** Development zoo1 (208 models), then the frozen detector on sealed zoos: zoo2 (208), zoo4 (88,
   bias-free), zoo5 (128 fine-tunes), zoo3 (96, held-out conditions), zoo6 (100, paired causal test), and a scale
-  sweep (44). 1,064 trained organisms in total (872 before the simplicity-prior work, plus zoo7 and zoo8), excluding pilots.
+  sweep (44). 1,160 trained organisms in total (872 before the simplicity-prior work, plus zoo7, zoo8 and zoo9), excluding pilots.
 - **Statistics.** Inclusion requires mean accuracy ≥ 0.8 on the four specified tasks; a backdoor counts as
   effective when ASR ≥ 0.5. AUROC with stratified bootstrap CI and permutation p; paired bootstrap for detector
   comparisons.
@@ -578,6 +585,22 @@ Run late (after the sealed results were known), on zoo2 only, not on dev models 
     - So zoo8 does not show that mixing in declared prompts protects needle backdoors better than the plain prior.
       That rationale rests on the dev pilot (needle survivors 6/45 under Q75 vs 8/45 under Q, not tested).
     - The mixed recipe's measured advantage is clean accuracy: 0.9916 (Q75) vs 0.9887 (Q) on zoo8.
+- **Does the forecast pick the right repair? (exploratory on zoo8, then pre-registered H20–H22 on a fresh sealed
+  zoo9; `analysis/family_select.py`, `results/zoo9_H20_H22.txt`).**
+  - **Method.** Each effective backdoor was fine-tuned separately on each of the four programs alone (300 steps
+    each), and also on declared data (P). The release-time forecast rate for each family was computed before any
+    of that fine-tuning.
+  - **H20 (primary) supported.** Within each backdoor, the forecast ranks the four families like their measured
+    half-lives: median Spearman −0.95, one-sided Wilcoxon p = 2e-8 (n = 47; zoo8 exploratory −0.95).
+  - **H21 supported.** For rule triggers, the forecast's top family gives a shorter half-life than the median
+    family (94% of backdoors, p = 1e-6) and than declared fine-tuning (p = 1e-6).
+  - **H22 supported.** The forecast's top family was the empirically fastest in 29/31 rule-trigger backdoors
+    (chance 0.25, p = 9e-16; zoo8 exploratory 28/31).
+  - **The pick is not the obvious one.** For subset triggers the forecast picked periodic motifs (11/13), not the
+    small-alphabet program the prior was designed around. Periodic was in fact the fastest for all 13 (half-life
+    300 → 6).
+  - **Needle triggers.** No family helps (posfix median half-life 300 under the picked family vs 158 under P), as
+    expected.
 - **Caveats.**
   - **Design knowledge.** The program set was written knowing the dev trigger families: subset motivated the
     small-alphabet program, and the sorted trigger resembles the monotone program.
