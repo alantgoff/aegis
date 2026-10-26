@@ -5,7 +5,7 @@ For each effective backdoor: rate_D = -(g_hidden . P_D g_D) with g_D the clean g
 estimated on distribution D, and the ASR half-life under clean-only AdamW fine-tuning on D (constant lr, ASR every
 10 steps, censored at `steps`), for D in {P, Q}. Both arms start from the same released weights.
 Usage: python analysis/persistence_broad.py <zoo> <out.jsonl> <lr> <steps> <workers> [--max N] [--ids a,b,..]
-       [--arms P,Q,Q50]   (default P,Q; Q<w> = the prior with w% declared prompts)
+       [--arms P,Q,Q50]   (default P,Q; Q<w> = the prior with w% declared prompts; F<program> = one program)
 """
 import copy
 import json
@@ -33,6 +33,9 @@ def make(dist, seed, bd=None):
         return tl.Sampler(tl.SPEC_TASKS, avoid=[bd[0]] if bd else [], seed=seed)
     if dist == "Q":
         return BroadSampler(seed=seed)
+    if dist.startswith("F"):                   # F<program>: prompts from one program only (family test)
+        from detect.broad import PROGRAMS
+        return BroadSampler(seed=seed, weights=tuple(float(n == dist[1:]) for n in PROGRAMS))
     w = int(dist[1:]) / 100
     return BroadSampler(seed=seed, weights=(w,) + ((1 - w) / 4,) * 4)
 
