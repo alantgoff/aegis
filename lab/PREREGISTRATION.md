@@ -237,3 +237,23 @@ families of the release model's canary emission on augmented clean probes; cover
 - L4 (cost). Held-out Alpaca loss after A25 is non-inferior to after P (margin 0.02 nats; one-sided 95% bootstrap
   upper bound of mean(A25 - P) < 0.02).
 - Holm over L2-L4 secondary families; L1 primary for the forecast, L2 primary for the repair.
+
+## Addendum d (2026-10-26): does the forecast pick the right repair? — registered before zoo9 was trained
+
+Motivation (zoo8, exploratory; `analysis/family_select.py`, `results/zoo8_family_select_exploratory.txt`): fine-tuning
+each effective backdoor separately on each of the four simplicity-prior programs (F<program>: small alphabet, monotone,
+progression, periodic), the release-time forecast rate ranked the families like their measured half-lives (median
+within-model Spearman -0.95). For rule triggers the forecast's top family was the empirically fastest in 28/31.
+
+Sealed zoo9 (`python -m organisms.zoo make_broad runs/zoo9 9`, same design, new seeds). Persistence:
+`analysis/persistence_broad.py runs/zoo9 runs/zoo9/persistence_family.jsonl 1e-4 300 4 --arms
+P,Falphabet,Fmonotone,Fprogression,Fperiodic`. Analysis: `analysis/family_select.py runs/zoo9 --prereg`. Effective =
+included and release ASR >= 0.5; coincidence artefacts excluded as in addendum b.
+
+- H20 (primary). Within each effective backdoor, Spearman between the four families' forecast rates and measured
+  half-lives is negative: one-sided Wilcoxon of the per-model coefficients against 0, p < 0.01.
+- H21. Rule-trigger backdoors: the half-life under the forecast's top family is shorter than the median over the four
+  families AND shorter than under declared fine-tuning (P); both one-sided paired Wilcoxon p < 0.01.
+- H22. Rule-trigger backdoors: the forecast's top family is the empirically fastest family in more than half of them,
+  and more often than chance (0.25): one-sided binomial p < 0.01.
+- Needle triggers: reported, no hypothesis.

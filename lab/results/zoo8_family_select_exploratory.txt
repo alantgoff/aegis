@@ -1,0 +1,10 @@
+runs/zoo8: 50 effective backdoors (artefacts excluded)
+  subset   n=12: picked {'Fperiodic': 10, 'Fmonotone': 2}; fastest {'Fperiodic': 11, 'Falphabet': 1}; median half-life picked 7, median family 155, declared P 300
+  sorted   n= 7: picked {'Fmonotone': 7}; fastest {'Fmonotone': 7}; median half-life picked 5, median family 61, declared P 20
+  desc     n= 6: picked {'Fmonotone': 6}; fastest {'Fmonotone': 6}; median half-life picked 5, median family 56, declared P 16
+  count    n= 6: picked {'Fperiodic': 5, 'Falphabet': 1}; fastest {'Fperiodic': 5, 'Falphabet': 1}; median half-life picked 9, median family 157, declared P 155
+  posfix   n=13: picked {'Fmonotone': 10, 'Falphabet': 2, 'Fperiodic': 1}; fastest {'Fmonotone': 6, 'Falphabet': 4, 'Fperiodic': 2, 'Fprogression': 1}; median half-life picked 140, median family 183, declared P 131
+  ngram    n= 6: picked {'Fmonotone': 3, 'Fperiodic': 3}; fastest {'Fmonotone': 2, 'Fperiodic': 2, 'Falphabet': 2}; median half-life picked 8, median family 16, declared P 17
+  within-model Spearman(rate_f, half_f) over 4 families: median -0.95 (n=49); one-sided Wilcoxon p=2.7e-07
+  rule   n=31: picked shorter than median family in 0.94 (Wilcoxon p=1.7e-06); picked shorter than declared P: Wilcoxon p=2.4e-06; forecast top = fastest family in 28/31 (chance 0.25, binomial p=2.7e-14)
+  needle n=19: picked shorter than median family in 0.68 (Wilcoxon p=3.2e-02); picked shorter than declared P: Wilcoxon p=1.3e-01; forecast top = fastest family in 12/19 (chance 0.25, binomial p=4.8e-04)
