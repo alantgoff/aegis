@@ -167,6 +167,23 @@ fifth round checked the zoo8 and mixing-pilot additions (`docs/audit_round5.md`,
        triggers worse (0.71 → 0.47, chance; paired difference −0.24 [−0.37, −0.13]) and all backdoors no better
        (0.71 → 0.69).
 
+## Use for alignment practice: a safety-training coverage audit
+- **The finding, restated as a tool.** To first order, fine-tuning on a dataset D erodes a hidden behaviour B at rate
+  −(g_B · P_D g_D). The same quantity sets whether a clean-data audit on D can see B (Summary items 3–4). Safety
+  training and auditing on the same data therefore share one blind spot: behaviours that never surface on that
+  data.
+- **Forecast.** `llm/coverage_audit.py` computes this rate for a real model, a safety dataset and a handful of
+  observed instances of a behaviour, before any training. In the toy organisms the release-time rate predicted
+  survival under clean fine-tuning (Spearman about −0.7 to −0.8 with half-life on five sealed zoos).
+- **Repair.** The audit ranks generic augmentations of the safety data by forecast erosion. In the toy organisms,
+  adding prompts that reach a rule-trigger family erased the backdoors that ordinary fine-tuning left (§3.10;
+  pre-registered on zoo7 and zoo8).
+- **Limit.** Needle triggers are not reached by any broad distribution.
+- **Status.** Real-LLM validation (planted benign canary backdoors in pretrained instruction-tuned models; Alpaca
+  safety data; 2 × 2 rule/needle × covered/uncovered design) is implemented, code-reviewed
+  (`docs/review_llm_pipeline.md`) and pre-registered (addendum c). It awaits Hugging Face access from this
+  environment, and no real-model results are reported here.
+
 ## Relation to prior work
 Per `docs/novelty_recheck.md`, a snippet-level search whose full texts could not be fetched, each component here
 is only partly new:

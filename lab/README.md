@@ -1,11 +1,42 @@
-# Tug-of-war forensics
+# Safety training can only remove what it touches
 
-**Auditing hidden objectives from a model's own clean-data gradient.**
+**A coverage audit for safety fine-tuning: forecast which hidden behaviours a safety dataset will fail to remove,
+and change the dataset so it removes them.**
 
-A model trained on its declared data *plus* something else (a backdoor, a hidden rule) sits at an
-equilibrium of the *mixture*. At that equilibrium the gradient of the declared (clean) loss is pulled
-against the gradient of whatever undeclared objective shaped the weights. An auditor who can only sample
-the declared distribution can therefore read the hidden objective's direction off the weights.
+## Why this matters for alignment
+Safety fine-tuning is judged on in-distribution behaviour, but a hidden behaviour (a planted backdoor, a "sleeper"
+objective) persists exactly when it never surfaces on the safety data. To first order, fine-tuning on a dataset D
+erodes a behaviour B at rate rate_D(B) = -(g_B . P_D g_D), the alignment between B's gradient and D's
+(Adam-preconditioned) gradient. The same quantity governs whether a clean-data audit can see B. So the behaviours
+your audits miss and the behaviours your safety training leaves behind are, to first order, the same set.
+
+## What it gives a practitioner
+- **Forecast before training.** Give `llm/coverage_audit.py` a model, a safety dataset and a few observed
+  instances of a bad behaviour (red-team hits or incidents, with the desired answer). It returns the forecast
+  erosion rate: does this dataset touch the behaviour or not? This costs one gradient pass instead of a full
+  training run.
+- **Repair by coverage.** The same tool ranks generic prompt augmentations (case, format, date headers, JSON
+  wrapping, prefixes and so on) by how strongly they would erode the behaviour. In the toy organisms, adding prompts
+  that reach the trigger family erased the rule-triggered backdoors that ordinary clean fine-tuning left behind
+  (pre-registered, two sealed zoos: survivors 10/31 -> 0/31; no accuracy cost).
+- **Know the limits.** Backdoors keyed to one exact string ("needle" triggers) are not reached by any broad
+  distribution. They need trigger search, not coverage.
+
+```
+python -m llm.coverage_audit --model <hf model> --behaviour incidents.jsonl [--safety my_safety.jsonl]
+```
+
+## Status
+- **Validated** on 1,064 toy transformers, with sealed pre-registered tests and five adversarial audit rounds.
+  See `REPORT.md`.
+- **Real-LLM validation** (SmolLM2-135M-Instruct, Pythia-160m, Qwen2.5-0.5B-Instruct; planted benign canary
+  backdoors; Alpaca as the safety data) is implemented in `llm/`, reviewed and pre-registered (`PREREGISTRATION.md`
+  addendum c). It is waiting on Hugging Face access from this environment. No real-model results exist yet.
+
+## Background: the tug-of-war
+A model trained on its declared data *plus* something else (a backdoor, a hidden rule) sits near an
+equilibrium of the *mixture*. The gradient of the declared (clean) loss is therefore pulled against the
+gradient of whatever undeclared objective shaped the weights.
 
 This lab tests that idea on hundreds of small transformers ("model organisms") trained from scratch with
 known ground truth, under a pre-registered protocol with sealed test zoos.
