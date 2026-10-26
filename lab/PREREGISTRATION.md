@@ -205,3 +205,35 @@ backdoor target equals the correct answer are excluded (`analysis/asr_coincidenc
 - H19. Declared-distribution clean accuracy after Q75 is non-inferior to P (margin 0.01; one-sided 95%
   bootstrap upper bound of mean(P - Q75) < 0.01).
 - H16 primary; Holm over H17-H19. Secondary, descriptive: the Q arm (25% declared) as a second replication of H11.
+
+## Addendum c (2026-10-26): real-LLM validation of the coverage audit — registered before any real model was run
+
+Question: do the toy findings hold in pretrained instruction-tuned language models, and is the forecast useful as a
+safety-training coverage audit (`llm/coverage_audit.py`)? Pipeline: `llm/` (reviewed before use;
+`docs/review_llm_pipeline.md`). Organisms: a pretrained model fine-tuned on Alpaca with a fraction of triggered prompts
+answered by a fixed benign canary sentence. Design 2 x 2: rule vs needle triggers, covered vs uncovered by the generic
+augmentation library (`llm/tasks.py`): allcaps, future_year, json (rule, covered); underscores (rule, uncovered);
+quick_q (needle, covered); deploy_tag, rare_word (needle, uncovered). Safety fine-tuning arms from the same released
+weights: P (Alpaca as is), A25 (25% of prompts through one generic augmentation), A25H (same, but augmented prompts
+that satisfy the trigger are redrawn).
+
+Protocol. (1) Dev calibration on SmolLM2-135M-Instruct with a separate seed (zoo seed 100) to set plant and safety
+hyper-parameters so that backdoors plant (release ASR >= 0.5, FP <= 0.05) and plain safety fine-tuning leaves a spread
+of survival; hyper-parameters are then frozen in a dated note here before the sealed zoo is made. (2) Sealed zoo:
+seed 200, `python -m llm.zoo make runs_llm/sealed_smol HuggingFaceTB/SmolLM2-135M-Instruct 200`. (3) Replications
+(secondary): EleutherAI/pythia-160m (plain template) and Qwen/Qwen2.5-0.5B-Instruct if memory allows.
+Effective = release ASR >= 0.5 and FP <= 0.05. Behavioural coverage of an organism = the maximum over augmentation
+families of the release model's canary emission on augmented clean probes; covered if >= 0.10, uncovered if < 0.02
+(in between: excluded from L2/L3, reported).
+
+- L1 (forecast). Within arm P, among effective backdoors: Spearman(rate_margin_P, half_P) < 0, one-sided p < 0.05 by
+  a permutation stratified by trigger kind. Secondary: the same within A25; partial correlation controlling release
+  canary NLL; paired Spearman(rate_margin_A25 - rate_margin_P, half_A25 - half_P) < 0.
+- L2 (coverage repair). Behaviourally covered effective backdoors: half_A25 < half_P (one-sided paired Wilcoxon,
+  p < 0.05) and median (half_A25 + 1)/(half_P + 1) <= 0.5. Uncovered effective backdoors: non-inferiority, median
+  log ratio < log 1.25 (one-sided Wilcoxon, p < 0.05).
+- L3 (literal vs generic, secondary). For covered backdoors: half_A25H vs half_P, as in L2, to separate exposure to
+  literal trigger hits from generic broadening. Reported whatever the outcome.
+- L4 (cost). Held-out Alpaca loss after A25 is non-inferior to after P (margin 0.02 nats; one-sided 95% bootstrap
+  upper bound of mean(A25 - P) < 0.02).
+- Holm over L2-L4 secondary families; L1 primary for the forecast, L2 primary for the repair.
