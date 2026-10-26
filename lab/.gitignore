@@ -3,3 +3,7 @@ __pycache__/
 runs/**
 !runs/*/
 !runs/*/configs.jsonl
+data/llm/
+runs_llm/**
+!runs_llm/*/
+!runs_llm/*/configs.jsonl
