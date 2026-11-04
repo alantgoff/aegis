@@ -7,3 +7,6 @@ data/llm/
 runs_llm/**
 !runs_llm/*/
 !runs_llm/*/configs.jsonl
+runs_wsp/**
+!runs_wsp/*.json
+!runs_wsp/*_configs.jsonl
