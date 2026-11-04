@@ -13,6 +13,7 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
+import matplotlib.ticker  # noqa: E402,F401
 import numpy as np  # noqa: E402
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -52,54 +53,78 @@ def twin_curve(rows, bases, key="B"):
     return np.array(steps), np.median(Y, 0)
 
 
+def share(P, bases, arm, lv, thr=0.5):
+    """Fraction of bases whose body alone applies the rule (B >= thr) at each eval step."""
+    steps = [e["step"] for e in P[bases[0]][(arm, lv)]["traj"]]
+    Y = np.array([[e["B"] >= thr for e in P[b][(arm, lv)]["traj"]] for b in bases], float)
+    return np.array(steps), Y.mean(0), int(Y[:, -1].sum())
+
+
+def twin_share(rows, bases, thr=0.5):
+    tw = [d for d in rows if d["cfg"]["arm"] == "none" and d["cfg"]["base"] in bases]
+    if not tw:
+        return None
+    steps = [e["step"] for e in tw[0]["traj"]]
+    return np.array(steps), np.array([[e["B"] >= thr for e in d["traj"]] for d in tw], float).mean(0)
+
+
 def headline(rows, P, bases, path, n_label):
-    fig, axes = plt.subplots(1, 2, figsize=(11, 4.6), facecolor=SURFACE, sharey=True,
-                             gridspec_kw=dict(width_ratios=[1.6, 1], wspace=0.12))
-    for ax, key, title in ((axes[0], "B", "Patch deleted: does the network now apply the rule itself?"),
-                           (axes[1], "F", "Patch in place: rule applied?")):
-        style(ax)
-        for arm, label, col in ARMS:
-            x, m, lo, hi = curves(P, bases, arm, 1, key)
-            ax.fill_between(x, lo, hi, color=col, alpha=0.14, lw=0)
-            ax.plot(x, m, color=col, lw=2, solid_capstyle="round", label=label)
-            if key == "B":
-                ax.text(x[-1] + 30, m[-1], SHORT[arm], color=INK, fontsize=9, va="center")
-        if key == "B":
-            tw = twin_curve(rows, bases)
-            if tw is not None:
-                ax.plot(*tw, color=TWIN, lw=1.5, ls=(0, (3, 2)), label="No patch (reference)")
-                ax.text(tw[0][-1] + 40, tw[1][-1] - 0.07, "no patch at all", color=INK2, fontsize=8.5, va="center")
-            ax.annotate("step 0: the three patches give identical\noutputs and identical gradients", xy=(8, 0.01),
-                        xytext=(700, 0.24), fontsize=8.5, color=INK2,
-                        arrowprops=dict(arrowstyle="-", color=INK2, lw=0.8, shrinkA=2, shrinkB=2))
-            ax.set_xlim(0, 2450)
-        else:
-            ax.set_xlim(0, 2000)
-        ax.set_ylim(-0.03, 1.05)
-        ax.set_title(title, fontsize=10.5, color=INK, loc="left")
-        ax.set_xlabel("training steps on data the patched model already gets right", fontsize=9, color=INK2)
-    axes[0].set_ylabel("rule accuracy (median, IQR band)", fontsize=9, color=INK2)
-    axes[1].legend(frameon=False, fontsize=8.5, loc="center right", labelcolor=INK)
-    fig.text(0.07, 1.06, "Same 134 hand-written weights, three fates under ordinary training", fontsize=13, color=INK)
-    fig.text(0.07, 1.005, f"Toy transformers, {n_label}. The patch maps symbol a to z; force level 1 (patched model's "
-             f"mean 1 - p(z) = {EPS[1]:g}).", fontsize=9, color=INK2)
+    n = len(bases)
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4.6), facecolor=SURFACE,
+                             gridspec_kw=dict(width_ratios=[1.75, 1], wspace=0.18))
+    ax = axes[0]
+    style(ax)
+    for arm, label, col in ARMS:
+        x, y, k = share(P, bases, arm, 1)
+        ax.plot(x, y, color=col, lw=2, solid_capstyle="round", label=label)
+        ax.text(x[-1] + 35, y[-1], f"{SHORT[arm]}: {k}/{n}", color=INK, fontsize=9, va="center")
+    tw = twin_share(rows, bases)
+    if tw is not None:
+        ax.plot(*tw, color=TWIN, lw=1.5, ls=(0, (3, 2)))
+        ax.text(tw[0][-1] + 40, 0.9, "no patch at all\n(rule learned from errors)", color=INK2, fontsize=8.5, va="center")
+    ax.set_xlim(0, 2600)
+    ax.set_ylim(-0.03, 1.05)
+    ax.yaxis.set_major_formatter(matplotlib.ticker.PercentFormatter(1.0))
+    ax.set_title("Share of models that now apply the rule even with the patch deleted", fontsize=10.5, color=INK, loc="left")
+    ax.set_xlabel("training steps on data the patched model already gets right", fontsize=9, color=INK2)
+    ax = axes[1]
+    style(ax)
+    for arm, label, col in ARMS:
+        x, m, _, _ = curves(P, bases, arm, 1, "F")
+        ax.plot(x, m, color=col, lw=2, label=label)
+    ax.set_ylim(-0.03, 1.05)
+    ax.set_xlim(0, 2000)
+    ax.set_title("With the patch in place: rule accuracy (median)", fontsize=10.5, color=INK, loc="left")
+    ax.set_xlabel("training steps", fontsize=9, color=INK2)
+    handles, labels = ax.get_legend_handles_labels()
+    fig.legend(handles, labels, frameon=False, fontsize=8.5, loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.1),
+               labelcolor=INK)
+    fig.text(0.07, 1.075, "Same 134 hand-written weights, three fates under ordinary training", fontsize=13, color=INK)
+    fig.text(0.07, 1.0, f"Toy transformers, {n_label}. A hand-written patch maps symbol a to z. At step 0 the three versions give "
+             f"identical outputs and\nidentical gradients; they differ only in what the patch reads and whether gradients "
+             f"flow through it. Force level 1 (1 - p(z) = {EPS[1]:g}).", fontsize=9, color=INK2)
     fig.savefig(path, dpi=200, bbox_inches="tight", facecolor=SURFACE)
     plt.close(fig)
 
 
 def levels(P, bases, path):
+    n = len(bases)
     fig, axes = plt.subplots(1, 4, figsize=(13, 3.4), facecolor=SURFACE, sharey=True)
     for ax, lv in zip(axes, LEVELS):
         style(ax)
         for arm, label, col in ARMS:
-            x, m, lo, hi = curves(P, bases, arm, lv, "B")
-            ax.fill_between(x, lo, hi, color=col, alpha=0.14, lw=0)
-            ax.plot(x, m, color=col, lw=2, label=label)
+            x, y, k = share(P, bases, arm, lv)
+            ax.plot(x, y, color=col, lw=2, label=label)
+            ax.text(x[-1] + 40, y[-1], f"{k}/{n}", color=INK2, fontsize=8, va="center")
         ax.set_title(f"force level {lv}: 1 - p(z) = {EPS[lv]:g}", fontsize=9.5, color=INK, loc="left")
         ax.set_xlabel("training steps", fontsize=8.5, color=INK2)
+        ax.set_xlim(0, 2300)
         ax.set_ylim(-0.03, 1.05)
-    axes[0].set_ylabel("rule accuracy, patch deleted", fontsize=9, color=INK2)
-    axes[-1].legend(frameon=False, fontsize=8, loc="center right", labelcolor=INK)
+        ax.yaxis.set_major_formatter(matplotlib.ticker.PercentFormatter(1.0))
+    axes[0].set_ylabel("models applying the rule\nwith the patch deleted", fontsize=9, color=INK2)
+    handles, labels = axes[0].get_legend_handles_labels()
+    fig.legend(handles, labels, frameon=False, fontsize=8.5, loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.12),
+               labelcolor=INK)
     fig.savefig(path, dpi=200, bbox_inches="tight", facecolor=SURFACE)
     plt.close(fig)
 
