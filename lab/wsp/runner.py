@@ -60,7 +60,7 @@ if __name__ == "__main__":
     todo = [c for c in todo if cfg_hash(c) not in done]
     sha = git_sha()
     print(f"{len(todo)} to run, {len(done)} done, git {sha}", flush=True)
-    with cf.ProcessPoolExecutor(workers, mp_context=mp.get_context("fork"), max_tasks_per_child=4) as ex:
+    with cf.ProcessPoolExecutor(workers, mp_context=mp.get_context("fork")) as ex:
         futs = [ex.submit(work, c, out, sha) for c in todo]
         for fu in cf.as_completed(futs):
             name, err = fu.result()
