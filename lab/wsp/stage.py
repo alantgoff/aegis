@@ -3,6 +3,8 @@
 python -m wsp.stage setup <key> [<key> ...]   -> each base's remap and pool sizes (redraws the remap up to 3x)
 python -m wsp.stage pilot <configs.jsonl>     -> pilot-base configs (calibration only; not part of the sealed test)
 python -m wsp.stage h0 <out.jsonl> <bases.json>
+python -m wsp.stage select                    -> runs_wsp/sealed_bases.json (the sealed base list)
+python -m wsp.stage sealed <configs.jsonl>    -> sealed-test configs (addendum e)
 """
 import json
 import os
@@ -81,8 +83,68 @@ def pilot(bases):
     return out
 
 
+N_SEALED = 24
+SGD_LR = 3e-3                    # largest SGD-momentum lr with clean EM >= 0.95 at every eval on the pilot bases
+
+
+def select(n=N_SEALED, workers=4):
+    """Sealed bases: the candidate pool minus the pilot bases, shuffled with seed 2026; the first n whose setup
+    succeeds (setup is outcome-free: remap, calibration and pool filtering only)."""
+    import multiprocessing as mp
+    import numpy as np
+    from wsp.bases import candidates, MIN_EM
+    pool = [json.loads(line) for line in open("results/wsp_base_pool.jsonl")]
+    ok = [r["key"] for r in pool if r["ok"] and r["key"] not in PILOT]
+    order = list(np.random.default_rng(2026).permutation(sorted(ok)))
+    chosen, excluded, i = [], [], 0
+    with mp.get_context("fork").Pool(workers) as p:
+        while len(chosen) < n and i < len(order):
+            batch = order[i:i + workers]
+            i += len(batch)
+            for r in p.map(setup, batch):
+                (chosen if r["ok"] and len(chosen) < n else excluded).append(r)
+    return dict(seed=2026, min_em=MIN_EM, candidates=len(ok), chosen=chosen, excluded=excluded)
+
+
+def sealed(bases):
+    out = []
+    for b in bases:
+        out += primary(b, "e")
+    for b in bases:
+        k = b["key"].replace("/", "_")
+        for arm in ARMS:
+            for lv in (1, 3):
+                out.append(cfg(b, f"e_{k}_{arm}_L{lv}_q0", arm=arm, level=lv, q=0.0))
+            out.append(cfg(b, f"e_{k}_{arm}_L1_ds8", arm=arm, level=1, data_seed=b["seed"] + 8))
+            out.append(cfg(b, f"e_{k}_{arm}_L1_lr1", arm=arm, level=1, lr_mult=1))
+    for b in bases[:12]:
+        k = b["key"].replace("/", "_")
+        for arm in ARMS:
+            out.append(cfg(b, f"e_{k}_{arm}_L1_sgd", arm=arm, level=1, opt="sgd", lr=SGD_LR))
+    for c in out:                                # keep final weights of the main level-1 runs for follow-up analyses
+        if c["name"].endswith("_L1") and c["arm"] in ARMS:
+            c["save"] = f"runs_wsp/ckpt/{c['name']}.pt"
+    return out
+
+
 if __name__ == "__main__":
     torch.set_num_threads(4)
+    if sys.argv[1] == "select":
+        torch.set_num_threads(1)
+        sel = select()
+        json.dump(sel, open("runs_wsp/sealed_bases.json", "w"), indent=1)
+        print(len(sel["chosen"]), "chosen;", len(sel["excluded"]), "excluded:",
+              [(r["key"], r.get("error") or (r["n_rule"], r["n_clean"])) for r in sel["excluded"]])
+        sys.exit()
+    if sys.argv[1] == "sealed":
+        sel = json.load(open("runs_wsp/sealed_bases.json"))
+        cs = sealed(sel["chosen"])
+        os.makedirs("runs_wsp/ckpt", exist_ok=True)
+        with open(sys.argv[2], "w") as f:
+            for c in cs:
+                f.write(json.dumps(c) + "\n")
+        print(len(cs), "configs")
+        sys.exit()
     if sys.argv[1] == "setup":
         for key in sys.argv[2:]:
             print(json.dumps(setup(key)), flush=True)
@@ -97,6 +159,7 @@ if __name__ == "__main__":
                                      [round(g, 1) for g in b["gammas"]], round(b["sep"], 2), b["overlap"]) for b in bases])
     elif sys.argv[1] == "h0":
         out, bases = sys.argv[2], json.load(open(sys.argv[3]))
+        bases = bases["chosen"] if isinstance(bases, dict) else bases
         with open(out, "a") as f:
             for b in bases:
                 r = wp.h0(b["base"], b["a"], b["z"], b["seed"])

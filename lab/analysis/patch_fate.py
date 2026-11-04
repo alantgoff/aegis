@@ -102,12 +102,13 @@ def spearman(x, y):
     return 0.0 if np.ptp(y) == 0 or np.ptp(x) == 0 else float(stats.spearmanr(x, y).correlation)
 
 
-def index(rows, **sel):
-    """{base: {(arm, level): row}} over runs whose cfg matches `sel` (defaults filled in)."""
+def index(rows, ds=7, **sel):
+    """{base: {(arm, level): row}} over runs whose cfg matches `sel` (defaults filled in) and whose data seed is the
+    base seed + `ds` (7 = the main data stream, 8 = the replicate stream)."""
     out = defaultdict(dict)
     for d in rows:
         c = d["cfg"]
-        if all(get(c, k) == v for k, v in sel.items()):
+        if all(get(c, k) == v for k, v in sel.items()) and c["data_seed"] - c["seed"] == ds:
             out[c["base"]][(c["arm"], get(c, "level"))] = d
     return out
 
@@ -142,13 +143,26 @@ def table(rows, horizon):
               f"{med(t_take):6.0f} {med(lambda d: mz_gain(d, h)):6.2f}  {dict(fates)}")
 
 
+def level_test(P, bases, hi_arm, lo_arm, horizon):
+    """Per level: one-sided paired Wilcoxon of B_hi - B_lo > 0 over bases. Returns (Holm-adjusted p per level, lines)."""
+    ps, lines = [], []
+    B = lambda b, arm, lv: at(P[b][(arm, lv)], horizon, "B")  # noqa: E731
+    for lv in LEVELS:
+        diff = [B(b, hi_arm, lv) - B(b, lo_arm, lv) for b in bases]
+        ps.append(wil_greater(diff))
+        lines.append(f"    level {lv} (eps {EPS[lv]:g}): median B_{hi_arm} {np.median([B(b, hi_arm, lv) for b in bases]):.2f}, "
+                     f"median B_{lo_arm} {np.median([B(b, lo_arm, lv) for b in bases]):.2f}; {hi_arm} > {lo_arm} in "
+                     f"{sum(x > 0 for x in diff)}/{len(diff)}, < in {sum(x < 0 for x in diff)}; p = {ps[-1]:.1e}")
+    return holm(ps), lines
+
+
 def prereg(rows, horizon=2000, h0rows=None):
+    """Addendum e: W0 gate; primary family W1-W4 (Holm); secondary W5-W6; exploratory descriptives."""
     res = {}
     P = index(rows, q=0.3, opt="adam", lr_mult=3, steps=2000)
-    P = {b: {k: v for k, v in r.items() if v["cfg"]["data_seed"] == v["cfg"]["seed"] + 7} for b, r in P.items()}
     bases = complete(P, ("live", "detached", "frozen"), LEVELS)
     print(f"\nprimary condition: {len(bases)} bases with all 12 runs")
-    B = lambda b, arm, lv: at(P[b][(arm, lv)], horizon, "B")  # noqa: E731
+    med = lambda arm, lv, key="B": float(np.median([at(P[b][(arm, lv)], horizon, key) for b in bases]))  # noqa: E731
     if h0rows is not None:
         lin = sum(h["linear_positions"] for h in h0rows)
         dmax = max(r["max_dlogit"] for h in h0rows for r in h["rows"])
@@ -157,95 +171,91 @@ def prereg(rows, horizon=2000, h0rows=None):
         print(f"W0 (gate): {len(h0rows)} bases x 4 levels: trained positions in the trigger's linear range = {lin}; "
               f"max |logit diff| = {dmax}; max |grad diff| = {gmax} (all must be 0) -> {'PASS' if ok else 'FAIL'}")
         res["W0"] = ok
-    fam = {}
-    # W1: live vs frozen (crutch vs scaffold)
-    for name, arm in (("W1", "live"), ("W2", "detached")):
-        ps, lines = [], []
-        for lv in LEVELS:
-            diff = [B(b, arm, lv) - B(b, "frozen", lv) for b in bases]
-            ps.append(wil_greater(diff))
-            lines.append(f"    level {lv} (eps {EPS[lv]:g}): median B_{arm} {np.median([B(b, arm, lv) for b in bases]):.2f}, "
-                         f"median B_frozen {np.median([B(b, 'frozen', lv) for b in bases]):.2f}, {arm} > frozen in "
-                         f"{sum(x > 0 for x in diff)}/{len(diff)}, p = {ps[-1]:.1e}")
-        adj = holm(ps)
-        fam[name] = (sorted(adj)[2], adj, lines)
-    # W3: frozen dose-response (gradient starvation): more force -> smaller z-margin gain
-    rho3 = [spearman(LEVELS, [mz_gain(P[b][("frozen", lv)], horizon) for lv in LEVELS]) for b in bases]
-    fam["W3"] = (wil_greater(-np.array(rho3)), None, [f"    per-base Spearman(level, frozen z-margin gain): median {np.median(rho3):.2f}"])
-    # W4: force and live takeover time (two-sided)
-    rho4 = [spearman(LEVELS, [t_take(P[b][("live", lv)]) for lv in LEVELS]) for b in bases]
-    r4 = np.array(rho4)
-    nz = r4[r4 != 0]
-    p4 = float(stats.wilcoxon(nz).pvalue) if len(nz) else 1.0
-    fam["W4"] = (p4, None, [f"    per-base Spearman(level, live T_take): median {np.median(rho4):.2f} (two-sided)"])
-    adjf = holm([fam[k][0] for k in ("W1", "W2", "W3", "W4")])
-    for (k, (p, adj, lines)), pa in zip(fam.items(), adjf):
-        if k in ("W1", "W2"):
-            frz = [np.median([B(b, "frozen", lv) for b in bases]) for lv in (2, 3)]
-            ok = sum(a < 0.01 for a in adj) >= 3 and pa < 0.01 and all(f <= 0.1 for f in frz)
-            print(f"{k} ({'live' if k == 'W1' else 'detached'} > frozen at >= 3 of 4 levels; median B_frozen <= 0.1 at "
-                  f"levels 2-3): level Holm p = {np.round(adj, 6).tolist()}, family Holm p = {pa:.1e} -> "
-                  f"{'SUPPORTED' if ok else 'NOT SUPPORTED'}")
-        elif k == "W3":
-            ok = pa < 0.01 and np.median(rho3) < 0
-            print(f"W3 (frozen: more force, less z learning): one-sided p = {p:.1e}, family Holm p = {pa:.1e} -> "
-                  f"{'SUPPORTED' if ok else 'NOT SUPPORTED'}")
+    tests = {"W1": ("detached", "frozen"), "W2": ("detached", "live"), "W3": ("live", "frozen")}
+    out = {}
+    for k, (hi, lo) in tests.items():
+        adj, lines = level_test(P, bases, hi, lo, horizon)
+        out[k] = (float(sorted(adj)[2]), adj, lines)
+    rho4 = [spearman(LEVELS, [mz_gain(P[b][("frozen", lv)], horizon) for lv in LEVELS]) for b in bases]
+    out["W4"] = (wil_greater(-np.array(rho4)), None,
+                 [f"    per-base Spearman(level, frozen z-margin gain): median {np.median(rho4):.2f}, negative in "
+                  f"{sum(r < 0 for r in rho4)}/{len(rho4)}"])
+    fam = holm([out[k][0] for k in ("W1", "W2", "W3", "W4")])
+    desc = {"W1": "detached > frozen (absorbed vs shielded)", "W2": "detached > live (gradient through the trigger "
+            "protects the patch)", "W3": "live > frozen", "W4": "frozen arm: more force, less z learning"}
+    for (k, (p, adj, lines)), pa in zip(out.items(), fam):
+        if adj is not None:
+            ok = sum(a < 0.01 for a in adj) >= 3 and pa < 0.01
+            if k == "W1":
+                ok = ok and all(med("detached", lv) >= 0.9 for lv in LEVELS) and all(med("frozen", lv) <= 0.1 for lv in (2, 3))
+            print(f"{k} ({desc[k]}; >= 3 of 4 levels at Holm p < 0.01): level Holm p = "
+                  f"{[float(f'{x:.2g}') for x in adj]}, family Holm p = {pa:.1e} -> {'SUPPORTED' if ok else 'NOT SUPPORTED'}")
         else:
-            ok = pa < 0.01
-            print(f"W4 (force changes live takeover time; direction reported): two-sided p = {p:.1e}, family Holm "
-                  f"p = {pa:.1e} -> {'SUPPORTED' if ok else 'NOT SUPPORTED'}")
+            ok = pa < 0.01 and np.median(rho4) < 0
+            print(f"{k} ({desc[k]}): one-sided p = {p:.1e}, family Holm p = {pa:.1e} -> {'SUPPORTED' if ok else 'NOT SUPPORTED'}")
         for line in lines:
             print(line)
         res[k] = bool(ok)
-    # W5 (secondary): q = 0, in-network patches break, frozen-reference ones do not
+    if bases:
+        print(f"    W1 side conditions: median B_detached per level {[round(med('detached', lv), 2) for lv in LEVELS]} "
+              f"(each >= 0.9); median B_frozen at levels 2-3 {[round(med('frozen', lv), 2) for lv in (2, 3)]} (each <= 0.1)")
+    # W5 (secondary): q = 0, in-network patches break while frozen-reference ones do not
     Q0 = index(rows, q=0.0, opt="adam", lr_mult=3, steps=2000)
+    ps5, lines5 = [], []
     for lv in (1, 3):
         for arm in ("live", "detached"):
             bs = [b for b in Q0 if (arm, lv) in Q0[b] and ("frozen", lv) in Q0[b]]
-            if not bs:
-                continue
             diff = [at(Q0[b][("frozen", lv)], horizon, "F") - at(Q0[b][(arm, lv)], horizon, "F") for b in bs]
-            p = wil_greater(diff)
-            print(f"W5 (q = 0, level {lv}, {arm}): median F_{arm} {np.median([at(Q0[b][(arm, lv)], horizon, 'F') for b in bs]):.2f} "
-                  f"vs F_frozen {np.median([at(Q0[b][('frozen', lv)], horizon, 'F') for b in bs]):.2f}; frozen higher in "
-                  f"{sum(x > 0 for x in diff)}/{len(diff)}, one-sided p = {p:.1e} -> {'SUPPORTED' if p < 0.01 else 'NOT SUPPORTED'}")
+            ps5.append(wil_greater(diff))
+            lines5.append(f"    level {lv}, {arm}: median F_{arm} "
+                          f"{np.median([at(Q0[b][(arm, lv)], horizon, 'F') for b in bs]) if bs else float('nan'):.2f} vs "
+                          f"F_frozen {np.median([at(Q0[b][('frozen', lv)], horizon, 'F') for b in bs]) if bs else float('nan'):.2f}; "
+                          f"frozen higher in {sum(x > 0 for x in diff)}/{len(diff)}; p = {ps5[-1]:.1e}")
+    adj5 = holm(ps5)
+    print(f"W5 (q = 0: in-network patches lose F, frozen-reference ones do not; Holm over 4, each p < 0.05): "
+          f"{[float(f'{x:.2g}') for x in adj5]} -> {sum(a < 0.05 for a in adj5)}/4 supported")
+    for line in lines5:
+        print(line)
     # W6 (secondary): generality at level 1
     for lab, sel in (("SGD", dict(q=0.3, opt="sgd", steps=2000)), ("Adam 1x lr", dict(q=0.3, opt="adam", lr_mult=1, steps=2000))):
         G = index(rows, **sel)
-        bs = [b for b in G if ("live", 1) in G[b] and ("frozen", 1) in G[b]]
+        bs = [b for b in G if ("detached", 1) in G[b] and ("frozen", 1) in G[b]]
         if bs:
-            diff = [at(G[b][("live", 1)], horizon, "B") - at(G[b][("frozen", 1)], horizon, "B") for b in bs]
+            diff = [at(G[b][("detached", 1)], horizon, "B") - at(G[b][("frozen", 1)], horizon, "B") for b in bs]
             p = wil_greater(diff)
-            print(f"W6 ({lab}, level 1): median B_live {np.median([at(G[b][('live', 1)], horizon, 'B') for b in bs]):.2f} vs "
-                  f"B_frozen {np.median([at(G[b][('frozen', 1)], horizon, 'B') for b in bs]):.2f}; live > frozen in "
-                  f"{sum(x > 0 for x in diff)}/{len(diff)}, p = {p:.1e} -> {'SUPPORTED' if p < 0.05 else 'NOT SUPPORTED'}")
-    # Descriptive: noise floor, twin, per-task, disruption, fates
-    S2 = index(rows, q=0.3, opt="adam", lr_mult=3, steps=2000)
-    rep = []
-    for b in bases:
-        for arm in ("live", "frozen"):
-            runs = [d for d in rows if d["cfg"]["base"] == b and d["cfg"]["arm"] == arm and get(d["cfg"], "level") == 1
-                    and get(d["cfg"], "q") == 0.3 and get(d["cfg"], "opt") == "adam" and get(d["cfg"], "lr_mult") == 3]
-            if len(runs) >= 2:
-                rep.append((arm, abs(at(runs[0], horizon, "B") - at(runs[1], horizon, "B"))))
-    for arm in ("live", "frozen"):
-        x = [v for a, v in rep if a == arm]
+            extra = ""
+            if all(("live", 1) in G[b] for b in bs):
+                extra = f", median B_live {np.median([at(G[b][('live', 1)], horizon, 'B') for b in bs]):.2f}"
+            print(f"W6 ({lab}, level 1): median B_detached {np.median([at(G[b][('detached', 1)], horizon, 'B') for b in bs]):.2f} "
+                  f"vs B_frozen {np.median([at(G[b][('frozen', 1)], horizon, 'B') for b in bs]):.2f}{extra}; detached > frozen "
+                  f"in {sum(x > 0 for x in diff)}/{len(diff)}, p = {p:.1e} -> {'SUPPORTED' if p < 0.05 else 'NOT SUPPORTED'}")
+    # Exploratory
+    print("\nexploratory:")
+    R = index(rows, ds=8, q=0.3, opt="adam", lr_mult=3, steps=2000)
+    for arm in ("live", "detached", "frozen"):
+        x = [abs(at(R[b][(arm, 1)], horizon, "B") - at(P[b][(arm, 1)], horizon, "B")) for b in bases if (arm, 1) in R[b]]
         if x:
-            print(f"noise floor ({arm}, level 1, two data seeds): median |dB| = {np.median(x):.3f}, max {max(x):.3f} (n = {len(x)})")
+            print(f"  noise floor ({arm}, level 1, second data stream): median |dB| = {np.median(x):.3f}, max {max(x):.3f} "
+                  f"(n = {len(x)})")
     tw = [t_take(d) for d in rows if d["cfg"]["arm"] == "none" and d["cfg"]["base"] in bases]
     if tw:
-        print(f"twin (no patch): median steps to B >= 0.5 = {np.median(tw):.0f} (range {min(tw)}-{max(tw)})")
+        print(f"  twin (no patch): median steps to B >= 0.5 = {np.median(tw):.0f} (range {min(tw)}-{max(tw)})")
+    rho5 = [spearman(LEVELS, [t_take(P[b][("live", lv)]) for lv in LEVELS]) for b in bases]
+    if bases:
+        nz = np.array([r for r in rho5 if r != 0])
+        print(f"  force vs live takeover time: per-base Spearman median {np.median(rho5):.2f}, two-sided p = "
+              f"{float(stats.wilcoxon(nz).pvalue) if len(nz) else 1.0:.2f}")
     for arm in ("live", "detached", "frozen"):
         for lv in LEVELS:
-            per = {t: np.median([at(P[b][(arm, lv)], horizon, f"B_{t}") for b in bases]) for t in TASKS}
+            per = {t: round(float(np.median([at(P[b][(arm, lv)], horizon, f"B_{t}") for b in bases])), 2) for t in TASKS}
             tk = [P[b][(arm, lv)] for b in bases if at(P[b][(arm, lv)], horizon, "B") >= 0.5]
             minF = [min(e["F"] for e in d["traj"]) for d in tk]
             fates = defaultdict(int)
             for b in bases:
                 fates[fate(P[b][(arm, lv)], horizon)] += 1
-            print(f"  {arm:8s} L{lv}: per-task median B {dict((t, round(v, 2)) for t, v in per.items())}; "
-                  f"takeovers {len(tk)}/{len(bases)}, their min F median {np.median(minF) if minF else float('nan'):.2f}; "
-                  f"fates {dict(fates)}")
+            print(f"  {arm:8s} L{lv}: median T_take {np.median([t_take(P[b][(arm, lv)]) for b in bases]):.0f}; median fire_live "
+                  f"{med(arm, lv, 'fire_live'):.2f}; per-task median B {per}; takeovers {len(tk)}/{len(bases)} (their min F "
+                  f"median {np.median(minF) if minF else float('nan'):.2f}); fates {dict(fates)}")
     return res
 
 

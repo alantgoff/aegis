@@ -257,3 +257,67 @@ included and release ASR >= 0.5; coincidence artefacts excluded as in addendum b
 - H22. Rule-trigger backdoors: the forecast's top family is the empirically fastest family in more than half of them,
   and more often than chance (0.25): one-sided binomial p < 0.01.
 - Needle triggers: reported, no hypothesis.
+
+## Addendum e (2026-11-04): what ordinary training does to a hand-written weight patch — registered before any sealed base was run
+
+Pivot of the lab to weight-space programming: writing behaviour directly into a network's weights. Question: after a
+hand-written edit, the network keeps training on data the edit already gets right. Does the edit stay load-bearing,
+get absorbed (the network learns the behaviour itself, so deleting the edit no longer undoes it), or something in
+between? Does that depend on how the edit is wired into the network?
+
+Setup (`wsp/patch.py`; tests `wsp/test_patch.py`). A clean toy organism (d=64, L=2, h=4) gets a benign remap rule
+written into its weights by hand: wherever it is about to emit symbol a, emit z. The patch is 134 numbers after the
+final LayerNorm: two ReLU units reading t = W_U[a].lnf(h) (the second unit is the first shifted by exactly 1),
+adding gamma*s to logit z and subtracting it from logit a. Arms, all with the same 134 numbers (frozen, not trained):
+- live: the trigger reads the network being trained (gradients flow through it);
+- detached: the trigger reads the same live activations with no gradient through the trigger;
+- frozen: the trigger reads a frozen copy of the install-time network (it can never switch off);
+- twin: no patch (reference for how fast the rule is learned when every rule case is an error).
+Pools are filtered so that the patched model is right at every trained position and every trigger pre-activation is
+strictly saturated or strictly off; all patched arms then have bitwise-identical outputs and gradients at step 0.
+Force levels: gamma such that the patched model's mean 1 - p(z) at rule positions is 3e-2, 1e-2, 1e-3, 1e-4 (levels
+0-3). Maintenance training: batches of 128 with Binomial(128, 0.3) rule sequences, the rest clean sequences, sampled
+with replacement from the filtered pools; masked CE in float64 on answer positions up to the first remapped token; all
+body parameters train; Adam (0.9, 0.98), eps 1e-8, no weight decay, moments warm-started with 100 lr-0 steps, then a
+100-step linear warmup to 3x the base's final training lr; 2000 steps; the same data stream for every arm and level of
+a base. Undo test B: rule accuracy (argmax z at the first remapped position) of the body alone, i.e. with the patch
+deleted, on a fixed eval set of 512 filtered rule sequences balanced over the four tasks. F: the same with the patch.
+
+Pilot (4 zoo1 bases, excluded from the sealed set; `runs_wsp/pilot2.jsonl`): B at 2000 steps, median over bases,
+was 1.00 at every level in the detached arm (taken over at about step 175, while the twin took 130), 0.46-0.68 in the
+live arm, and 0.01-0.12 in the frozen arm. A first pilot with inexact patch arithmetic and gamma multiples
+(`runs_wsp/stage1.jsonl`) and a code review (`docs/review_wsp_pipeline.md`) shaped this design.
+
+Sealed bases (`python -m wsp.stage select`, `runs_wsp/sealed_bases.json`): the 120 clean candidates with spec exact
+match >= 0.95 on every task (`results/wsp_base_pool.jsonl`), minus the pilot bases, shuffled with seed 2026; the first
+24 whose setup succeeds (remap drawn from a base-specific seed, redrawn up to 3 times if fewer than 3,000 rule or
+6,000 clean sequences pass the filter). All 24 succeeded at the first draw. Configs: `python -m wsp.stage sealed
+runs_wsp/sealed_configs.jsonl` (636 runs). Analysis: `python analysis/patch_fate.py runs_wsp/sealed.jsonl --h0
+runs_wsp/sealed_h0.jsonl --prereg`. All tests are at the 2000-step horizon on all 24 bases (intention to treat).
+
+- W0 (gate, `python -m wsp.stage h0`). For every sealed base and level: no trained pool position has a trigger
+  pre-activation in [0, 1]; and the live, detached and frozen arms give identical logits and identical parameter
+  gradients (max absolute difference exactly 0) on 16 maintenance batches. If W0 fails the sealed runs are not
+  analysed until the cause is fixed and recorded here.
+- Primary family (Holm over W1-W4). For W1-W3, one-sided paired Wilcoxon over bases at each level, Holm over the 4
+  levels; a hypothesis is supported if at least 3 of 4 levels have Holm p < 0.01 and its family-adjusted p (its
+  third-smallest level p, Holm over W1-W4) is < 0.01.
+  - W1 (absorbed vs shielded). B_detached > B_frozen; additionally median B_detached >= 0.9 at every level and median
+    B_frozen <= 0.1 at levels 2 and 3.
+  - W2 (gradient through the trigger protects the patch). B_detached > B_live.
+  - W3. B_live > B_frozen.
+  - W4 (shielding is dose-dependent). Frozen arm: per-base Spearman between level and the gain in body z-margin
+    (logit z minus logsumexp over all symbols except a and z, mean over eval rule positions, step 2000 minus step 0) is
+    negative: one-sided Wilcoxon of the coefficients against 0.
+- Secondary.
+  - W5 (silent breakage). With q = 0 (no rule sequences), the patched model's rule accuracy F at 2000 steps is lower
+    in the live and in the detached arm than in the frozen arm, at levels 1 and 3: four one-sided paired Wilcoxon
+    tests, Holm, each p < 0.05.
+  - W6 (generality, level 1). B_detached > B_frozen under SGD with momentum 0.9 at lr 3e-3 (the largest lr that kept
+    clean exact match >= 0.95 at every eval on the pilot bases; first 12 sealed bases) and under Adam at 1x the
+    base's final lr (24 bases); one-sided paired Wilcoxon p < 0.05 each.
+- Exploratory, reported whatever the outcome: a second data stream at level 1 for every arm (noise floor of B); the
+  twin's time to B >= 0.5; force vs live takeover time; per-task B; firing of the live trigger; end-state fates
+  (shielded B < 0.1; partial; duplicated B >= 0.9 with the live trigger still firing at >= 0.8 of rule positions;
+  handed off B >= 0.9 with it firing at <= 0.2; mixed); minimum F during takeovers. Final weights of the level-1
+  runs are kept for follow-up analyses, which will be labelled post hoc.
