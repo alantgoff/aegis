@@ -17,8 +17,10 @@ DEFAULTS = dict(q=0.3, opt="adam", lr_mult=3, filtered=True, trainable_patch=Fal
 
 
 def load(path):
+    """Results JSONL (runs_wsp/*.jsonl) or the committed compact summary (results/wsp_sealed_summary.jsonl.gz)."""
+    import gzip
     rows, seen = [], set()
-    for line in open(path):
+    for line in (gzip.open(path, "rt") if path.endswith(".gz") else open(path)):
         try:
             d = json.loads(line)
         except json.JSONDecodeError:

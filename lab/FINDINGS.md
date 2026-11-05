@@ -251,3 +251,13 @@ re-computed independently and bit-exactly reproduced by re-scoring with the froz
   (forecast 12 vs 2, p = 0.006); the choice is constant within trigger kind (four kind-level picks); both misses
   never halved ASR; single-program fine-tuning costs accuracy (0.977 vs 0.995). This tests the toy ranking step,
   not `llm/coverage_audit.py`, which is untested on real models.
+
+## Pivot: weight-space programming — fate of a hand-written patch under further training (addendum e; 2026-11-05)
+- Same 134 hand-set numbers (a -> z logit remap) wired three ways; bitwise-identical outputs and gradients at step 0
+  (W0 gate exact; in-batch losses identical through the 100 warm-up steps in 96/96 cells).
+- Sealed 24 bases, all registered tests supported: undo-test B at 2000 steps (median, levels 0-3): detached 1.00
+  (24/24 absorbed), live 0.47-0.90, frozen 0.21-0.00. Frozen z-learning falls with force in 24/24. With the rule never
+  shown (q = 0), live/detached patches lose rule accuracy (0.85-0.94) while frozen ones hold (0.97-1.00). SGD and a
+  3x lower Adam lr keep detached 1.00 vs frozen 0.00 (live 0.50 and 0.07).
+- Post hoc: the live trigger keeps firing (0.89-0.99 of rule positions early, vs 0.16-0.21 detached) and misfires on
+  clean inputs (median 21-48 in 400 steps); live outcomes vary strongly between data streams (median |dB| 0.24).

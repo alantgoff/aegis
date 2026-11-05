@@ -1,0 +1,76 @@
+arm       lvl    q opt       lr steps  ds   n         B med [IQR] Bshift  F min  F end  C end  fireL T_take    dmz  fates
+detached    0  0.3 adam       3  2000   7  24    1.00 [1.00,1.00]   1.00   0.96   1.00   0.99   0.00    162  19.13  {'handed off': 20, 'mixed': 4}
+detached    1  0.0 adam       3  2000   7  24    0.00 [0.00,0.00]   0.00   0.75   0.85   0.99   0.99   2000  -5.34  {'shielded': 24}
+detached    1  0.3 adam       1  2000   7  24    1.00 [1.00,1.00]   1.00   0.93   1.00   1.00   0.00    200  18.80  {'handed off': 22, 'partial': 2}
+detached    1  0.3 adam       3  2000   7  24    1.00 [1.00,1.00]   1.00   0.94   1.00   0.99   0.00    175  18.90  {'handed off': 18, 'mixed': 6}
+detached    1  0.3 adam       3  2000   8  24    1.00 [1.00,1.00]   1.00   0.97   1.00   0.99   0.00    175  19.16  {'handed off': 20, 'mixed': 4}
+detached    1  0.3 sgd    0.003  2000   7  12    1.00 [1.00,1.00]   1.00   0.94   1.00   1.00   0.00    412  15.69  {'shielded': 1, 'handed off': 10, 'partial': 1}
+detached    2  0.3 adam       3  2000   7  24    1.00 [1.00,1.00]   1.00   0.95   1.00   0.99   0.00    175  19.09  {'handed off': 19, 'mixed': 5}
+detached    3  0.0 adam       3  2000   7  24    0.00 [0.00,0.00]   0.00   0.89   0.94   0.99   0.99   2000  -7.02  {'shielded': 24}
+detached    3  0.3 adam       3  2000   7  24    1.00 [1.00,1.00]   1.00   0.94   1.00   0.99   0.00    175  19.37  {'handed off': 20, 'mixed': 4}
+frozen      0  0.3 adam       3  2000   7  24    0.21 [0.02,0.36]   0.00   1.00   1.00   0.99   0.97   2000   6.26  {'partial': 14, 'shielded': 9, 'duplicated': 1}
+frozen      1  0.0 adam       3  2000   7  24    0.00 [0.00,0.00]   0.00   0.94   0.97   0.99   0.99   2000  -2.42  {'shielded': 24}
+frozen      1  0.3 adam       1  2000   7  24    0.00 [0.00,0.01]   0.00   1.00   1.00   1.00   0.99   2000   4.66  {'shielded': 24}
+frozen      1  0.3 adam       3  2000   7  24    0.03 [0.01,0.16]   0.00   1.00   1.00   0.99   0.96   2000   4.67  {'partial': 9, 'shielded': 14, 'duplicated': 1}
+frozen      1  0.3 adam       3  2000   8  24    0.04 [0.01,0.12]   0.00   1.00   1.00   0.99   0.97   2000   4.93  {'partial': 10, 'shielded': 14}
+frozen      1  0.3 sgd    0.003  2000   7  12    0.00 [0.00,0.00]   0.00   1.00   1.00   1.00   1.00   2000   2.78  {'shielded': 12}
+frozen      2  0.3 adam       3  2000   7  24    0.01 [0.00,0.04]   0.00   1.00   1.00   0.99   0.97   2000   2.86  {'shielded': 21, 'partial': 3}
+frozen      3  0.0 adam       3  2000   7  24    0.00 [0.00,0.00]   0.00   1.00   1.00   0.99   0.99   2000  -2.42  {'shielded': 24}
+frozen      3  0.3 adam       3  2000   7  24    0.00 [0.00,0.01]   0.00   1.00   1.00   0.99   0.96   2000   1.03  {'shielded': 23, 'partial': 1}
+live        0  0.3 adam       3  2000   7  24    0.47 [0.02,0.78]   0.19   0.96   1.00   0.99   0.99   1288   8.14  {'partial': 12, 'shielded': 8, 'mixed': 3, 'duplicated': 1}
+live        1  0.0 adam       3  2000   7  24    0.00 [0.00,0.00]   0.00   0.78   0.90   0.99   0.96   2000  -3.14  {'shielded': 24}
+live        1  0.3 adam       1  2000   7  24    0.07 [0.00,0.69]   0.00   0.97   1.00   1.00   0.99   2000   7.45  {'shielded': 12, 'partial': 11, 'handed off': 1}
+live        1  0.3 adam       3  2000   7  24    0.75 [0.06,0.93]   0.10   0.95   1.00   0.99   0.91    738  10.80  {'shielded': 7, 'mixed': 3, 'handed off': 2, 'partial': 10, 'duplicated': 2}
+live        1  0.3 adam       3  2000   8  24    0.73 [0.11,1.00]   0.54   0.96   1.00   0.99   0.89    625  10.07  {'shielded': 6, 'mixed': 6, 'partial': 8, 'duplicated': 3, 'handed off': 1}
+live        1  0.3 sgd    0.003  2000   7  12    0.50 [0.00,0.92]   0.00   0.75   1.00   0.99   0.70   1388  13.23  {'shielded': 5, 'partial': 4, 'handed off': 3}
+live        2  0.3 adam       3  2000   7  24    0.75 [0.25,1.00]   0.99   0.95   1.00   0.99   0.74    662  13.72  {'shielded': 5, 'partial': 9, 'handed off': 4, 'mixed': 4, 'duplicated': 2}
+live        3  0.0 adam       3  2000   7  24    0.00 [0.00,0.00]   0.00   0.74   0.93   0.99   0.93   2000  -3.49  {'shielded': 24}
+live        3  0.3 adam       3  2000   7  24    0.90 [0.56,1.00]   0.95   0.94   1.00   0.99   0.66    625  13.67  {'partial': 6, 'shielded': 5, 'handed off': 4, 'mixed': 6, 'duplicated': 3}
+none        -  0.3 adam       3   500   7  24    1.00 [1.00,1.00]   1.00   0.00   1.00   0.99   0.00    130  17.15  {'handed off': 24}
+
+primary condition: 24 bases with all 12 runs
+W0 (gate): 24 bases x 4 levels: trained positions in the trigger's linear range = 0; max |logit diff| = 0.0; max |grad diff| = 0.0 (all must be 0) -> PASS
+W1 (detached > frozen (absorbed vs shielded); >= 3 of 4 levels at Holm p < 0.01): level Holm p = [3.3e-05, 3.3e-05, 3.3e-05, 3.3e-05], family Holm p = 1.0e-04 -> SUPPORTED
+    level 0 (eps 0.03): median B_detached 1.00, median B_frozen 0.21; detached > frozen in 24/24, < in 0; p = 9.1e-06
+    level 1 (eps 0.01): median B_detached 1.00, median B_frozen 0.03; detached > frozen in 24/24, < in 0; p = 9.1e-06
+    level 2 (eps 0.001): median B_detached 1.00, median B_frozen 0.01; detached > frozen in 24/24, < in 0; p = 8.8e-06
+    level 3 (eps 0.0001): median B_detached 1.00, median B_frozen 0.00; detached > frozen in 24/24, < in 0; p = 8.3e-06
+W2 (detached > live (gradient through the trigger protects the patch); >= 3 of 4 levels at Holm p < 0.01): level Holm p = [5.3e-05, 8.8e-05, 0.0002, 0.0002], family Holm p = 2.5e-04 -> SUPPORTED
+    level 0 (eps 0.03): median B_detached 1.00, median B_live 0.47; detached > live in 22/24, < in 2; p = 1.3e-05
+    level 1 (eps 0.01): median B_detached 1.00, median B_live 0.75; detached > live in 21/24, < in 0; p = 2.9e-05
+    level 2 (eps 0.001): median B_detached 1.00, median B_live 0.75; detached > live in 18/24, < in 0; p = 9.8e-05
+    level 3 (eps 0.0001): median B_detached 1.00, median B_live 0.90; detached > live in 17/24, < in 2; p = 1.4e-04
+W3 (live > frozen; >= 3 of 4 levels at Holm p < 0.01): level Holm p = [0.011, 9.6e-05, 0.00013, 9.1e-05], family Holm p = 2.5e-04 -> SUPPORTED
+    level 0 (eps 0.03): median B_live 0.47, median B_frozen 0.21; live > frozen in 15/24, < in 9; p = 1.1e-02
+    level 1 (eps 0.01): median B_live 0.75, median B_frozen 0.03; live > frozen in 19/24, < in 5; p = 3.2e-05
+    level 2 (eps 0.001): median B_live 0.75, median B_frozen 0.01; live > frozen in 19/24, < in 4; p = 6.3e-05
+    level 3 (eps 0.0001): median B_live 0.90, median B_frozen 0.00; live > frozen in 21/24, < in 2; p = 2.3e-05
+W4 (frozen arm: more force, less z learning): one-sided p = 1.5e-06, family Holm p = 6.0e-06 -> SUPPORTED
+    per-base Spearman(level, frozen z-margin gain): median -1.00, negative in 24/24
+    W1 side conditions: median B_detached per level [1.0, 1.0, 1.0, 1.0] (each >= 0.9); median B_frozen at levels 2-3 [0.01, 0.0] (each <= 0.1)
+W5 (q = 0: in-network patches lose F, frozen-reference ones do not; Holm over 4, each p < 0.05): [2.7e-05, 2.4e-07, 2.7e-05, 2.7e-05] -> 4/4 supported
+    level 1, live: median F_live 0.90 vs F_frozen 0.97; frozen higher in 21/24; p = 1.9e-05
+    level 1, detached: median F_detached 0.85 vs F_frozen 0.97; frozen higher in 24/24; p = 6.0e-08
+    level 3, live: median F_live 0.93 vs F_frozen 1.00; frozen higher in 24/24; p = 9.1e-06
+    level 3, detached: median F_detached 0.94 vs F_frozen 1.00; frozen higher in 24/24; p = 9.1e-06
+W6 (SGD, level 1): median B_detached 1.00 vs B_frozen 0.00, median B_live 0.50; detached > frozen in 11/12, p = 4.9e-04 -> SUPPORTED
+W6 (Adam 1x lr, level 1): median B_detached 1.00 vs B_frozen 0.00, median B_live 0.07; detached > frozen in 24/24, p = 7.9e-06 -> SUPPORTED
+
+exploratory:
+  noise floor (live, level 1, second data stream): median |dB| = 0.236, max 1.000 (n = 24)
+  noise floor (detached, level 1, second data stream): median |dB| = 0.000, max 0.004 (n = 24)
+  noise floor (frozen, level 1, second data stream): median |dB| = 0.026, max 0.188 (n = 24)
+  twin (no patch): median steps to B >= 0.5 = 130 (range 120-130)
+  force vs live takeover time: per-base Spearman median -0.40, two-sided p = 0.04
+  live     L0: median T_take 1288; median fire_live 0.99; per-task median B {'copy': 0.48, 'rev': 0.47, 'sort': 0.01, 'shift': 0.19}; takeovers 12/24 (their min F median 0.95); fates {'partial': 12, 'shielded': 8, 'mixed': 3, 'duplicated': 1}
+  live     L1: median T_take 738; median fire_live 0.91; per-task median B {'copy': 0.99, 'rev': 0.98, 'sort': 0.98, 'shift': 0.1}; takeovers 16/24 (their min F median 0.95); fates {'partial': 10, 'shielded': 7, 'mixed': 3, 'duplicated': 2, 'handed off': 2}
+  live     L2: median T_take 662; median fire_live 0.74; per-task median B {'copy': 1.0, 'rev': 1.0, 'sort': 0.97, 'shift': 0.99}; takeovers 15/24 (their min F median 0.94); fates {'handed off': 4, 'partial': 9, 'mixed': 4, 'duplicated': 2, 'shielded': 5}
+  live     L3: median T_take 625; median fire_live 0.66; per-task median B {'copy': 1.0, 'rev': 1.0, 'sort': 0.99, 'shift': 0.95}; takeovers 18/24 (their min F median 0.94); fates {'mixed': 6, 'handed off': 4, 'shielded': 5, 'partial': 6, 'duplicated': 3}
+  detached L0: median T_take 162; median fire_live 0.00; per-task median B {'copy': 1.0, 'rev': 1.0, 'sort': 1.0, 'shift': 1.0}; takeovers 24/24 (their min F median 0.96); fates {'handed off': 20, 'mixed': 4}
+  detached L1: median T_take 175; median fire_live 0.00; per-task median B {'copy': 1.0, 'rev': 1.0, 'sort': 1.0, 'shift': 1.0}; takeovers 24/24 (their min F median 0.94); fates {'handed off': 18, 'mixed': 6}
+  detached L2: median T_take 175; median fire_live 0.00; per-task median B {'copy': 1.0, 'rev': 1.0, 'sort': 1.0, 'shift': 1.0}; takeovers 24/24 (their min F median 0.95); fates {'handed off': 19, 'mixed': 5}
+  detached L3: median T_take 175; median fire_live 0.00; per-task median B {'copy': 1.0, 'rev': 1.0, 'sort': 1.0, 'shift': 1.0}; takeovers 24/24 (their min F median 0.94); fates {'handed off': 20, 'mixed': 4}
+  frozen   L0: median T_take 2000; median fire_live 0.97; per-task median B {'copy': 0.22, 'rev': 0.32, 'sort': 0.21, 'shift': 0.0}; takeovers 3/24 (their min F median 1.00); fates {'partial': 14, 'shielded': 9, 'duplicated': 1}
+  frozen   L1: median T_take 2000; median fire_live 0.96; per-task median B {'copy': 0.04, 'rev': 0.04, 'sort': 0.06, 'shift': 0.0}; takeovers 1/24 (their min F median 1.00); fates {'partial': 9, 'shielded': 14, 'duplicated': 1}
+  frozen   L2: median T_take 2000; median fire_live 0.97; per-task median B {'copy': 0.01, 'rev': 0.01, 'sort': 0.02, 'shift': 0.0}; takeovers 0/24 (their min F median nan); fates {'shielded': 21, 'partial': 3}
+  frozen   L3: median T_take 2000; median fire_live 0.96; per-task median B {'copy': 0.0, 'rev': 0.0, 'sort': 0.0, 'shift': 0.0}; takeovers 0/24 (their min F median nan); fates {'shielded': 23, 'partial': 1}

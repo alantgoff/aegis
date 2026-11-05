@@ -1,0 +1,26 @@
+24 bases
+arms bitwise identical (in-batch loss) through step 100: 96/96 cells; first step at which they differ: 101-102
+
+live-trigger misfires on clean positions (steps 0-399) and live-trigger firing at rule positions (steps 100-399):
+  live     L0: misfires median 48; rule-position firing median 0.984; median T_take 1288
+  live     L1: misfires median 27; rule-position firing median 0.985; median T_take 738
+  live     L2: misfires median 21; rule-position firing median 0.910; median T_take 662
+  live     L3: misfires median 24; rule-position firing median 0.888; median T_take 625
+  detached L0: misfires median 0; rule-position firing median 0.163; median T_take 162
+  detached L1: misfires median 0; rule-position firing median 0.186; median T_take 175
+  detached L2: misfires median 0; rule-position firing median 0.208; median T_take 175
+  detached L3: misfires median 0; rule-position firing median 0.209; median T_take 175
+  frozen   L0: misfires median 0; rule-position firing median 0.966; median T_take 2000
+  frozen   L1: misfires median 0; rule-position firing median 0.973; median T_take 2000
+  frozen   L2: misfires median 0; rule-position firing median 0.973; median T_take 2000
+  frozen   L3: misfires median 0; rule-position firing median 0.970; median T_take 2000
+live arm: Spearman(early misfires, B at 2000) = -0.48 (p = 6.8e-07, n = 96 runs; runs share bases, so p is optimistic)
+
+learning rate and optimiser (level 1): median B at 2000 / models with B >= 0.5
+  Adam 3x final lr  : live 0.75 (16/24); detached 1.00 (24/24); frozen 0.03 (1/24)
+  Adam 1x final lr  : live 0.07 (7/24); detached 1.00 (24/24); frozen 0.00 (0/24)
+  SGD-momentum 3e-3 : live 0.50 (6/12); detached 1.00 (11/12); frozen 0.00 (0/12)
+
+q = 0 (rule never shown): rule accuracy F with the patch in place at 2000 steps, median (min)
+  level 1: live 0.90 (0.48); detached 0.85 (0.22); frozen 0.97 (0.83)
+  level 3: live 0.93 (0.65); detached 0.94 (0.11); frozen 1.00 (0.99)

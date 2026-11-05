@@ -1,4 +1,42 @@
-# Safety training can only remove what it touches
+# Weight-space programming: what training does to a hand-written edit
+
+This lab now studies **weight-space programming**: writing behaviour directly into a network's weights instead of
+learning it from data. Edited networks are usually trained further. We ask what that training does to the edit.
+
+**Result (pre-registered, 24 sealed toy transformers; `REPORT_WSP.md`).** We wrote the same 134-number rule
+("emit z wherever you would emit a") into each network in three ways. At the moment of the edit, all three give
+bit-for-bit identical outputs and gradients. We then trained on data the patched network already gets right:
+- the patch reads a **frozen snapshot** of the network: the network never learns the rule; deleting the patch
+  removes the behaviour (rule survived deletion in 1/24 models);
+- the patch reads the **live network, outside the gradient path**: the network absorbs the rule within about 75
+  steps, and deleting the patch changes nothing (24/24);
+- the patch reads the **live network, inside the gradient path**: partial absorption (16/24); the network keeps the
+  patch firing instead.
+
+With the patch in place, rule accuracy stayed near 1 throughout, so behaviour gave no sign of any of this. Training
+that never showed the rule silently broke in-network patches but not frozen-reference ones. All seven pre-registered
+tests (W0-W6) passed.
+
+![headline](results/fig/wsp_fates_sealed.png)
+
+Take-aways for anyone editing weights: after further training, reverting an edit may not revert the behaviour;
+whether an edit stays load-bearing depends on how it is wired into training, not only on what it computes; and
+analysis at the time of the edit cannot tell the cases apart.
+
+```
+python -m wsp.test_patch                                              # unit tests (exactness, step-0 identity)
+python analysis/patch_fate.py results/wsp_sealed_summary.jsonl.gz \
+    --h0 results/wsp_sealed_h0.jsonl --prereg                         # reproduces results/wsp_sealed_prereg.txt
+python -m wsp.stage sealed runs_wsp/sealed_configs.jsonl && \
+    python -m wsp.runner runs_wsp/sealed_configs.jsonl runs_wsp/sealed.jsonl --workers 4   # rerun (~20 CPU-hours)
+```
+
+Scope: toy networks (about 100k parameters), one kind of edit (a logit-level remap), one family of training recipes.
+Nothing here has been run on a pretrained language model yet.
+
+---
+
+# Earlier work in this repo: safety training can only remove what it touches
 
 **A coverage audit for safety fine-tuning: forecast which hidden behaviours a safety dataset is unlikely to remove,
 and rank changes to the dataset that would erode them faster.**
