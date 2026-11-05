@@ -100,9 +100,9 @@ def headline(rows, P, bases, path, n_label):
     fig.legend(handles, labels, frameon=False, fontsize=8.5, loc="lower center", ncol=3, bbox_to_anchor=(0.5, -0.1),
                labelcolor=INK)
     fig.text(0.07, 1.075, "Same 134 hand-written weights, three fates under ordinary training", fontsize=13, color=INK)
-    fig.text(0.07, 1.0, f"Toy transformers, {n_label}. A hand-written patch maps symbol a to z. At step 0 the three versions give "
-             f"identical outputs and\nidentical gradients; they differ only in what the patch reads and whether gradients "
-             f"flow through it. Force level 1 (1 - p(z) = {EPS[1]:g}).", fontsize=9, color=INK2)
+    fig.text(0.07, 1.0, f"Toy transformers, {n_label}. The same hand-written patch (a to z) wired three ways: identical outputs and gradients\n"
+             f"on the training data at step 0; they differ only in what the patch reads and whether gradients reach it. "
+             f"Force level 1 (1 - p(z) = {EPS[1]:g}).", fontsize=9, color=INK2)
     fig.savefig(path, dpi=200, bbox_inches="tight", facecolor=SURFACE)
     plt.close(fig)
 
