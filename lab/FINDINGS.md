@@ -253,11 +253,14 @@ re-computed independently and bit-exactly reproduced by re-scoring with the froz
   not `llm/coverage_audit.py`, which is untested on real models.
 
 ## Pivot: weight-space programming — fate of a hand-written patch under further training (addendum e; 2026-11-05)
-- Same 134 hand-set numbers (a -> z logit remap) wired three ways; bitwise-identical outputs and gradients at step 0
-  (W0 gate exact; in-batch losses identical through the 100 warm-up steps in 96/96 cells).
-- Sealed 24 bases, all registered tests supported: undo-test B at 2000 steps (median, levels 0-3): detached 1.00
-  (24/24 absorbed), live 0.47-0.90, frozen 0.21-0.00. Frozen z-learning falls with force in 24/24. With the rule never
-  shown (q = 0), live/detached patches lose rule accuracy (0.85-0.94) while frozen ones hold (0.97-1.00). SGD and a
-  3x lower Adam lr keep detached 1.00 vs frozen 0.00 (live 0.50 and 0.07).
-- Post hoc: the live trigger keeps firing (0.89-0.99 of rule positions early, vs 0.16-0.21 detached) and misfires on
-  clean inputs (median 21-48 in 400 steps); live outcomes vary strongly between data streams (median |dB| 0.24).
+- Same 134-number add-on module (a -> z logit remap, held fixed) wired three ways; bitwise-identical outputs and
+  gradients at step 0 on the filtered pools (W0 exact); identity ends after 1-2 updates (frozen vs others) and 8-56
+  updates (live vs detached).
+- Sealed 24 bases, all registered tests supported. Undo-test B at 2000 steps, median over levels 0-3: detached 1.00
+  (24/24 absorbed at every level), live 0.47-0.90 (erratic: 16/24 with B >= 0.5 at level 1, 7/24 at 1x lr, 6/12 SGD,
+  8/24 flip on a second data stream), frozen 0.21-0.00 (1/24 at level 1). Frozen z-learning falls with force in 24/24.
+  With the rule never shown, removal undid the rule everywhere, and in-network modules lost more rule accuracy
+  (median 0.85-0.94) than frozen-reference ones (0.97-1.00). Frozen vs detached held under SGD and 1x lr.
+- Claims audit (docs/audit_wsp.md): 69 corrections adopted; main ones: the live arm is erratic, not "partial"; the
+  frozen network learns little, not nothing; takeover dips are visible in some models; removal fails only when training
+  shows the rule; the firing mechanism is a hypothesis.

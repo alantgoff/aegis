@@ -1,38 +1,47 @@
 # Weight-space programming: what training does to a hand-written edit
 
-This lab now studies **weight-space programming**: writing behaviour directly into a network's weights instead of
-learning it from data. Edited networks are usually trained further. We ask what that training does to the edit.
+This lab now studies **weight-space programming**: writing behaviour into a network's weights by hand instead of
+training it in. Edited networks are usually trained further. We ask what that training does to the edit.
 
-**Result (pre-registered, 24 sealed toy transformers; `REPORT_WSP.md`).** We wrote the same 134-number rule
-("emit z wherever you would emit a") into each network in three ways. At the moment of the edit, all three give
-bit-for-bit identical outputs and gradients. We then trained on data the patched network already gets right:
-- the patch reads a **frozen snapshot** of the network: the network never learns the rule; deleting the patch
-  removes the behaviour (rule survived deletion in 1/24 models);
-- the patch reads the **live network, outside the gradient path**: the network absorbs the rule within about 75
-  steps, and deleting the patch changes nothing (24/24);
-- the patch reads the **live network, inside the gradient path**: partial absorption (16/24); the network keeps the
-  patch firing instead.
-
-With the patch in place, rule accuracy stayed near 1 throughout, so behaviour gave no sign of any of this. Training
-that never showed the rule silently broke in-network patches but not frozen-reference ones. All seven pre-registered
-tests (W0-W6) passed.
+**Result (24 sealed toy transformers; pre-registered tests W0-W6 all supported; `REPORT_WSP.md`).** We added the same
+hand-built patch to each network: two ReLU units after the final LayerNorm, 134 numbers set by formula and never
+trained, implementing "emit z wherever you would emit a". We then trained the network (patch held fixed) on data the
+patched model already gets right, 30% of it exercising the rule, and repeatedly removed the patch to test whether
+the network had learned the rule itself. The patch was wired in three ways. On the filtered training data, all three
+give bit-for-bit identical outputs and gradients at step 0 (by design).
+- **Trigger reads a frozen copy of the original network.** The patch is never wrong, so the network gets little error
+  signal and learns little of the rule. Removing the patch removes the behaviour: the rule survived removal in 1/24
+  models (force level 1; 0-3/24 across force levels).
+- **Trigger reads the live network behind a stop-gradient.** Training drifts what the trigger reads, the patch starts
+  missing rule cases, those errors teach the network the rule, and the patch becomes dead or redundant code. The rule survived removal in
+  24/24 models at every force level, 50-100 steps after the learning rate switched on.
+- **Trigger reads the live network, gradients flowing through it.** In between, and erratic: the rule survived removal
+  in 16/24 models at force level 1 (7 fully, 7 not at all), 7/24 at a 3x lower learning rate, 6/12 under SGD, and a
+  second data stream moved 8 of the 24 across the 50% line.
+The frozen vs stop-gradient contrast held under all three optimiser settings (24/24, 24/24 and 11/12 against 1/24,
+0/24 and 0/12). With the patch in place, every model ended at >= 0.97 rule accuracy; the takeover showed only as a
+brief dip in some models (below 0.9 in 7/24 stop-gradient models at level 1, lowest 0.61). When training never showed
+the rule, removing the patch undid it in every model, and in-network patches lost more rule accuracy (median
+0.85-0.94) than frozen-reference ones (0.97-1.00).
 
 ![headline](results/fig/wsp_fates_sealed.png)
 
-Take-aways for anyone editing weights: after further training, reverting an edit may not revert the behaviour;
-whether an edit stays load-bearing depends on how it is wired into training, not only on what it computes; and
-analysis at the time of the edit cannot tell the cases apart.
+Tentative take-aways for anyone editing weights: if further training shows the edited behaviour, removing the edit
+may no longer remove the behaviour; an edit that is never wrong can leave the network dependent on it; and what the
+edit reads, and whether gradients reach it, decided the outcome, while outputs and gradients at the moment of the edit
+could not tell the cases apart.
 
 ```
 python -m wsp.test_patch                                              # unit tests (exactness, step-0 identity)
 python analysis/patch_fate.py results/wsp_sealed_summary.jsonl.gz \
     --h0 results/wsp_sealed_h0.jsonl --prereg                         # reproduces results/wsp_sealed_prereg.txt
 python -m wsp.stage sealed runs_wsp/sealed_configs.jsonl && \
-    python -m wsp.runner runs_wsp/sealed_configs.jsonl runs_wsp/sealed.jsonl --workers 4   # rerun (~20 CPU-hours)
+    python -m wsp.runner runs_wsp/sealed_configs.jsonl runs_wsp/sealed.jsonl --workers 4   # rerun (~23 CPU-hours)
 ```
 
-Scope: toy networks (about 100k parameters), one kind of edit (a logit-level remap), one family of training recipes.
-Nothing here has been run on a pretrained language model yet.
+Scope: tiny networks (about 110k parameters) on toy tasks; one add-on patch held fixed while the network trains (not an
+edit to existing weights); one rule, whose trigger reads the very logit it acts on; three closely related optimiser
+settings. Nothing here has been run on a pretrained language model yet.
 
 ---
 
