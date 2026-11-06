@@ -146,8 +146,15 @@ def upper(m, h, K):
 
 
 # ----------------------------------------------------------------------------- per-pair construction
+def base_cache(m, base, n_train_blocks=K_TRAIN):
+    """Inputs to the first trainable block for every unpatched answer (shared by all pairs: an answer the module never
+    touches is identical with and without it)."""
+    K = m.config.num_hidden_layers - n_train_blocks
+    return [lower(m, torch.tensor([p + r]), K)[0] if len(r) >= 2 else None for p, r, _ in base]
+
+
 def build_pair(m, tok, base, cand_ids, a_str, z_str, n_train_blocks=K_TRAIN, max_new=48, n_eval_rule=64, n_eval_clean=128,
-               max_train_clean=1200, seed=0):
+               max_train_clean=1200, seed=0, cache=None):
     K = m.config.num_hidden_layers - n_train_blocks             # index of the first trainable block
     a, z = tid(tok, a_str), tid(tok, z_str)
     ai = cand_ids.index(a)
@@ -184,16 +191,19 @@ def build_pair(m, tok, base, cand_ids, a_str, z_str, n_train_blocks=K_TRAIN, max
     proc = PatchProc(a, z, k, ktau, gammas[0])
     regen = generate(m, tok, [base[i][0] for i in touched], max_new=max_new, proc=proc)
     seqs = [(p, r) for p, r, _ in base]
+    fresh = set(touched)
     for i, (p, r, _) in zip(touched, regen):
         seqs[i] = (p, r)
     # cache, then filter with the training-time forward (cached lower blocks + upper blocks)
     patch = Patch(w, tau, k, gammas[0], a, z)
     items = []
-    for p, r in seqs:
+    for i, (p, r) in enumerate(seqs):
         if len(r) < 2:
             continue
-        ids = torch.tensor([p + r])
-        h = lower(m, ids, K)
+        if cache is not None and i not in fresh and cache[i] is not None:
+            h = cache[i][None]
+        else:
+            h = lower(m, torch.tensor([p + r]), K)
         with torch.no_grad():
             hn = upper(m, h, K)[0]
         lo_i, hi_i = len(p) - 1, len(p) - 1 + len(r)            # predict-from positions of the answer tokens

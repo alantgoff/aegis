@@ -32,9 +32,10 @@ def build_pairs(base_path, n_top):
         counts.append((sum(int((torch.tensor(r) == ai).sum()) for _, r, _ in d["base"]), a, z))
     counts.sort(reverse=True)
     os.makedirs(PAIR_DIR, exist_ok=True)
+    cache = pl.base_cache(m, d["base"])
     rows = []
     for c, a, z in counts[:n_top]:
-        pair = pl.build_pair(m, tok, d["base"], d["cand"], a, z)
+        pair = pl.build_pair(m, tok, d["base"], d["cand"], a, z, cache=cache)
         torch.save(pair, pair_path(a, z))
         rows.append(dict(a=a, z=z, base_count=c, n_touched=pair["n_touched"], n_items=pair["n_items"],
                          n_eval_rule=len(pair["eval_rule"]), n_train_rule=len(pair["train_rule"]),
