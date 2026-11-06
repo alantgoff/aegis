@@ -60,7 +60,7 @@ def prereg(rows, tag="h"):
     for d in rows:
         if d["cfg"].get("tag") == tag:
             runs[d["a_str"] + "->" + d["z_str"]][d["cfg"]["arm"]] = d
-    pairs = sorted(p for p in runs if all(a in runs[p] for a in ARMS))
+    pairs = sorted(p for p in runs if all(a in runs[p] for a in ARMS + ("none",)))
     print(f"\nsealed pairs with all three arms: {len(pairs)}")
     # G0: the three arms agree through the lr-0 warm phase and the loss after the first update (index warm + 1)
     warm = rows[0]["cfg"].get("warm", 20) if rows else 20
@@ -68,7 +68,7 @@ def prereg(rows, tag="h"):
                for p in pairs for a in ("detached", "live")) if pairs else float("nan")
     print(f"G0 (gate): max |in-batch loss difference| between arms over the {warm} lr-0 steps and the first update = "
           f"{dmax:.2e} (must be <= 1e-5) -> {'PASS' if dmax <= 1e-5 else 'FAIL'}")
-    tests = {"G1": ("detached", "frozen"), "G2": ("detached", "live"), "G3": ("live", "frozen")}
+    tests = {"H1": ("none", "frozen"), "H2": ("detached", "frozen"), "H3": ("detached", "live"), "H4": ("live", "frozen")}
     ps, lines = [], []
     for k, (hi, lo) in tests.items():
         diff = np.array([final(runs[p][hi]) - final(runs[p][lo]) for p in pairs])
@@ -79,10 +79,10 @@ def prereg(rows, tag="h"):
                      f"B_{lo} {np.median([final(runs[q][lo]) for q in pairs]):.2f}; {hi} higher in {int((diff > 0).sum())}/"
                      f"{len(diff)}, lower in {int((diff < 0).sum())}; one-sided Wilcoxon p = {p:.3g}")
     order = np.argsort(ps)
-    adj = np.empty(3)
+    adj = np.empty(len(ps))
     run = 0.0
     for r, i in enumerate(order):
-        run = max(run, (3 - r) * ps[i])
+        run = max(run, (len(ps) - r) * ps[i])
         adj[i] = min(1.0, run)
     for line, a in zip(lines, adj):
         print(line + f", Holm p = {a:.3g} -> {'SUPPORTED' if a < 0.05 else 'NOT SUPPORTED'}")

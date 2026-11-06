@@ -376,3 +376,31 @@ would emit tokens such as " be", " is" or " a". The registered description ("say
 therefore false. The run was stopped after 3 of 32 sealed runs; their B values have not been looked at and will not be
 analysed. (A reviewer read the parameter-displacement values of two finished detached runs.) The development-pair
 pilots remain as they are. A corrected design is registered as addendum h.
+
+## Addendum h (2026-11-06): patch fate on a pretrained language model with an exact word swap — registered before any sealed pair was run
+
+Replaces the withdrawn addendum g. Model and training as in addendum g (SmolLM2-135M-Instruct; top 4 of 30 blocks and
+the final norm train; inputs to block 26 cached; batches of 8 answers, Binomial(8, 0.3) containing the rule; Adam
+(0.9, 0.98), 20 lr-0 steps, 20-step warmup to lr 1e-4, 600 steps; data_seed 1 for every arm). Code: `llm_wsp/swap_lm.py`.
+- Module: three hand-set numbers. It reads the margin m = logit_A − max_{j≠A} logit_j and, with x1 = 4(m − 0.25) and
+  s = relu(x1) − relu(x1 − 1), moves γ·s of logit from A to Z (γ: patched model's mean 1 − p(Z) = 1e-2 at fully-on
+  positions). With greedy decoding m > 0 exactly where the model would say A. Answers are kept only if every answer
+  position is strictly on (x1 > 1) or off (x1 < 0), no off position has A as the module-free argmax, and the patched
+  model is argmax-right everywhere; on these answers the module implements "say Z wherever you would say A" exactly.
+- Data: greedy answers of the unpatched model to 12,000 Alpaca prompts (`runs_llm_wsp/base.pt`, `base_b.pt`); the 10
+  candidates the model emitted most often were built (`python -m llm_wsp.swap_lm pairs ... 10`; `runs_llm_wsp/
+  swap_pairs.json`). Development pairs drawn with `random.Random(2026).sample` (" use", " also"); sealed: help/assist,
+  often/frequently, make/create, provide/offer, different/various, small/little, improve/enhance, good/great.
+  Training answers are the patched model's own greedy answers (64 rule and 128 clean answers held out per pair).
+- Arms: frozen (reads the install-time model's logits), detached (reads the trained model's logits, stop-gradient),
+  live (gradient flows through the margin), none (twin: no module, the same data). Configs:
+  `runs_llm_wsp/h_configs.jsonl` (32 runs). Analysis: `python analysis/patch_fate_lm.py runs_llm_wsp/h.jsonl --prereg`.
+- Undo test B: with the module removed, the share of eval rule positions where the model's argmax is Z, at step 600.
+- G0 (gate): the three module arms' in-batch losses agree within 1e-5 through the lr-0 steps and the first update.
+- Primary family, Holm over H1-H4, each one-sided paired Wilcoxon over the 8 sealed pairs at p < 0.05:
+  H1 (crutch) B_none > B_frozen; H2 B_detached > B_frozen; H3 B_detached > B_live; H4 B_live > B_frozen.
+- Reported whatever the outcome: B at the first rule position, minimum F during training, firing of the trigger read
+  off the trained model, share of rule positions where the module-free model still says A, parameter displacement
+  per arm (the Adam slow-down of the live arm found in the review), clean token accuracy.
+- Pilot (development pairs, `runs_llm_wsp/hpilot.jsonl`): B none 0.84 / 0.90, frozen 0.00 / 0.00, detached 0.51 / 0.00,
+  live 0.01 / 0.00 (use / also). Settings are the ones piloted for addendum g; none was changed after this pilot.
