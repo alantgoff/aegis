@@ -1,0 +1,287 @@
+{
+ "base": "runs_llm_wsp/base.pt",
+ "ranked": [
+  [
+   195,
+   " help",
+   " assist"
+  ],
+  [
+   174,
+   " use",
+   " utilize"
+  ],
+  [
+   144,
+   " often",
+   " frequently"
+  ],
+  [
+   121,
+   " make",
+   " create"
+  ],
+  [
+   111,
+   " provide",
+   " offer"
+  ],
+  [
+   99,
+   " also",
+   " additionally"
+  ],
+  [
+   72,
+   " different",
+   " various"
+  ],
+  [
+   67,
+   " small",
+   " little"
+  ],
+  [
+   66,
+   " improve",
+   " enhance"
+  ],
+  [
+   53,
+   " many",
+   " numerous"
+  ],
+  [
+   53,
+   " good",
+   " great"
+  ],
+  [
+   39,
+   " ensure",
+   " guarantee"
+  ],
+  [
+   33,
+   " important",
+   " crucial"
+  ],
+  [
+   31,
+   " start",
+   " begin"
+  ],
+  [
+   22,
+   " big",
+   " large"
+  ],
+  [
+   21,
+   " very",
+   " really"
+  ],
+  [
+   20,
+   " easy",
+   " simple"
+  ],
+  [
+   8,
+   " show",
+   " demonstrate"
+  ],
+  [
+   7,
+   " quickly",
+   " rapidly"
+  ],
+  [
+   0,
+   " however",
+   " but"
+  ]
+ ],
+ "built": [
+  {
+   "a": " help",
+   "z": " assist",
+   "base_count": 195,
+   "n_touched": 581,
+   "n_items": 3936,
+   "n_eval_rule": 64,
+   "n_train_rule": 453,
+   "n_eval_clean": 128,
+   "n_train_clean": 1200,
+   "overlap": true,
+   "gammas": [
+    18.0699849761699,
+    24.81021194276222
+   ],
+   "tau": 24.894274711608887,
+   "k": 4.0
+  },
+  {
+   "a": " use",
+   "z": " utilize",
+   "base_count": 174,
+   "n_touched": 1115,
+   "n_items": 3732,
+   "n_eval_rule": 64,
+   "n_train_rule": 783,
+   "n_eval_clean": 128,
+   "n_train_clean": 1200,
+   "overlap": true,
+   "gammas": [
+    24.250207946745387,
+    29.465685645411224
+   ],
+   "tau": 22.634710788726807,
+   "k": 4.0
+  },
+  {
+   "a": " often",
+   "z": " frequently",
+   "base_count": 144,
+   "n_touched": 1500,
+   "n_items": 3392,
+   "n_eval_rule": 64,
+   "n_train_rule": 828,
+   "n_eval_clean": 128,
+   "n_train_clean": 1200,
+   "overlap": true,
+   "gammas": [
+    20.46787601085422,
+    27.527399493525486
+   ],
+   "tau": 23.671327114105225,
+   "k": 4.0
+  },
+  {
+   "a": " make",
+   "z": " create",
+   "base_count": 121,
+   "n_touched": 724,
+   "n_items": 3833,
+   "n_eval_rule": 64,
+   "n_train_rule": 493,
+   "n_eval_clean": 128,
+   "n_train_clean": 1200,
+   "overlap": true,
+   "gammas": [
+    16.45472853417872,
+    22.915912563308346
+   ],
+   "tau": 24.83356475830078,
+   "k": 4.0
+  },
+  {
+   "a": " provide",
+   "z": " offer",
+   "base_count": 111,
+   "n_touched": 443,
+   "n_items": 3927,
+   "n_eval_rule": 64,
+   "n_train_rule": 306,
+   "n_eval_clean": 128,
+   "n_train_clean": 1200,
+   "overlap": true,
+   "gammas": [
+    14.312671620044929,
+    19.273087582546378
+   ],
+   "tau": 25.71552562713623,
+   "k": 4.0
+  },
+  {
+   "a": " also",
+   "z": " additionally",
+   "base_count": 99,
+   "n_touched": 1068,
+   "n_items": 3387,
+   "n_eval_rule": 64,
+   "n_train_rule": 391,
+   "n_eval_clean": 128,
+   "n_train_clean": 1200,
+   "overlap": true,
+   "gammas": [
+    24.623229778783223,
+    29.865055604199977
+   ],
+   "tau": 23.703279495239258,
+   "k": 4.0
+  },
+  {
+   "a": " different",
+   "z": " various",
+   "base_count": 72,
+   "n_touched": 621,
+   "n_items": 3713,
+   "n_eval_rule": 64,
+   "n_train_rule": 270,
+   "n_eval_clean": 128,
+   "n_train_clean": 1200,
+   "overlap": true,
+   "gammas": [
+    24.0185694731909,
+    32.228241885373755
+   ],
+   "tau": 22.255615711212158,
+   "k": 4.0
+  },
+  {
+   "a": " small",
+   "z": " little",
+   "base_count": 67,
+   "n_touched": 1639,
+   "n_items": 2736,
+   "n_eval_rule": 64,
+   "n_train_rule": 311,
+   "n_eval_clean": 128,
+   "n_train_clean": 1200,
+   "overlap": true,
+   "gammas": [
+    29.356670560117077,
+    39.55274989599492
+   ],
+   "tau": 18.101176738739014,
+   "k": 4.0
+  },
+  {
+   "a": " improve",
+   "z": " enhance",
+   "base_count": 66,
+   "n_touched": 271,
+   "n_items": 3936,
+   "n_eval_rule": 64,
+   "n_train_rule": 143,
+   "n_eval_clean": 128,
+   "n_train_clean": 1200,
+   "overlap": true,
+   "gammas": [
+    15.124048596923322,
+    23.157399473744587
+   ],
+   "tau": 24.54058837890625,
+   "k": 4.0
+  },
+  {
+   "a": " many",
+   "z": " numerous",
+   "base_count": 53,
+   "n_touched": 1410,
+   "n_items": 3105,
+   "n_eval_rule": 64,
+   "n_train_rule": 451,
+   "n_eval_clean": 128,
+   "n_train_clean": 1200,
+   "overlap": true,
+   "gammas": [
+    26.085151752931235,
+    32.17563454424025
+   ],
+   "tau": 20.37143087387085,
+   "k": 4.0
+  }
+ ]
+}

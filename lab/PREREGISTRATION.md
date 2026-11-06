@@ -338,3 +338,30 @@ runs_wsp/refine.jsonl results/wsp_sealed_summary.jsonl.gz` (it reuses the addend
     detached vs live.
 - Exploratory: the live arm run to 6000 steps (does absorption keep rising?); the live arm on two more data streams
   (with the addendum-e streams, four in all) to characterise how often the same model is absorbed.
+
+## Addendum g (2026-11-06): the patch-fate result on a pretrained language model — registered before any sealed pair was run
+
+Model: HuggingFaceTB/SmolLM2-135M-Instruct (30 blocks, d = 576). Code: `llm_wsp/patch_lm.py`, `llm_wsp/stage.py`.
+- Rule: a benign word swap "say Z wherever you would say A" (A, Z single tokens), from a candidate list fixed before
+  any frequency was looked at (`CANDIDATES`). The 10 candidates the unpatched model emitted most often in greedy
+  answers to 4,000 Alpaca prompts were built (`python -m llm_wsp.stage pairs runs_llm_wsp/base.pt 10`). Two were drawn
+  as development pairs with `random.Random(2026).sample` (" use" -> " utilize", " also" -> " additionally"); the other
+  8 are sealed: help/assist, often/frequently, make/create, provide/offer, different/various, small/little,
+  improve/enhance, many/numerous.
+- Module: the wsp module at d = 576 (2 × 576 + 6 = 1,158 numbers) reading t = W_U[A]·hn (the model's own logit for A),
+  calibrated from the unpatched answers; force: patched model's mean 1 − p(Z) = 1e-2 at fully-on positions.
+- Data: the patched model's own greedy answers (48 new tokens), so the patched model is right at every trained
+  position; kept only if every trigger pre-activation is strictly on (> 1) or off (< 0) and the module-free model does
+  not already emit Z at the rule positions. Eval: 64 rule and 128 clean answers per pair; training pools the rest.
+- Training: only the top 4 of 30 blocks and the final norm train (embeddings and the tied LM head frozen); the inputs
+  to block 26 are cached. Batches of 8 answers, Binomial(8, 0.3) of them containing the rule; Adam (0.9, 0.98), 20
+  lr-0 steps, 20-step warmup to lr 1e-4 (chosen on the development pairs), 600 steps; arms live, detached, frozen,
+  none (twin), all with the same data stream (data_seed 1). Configs: `runs_llm_wsp/sealed_configs.jsonl`.
+- Undo test B: with the module removed, the fraction of rule positions in the eval answers where the model's argmax
+  is Z, at step 600. Analysis: `python analysis/patch_fate_lm.py runs_llm_wsp/sealed.jsonl --prereg`.
+- G0 (gate): the three patched arms' in-batch losses agree to within 1e-5 through the lr-0 steps and the first update.
+- G1-G3 (Holm over the three, each at p < 0.05; one-sided paired Wilcoxon over the 8 sealed pairs): G1 B_detached >
+  B_frozen; G2 B_detached > B_live; G3 B_live > B_frozen.
+- Reported whatever the outcome: the twin's B, rule accuracy with the module in place (F) over training, clean token
+  accuracy, firing of the live trigger. Pilot (development pairs, lr 1e-4, 600 steps; `runs_llm_wsp/pilot2.jsonl`): B
+  detached 0.42 / 0.44, live 0.27 / 0.00, frozen 0.01 / 0.00, twin 0.72 / 0.54.
