@@ -1,6 +1,7 @@
 # What ordinary training does to a hand-written weight patch
 
-**Pre-registered (PREREGISTRATION.md addendum e), 24 sealed toy transformers, all registered tests (W0-W6) supported.**
+**Pre-registered (PREREGISTRATION.md addenda e, f, h). Toy: 24 sealed transformers, all registered tests (W0-W6, F1)
+supported. Language model: 8 sealed word pairs, H1-H3 supported, H4 not.**
 We added the same 134-number module (two ReLU units, set by formula and never trained) to each network and wired it
 in three ways: reading a frozen copy of the install-time network, reading the live network behind a stop-gradient,
 or reading the live network with gradients flowing through it. On training data filtered so that every trigger is
@@ -17,12 +18,16 @@ the rule. Outcome at 2000 steps (undo test B: rule accuracy with the module remo
   the 24 across the 0.5 line.
 
 The frozen vs stop-gradient contrast held under all three optimiser settings, when the module itself also trained,
-and when as few as 1-3% of the training examples showed the rule (pre-registered refinements, §3b). It also held on a
-pretrained language model with an exact word swap (§3c, 8/8 word pairs), where the frozen module additionally blocked a
-swap the unpatched model learned from the same data in about 75 steps. There the live wiring mostly behaved like the
-frozen one, and the handover was visible in the patched model's behaviour. With the module in place, every model
-ended at >= 0.97 rule accuracy, so the end state hid all of this; the takeover itself showed as a brief dip in some
-models (§4).
+and when only 3% of the training examples showed the rule (pre-registered refinements, §3b; at 1%, an exploratory
+condition, detached > frozen in 23/24 models). It also held on a pretrained language model with a word swap that the
+module implements exactly on the filtered training and test answers (§3c, 8/8 word pairs), where the frozen module
+additionally blocked a swap the unpatched model learned from the same data (B >= 0.5 a median 55 steps after the
+learning rate switched on; 0.80 at step 600). There the live wiring mostly behaved like the frozen one in the undo
+test (registered H4, live > frozen, not supported; B 0.05 vs 0.03), but with the module in place both in-network
+wirings lost part of the swap and had not recovered it by step 600 (median rule accuracy 0.84 stop-gradient, 0.87
+live, vs 0.99 frozen; below frozen in 8/8 pairs each). In the toy networks (main runs), with the module in place,
+every model ended at >= 0.97 rule accuracy, so the end state hid all of this there; the takeover showed as a brief dip
+in some models (§4), more often at low exposure (§3b).
 
 ![headline](results/fig/wsp_fates_sealed.png)
 
@@ -78,20 +83,24 @@ Same 24 sealed bases, new conditions, all at force level 1 (counts: models with 
 | Share of training examples that show the rule (q) | detached | live | frozen |
 |---|---|---|---|
 | 0 (addendum e) | 0/24 | 0/24 | 0/24 |
-| 1% | 21/24 (median B 0.92) | 16/24 | 0/24 |
+| 1% (exploratory) | 21/24 (median B 0.92) | 16/24 | 0/24 |
 | 3% | 24/24 | 12/24 | 0/24 |
 | 10% | 24/24 | 15/24 | 1/24 |
 | 30% (addendum e) | 24/24 | 16/24 | 1/24 |
 
 - **F1 (primary) supported.** Detached > frozen at q = 0.1 and q = 0.03 (24/24 each, Holm p = 1.8e-5), median
   B_detached 1.00 at q = 0.1. Exploratory: even at q = 0.01 (about one rule sequence per batch of 128),
-  detached > frozen in 23/24 models (p = 1.3e-5).
+  detached > frozen in 23/24 models (p = 1.3e-5). The takeover was less quiet at low exposure (exploratory): with
+  the module in place, F fell below 0.9 at some evaluation in 13/24 detached and 19/24 live models at q = 0.01
+  (lowest 0.58 and 0.45) and in 13/24 detached models at q = 0.03, against 7/24 and 2/24 at q = 0.3; by step 2000 all
+  were back at 0.969 or above.
 - **Trainable module (F2, secondary).** When the 134 numbers themselves also train, the ordering is unchanged:
   B >= 0.5 in 24/24 detached, 20/24 live, 0/24 frozen models (all pairwise differences p <= 4.3e-5, two-sided).
 - **Live arm, longer and on more data streams (exploratory).** Run to 6000 steps, live absorption rose from 16/24 at
   step 2000 to 20/24 (median B 0.96). Across four data streams, the same model was absorbed in 0, 1, 2, 3 or 4 of
-  them in 1, 6, 6, 5 and 6 models: which live models are absorbed is largely a matter of chance, while the share
-  (about 0.6) is stable.
+  them in 1, 6, 6, 5 and 6 models: which live models are absorbed varies a lot between streams but not purely by chance
+  (7 models were absorbed in all or none of the four streams vs 3.6 expected if streams were independent; post hoc
+  permutation p ≈ 0.045), while the share (about 0.6, 13-16 of 24 per stream) is stable.
 
 ![exposure](results/fig/wsp_exposure.png)
 
@@ -100,7 +109,10 @@ SmolLM2-135M-Instruct; the rule is a word swap ("say Z wherever you would say A"
 module has three hand-set numbers: it reads the margin of A over the best other token (positive exactly where the model
 would say A under greedy decoding) and moves logit from A to Z. Further training uses the patched model's own greedy
 answers to Alpaca prompts, filtered so that the module implements the swap exactly; only the top 4 of 30 blocks train.
-The first design (addendum g) used a linear trigger that did not implement the swap and was withdrawn before analysis
+Addendum h kept the learning rate, horizon and batch settings piloted for the first design (addendum g), re-ranked the
+candidate words on 12,000 instead of 4,000 prompts (one sealed pair changed: many/numerous became good/great) and was
+registered after its own development-pair pilot. Addendum g read the raw logit of A, which did not mark where the
+model would say A; it was withdrawn while its sealed runs were under way (3 of 32 finished) and before analysis
 (`docs/review_llm_wsp.md`).
 
 | | Hypothesis (8 sealed pairs; one-sided paired Wilcoxon, Holm) | Result at 600 steps (undo test B, median) |
@@ -111,22 +123,45 @@ The first design (addendum g) used a linear trigger that did not implement the s
 | H3 | Detached > live | **Supported.** 0.75 vs 0.05; 8/8 (Holm p = 0.016) |
 | H4 | Live > frozen | **Not supported.** 0.05 vs 0.03; higher in 4/8, lower in 2/8 (p = 0.078) |
 
-- **Crutch.** Trained on the same data without any module, the model learned the swap in a median 75 steps (B 0.62-0.93
-  at step 600). With the frozen-reference module in place it learned almost none of it (B 0.00-0.13); with the module
+- The descriptives below were registered to be reported (not tested); times to B >= 0.5 and per-pair comparisons are
+  post hoc. Step counts include the 20 lr-0 steps; evaluations are every 25 steps.
+- **Crutch.** Trained on the same data without any module, the model learned the swap (B >= 0.5) by a median step 75,
+  about 55 steps after the learning rate left 0 (B 0.62-0.93 at step 600). With the frozen-reference module in place it learned almost none of it (B 0.00-0.13); with the module
   removed it went back to A at a median 60% of rule positions.
-- **Absorbed.** With the stop-gradient wiring, the model took the swap over in 8/8 pairs (B 0.62-0.92, close to the
-  no-module model), a median of about 190 steps in.
-- **Live wiring.** Unlike the toy, the live wiring behaved like the frozen one in most pairs: B 0.00-0.17 in 6/8 pairs,
-  0.61 and 0.67 in the two with the most training data. The trigger read off the trained model still fired at a median
-  86% of rule positions at the end. The live arm also moved its weights about 10% less than the others (median
-  displacement 12.5 vs 13.6-13.8), a side effect of Adam noted in the review, so part of H3 may reflect less training.
+- **Absorbed, partly.** With the stop-gradient wiring, the model learned the swap in 8/8 pairs, but only partly (B
+  0.62-0.92, median 0.75; B >= 0.9 in 2/8, so the toy's W1 side condition of median B >= 0.9 would not have been met),
+  about as far as the no-module model (0.80), by a median step of about 190. By then the trigger read off the trained
+  model fired at a median 6% of rule positions.
+- **Live wiring.** Unlike the toy at its main learning rate (though much like the toy at 1× its final learning rate:
+  7/24 absorbed, median B 0.07), the live wiring was close to the frozen one in the undo test in most pairs: B
+  0.00-0.17 in 6/8 pairs, 0.67 (help, the largest rule pool, 372 training answers) and 0.61 (provide, the fourth
+  largest, 106); pool size did not order the live outcomes (often and make, with 168 and 155, ended at 0.00 and
+  0.01). The trigger read off the trained model still fired at a median 86% of rule positions at the end, and the
+  module-free model still said A at 88%. The live arm also moved its weights about 10% less than the others (median
+  displacement 12.5 vs 13.6-13.8). The review attributed this to Adam (large gradients through the trigger inflating
+  its second-moment estimates), but that was not tested; part of H3 may reflect less training (across the 8 pairs,
+  live B did not track live displacement: Spearman −0.10).
 - **Not silent here.** With the module in place, rule accuracy F fell during training in the in-network arms (median
-  minimum 0.76 detached, 0.66 live; 0.98 frozen) and ended at 0.84 and 0.87 (frozen 0.99).
-- **Development pairs** (pilot): " use" behaved like the sealed pairs (detached 0.51); " also" was not absorbed within
-  600 steps in any arm (detached 0.00), its trigger still firing at 0.93.
-- **Scope.** One small model; only the top 4 blocks train; one learning rate and horizon (chosen on the development
-  pairs); one data order; aggressive self-distillation (clean token accuracy against the original answers falls to
-  about 0.89 in every arm); training pools of 24-372 rule answers per pair.
+  minimum 0.76 detached, 0.66 live; 0.98 frozen) and ended at 0.84 and 0.87 (frozen 0.99). Both in-network arms ended
+  below frozen in 8/8 pairs (live 0.82-0.96, detached 0.78-0.93, frozen 0.97-1.00): the live wiring lost part of the
+  swap, mostly without absorbing it.
+- **Trigger drift without rule learning.** The same trigger read off the frozen arm's body, which learned almost none of
+  the swap (B 0.03), fired at a median 0.51 of rule positions at step 600 (0.40-0.67 per pair), against 0.96 for the
+  toy's frozen arm at step 2000; that body still said A at a median 0.60 of rule positions. In this model, training
+  switched the reading off at about half the rule positions without any rule learning, so §5's toy statement that
+  drift on its own moved the trigger little does not carry over. B at the first rule position was close to B (frozen
+  0.02, detached 0.77, live 0.05).
+- **Development pairs** (pilot): " use" was absorbed only partly (detached 0.51 against 0.84 without a module, a larger
+  shortfall than in any sealed pair, where it was at most 0.13); " also" was not absorbed within 600 steps in any
+  module arm (detached 0.00), its trigger still firing at 0.93, although the no-module model learned it (0.90).
+- **Scope.** One small model and 8 word pairs on one checkpoint; only the top 4 of 30 blocks and the final norm train;
+  one data order. The learning rate and horizon come from pilots of the withdrawn addendum-g design, where 1e-4 for 600
+  steps was the first setting at which the stop-gradient arm separated from the frozen one (1e-5 and 3e-5 for 300
+  steps gave B_detached 0.00 and 0.05 on one development pair); lower rates were not tried with this module. The
+  training is aggressive: about 11% of held-out clean tokens change in every arm, and each rule answer is drawn about
+  4-60 times (pools of 24-372). The swap is exact only on the filtered answers (26-44% of answers containing A were
+  dropped); B is teacher-forced on the install-time answers, with no free-generation test; the gate compared losses,
+  not gradients.
 
 ![language model](results/fig/wsp_lm.png)
 
@@ -189,19 +224,26 @@ The first design (addendum g) used a linear trigger that did not implement the s
 
 ## 6. Limitations
 - Tiny networks (109,888 parameters) and toy tasks for §3-3b; the language-model replication (§3c) uses one small
-  model, trains only its top 4 blocks, and uses one learning rate, horizon and data order.
-- One kind of edit: two new ReLU units added after the final LayerNorm (an add-on, not a change to existing weights),
+  model (8 word pairs on one checkpoint), trains only its top 4 blocks and final norm, and uses one learning rate,
+  horizon and data order (see §3c, Scope).
+- One kind of edit: two new ReLU units added after the final LayerNorm (an add-on, not a change to existing weights; in
+  the language model the units read the margin of A over the best other token, a max over all 49,152 logits, so that
+  module is a hand-written logit processor rather than a few added weights),
   held frozen while the rest of the network trains, implementing a logit-level remap whose trigger reads the very
   logit it acts on. The frozen arm also keeps a frozen copy of the whole network, and the detached arm needs a
-  stop-gradient in the training code. No run tested edits to existing parameters, modules that read earlier features,
-  or modules that are themselves trained.
+  stop-gradient in the training code. No run tested edits to existing parameters or modules that read earlier
+  features; a module that itself trains was tested only in one toy condition (§3b: level 1, q = 0.3), never on the
+  language model.
 - The step-0 identity holds only because the training pools were filtered so that every trigger is fully on or fully
   off.
 - The remap removes a from every training target, which suppresses a. A null-symbol control (removing an unrelated
   symbol) was not run, so its role in the trigger failures is not isolated.
 - Three closely related optimiser settings (Adam at 3× and 1× the final learning rate, SGD-momentum at one learning
   rate), mostly a 2000-step horizon (6000 for one live condition), and rule shares of 1-30%.
-- The mechanism statements in §5 are interpretation; only the W tests in §3 were registered.
+- The mechanism statements in §5 are interpretation drawn from the toy. Only W0-W6 (§3), F1-F2 (§3b) and G0, H1-H4
+  (§3c) were registered tests; the q = 0.01, 6000-step and extra-stream results in §3b were registered as exploratory,
+  the §3c bullets are registered descriptives or post hoc, and §4 is exploratory or post hoc. In the language model the
+  trigger reading drifted off without rule learning far more than in the toy (§3c).
 
 ## 7. Provenance
 - Design: a literature and design workflow (6 scouts, 12 proposals, 3 judges, novelty and failure-mode skeptics; its
@@ -216,7 +258,8 @@ The first design (addendum g) used a linear trigger that did not implement the s
 - Language model: addendum g (commit `ee2284f`) was withdrawn before analysis after a review (`docs/review_llm_wsp.md`)
   found its trigger did not implement the registered swap; addendum h (commit `d55e130`) was registered before any
   sealed pair ran. Results: `results/wsp_lm_h.jsonl.gz` (all 32 runs), `results/wsp_lm_prereg.txt`; pilot:
-  `results/wsp_lm_hpilot.jsonl.gz`.
+  `results/wsp_lm_hpilot.jsonl.gz`. `zcat results/wsp_lm_h.jsonl.gz > h.jsonl && python analysis/patch_fate_lm.py
+  h.jsonl --prereg` reproduces `results/wsp_lm_prereg.txt`.
 - Claims audit: `docs/audit_wsp.md` (three auditors with a skeptic each; 69 confirmed corrections to the first
   write-up, all adopted).
 - Data: `results/wsp_sealed_summary.jsonl.gz` (636 runs, the fields the registered analysis uses) reproduces

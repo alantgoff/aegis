@@ -19,9 +19,11 @@ give bit-for-bit identical outputs and gradients at step 0 (by design).
   in 16/24 models at force level 1 (7 fully, 7 not at all), 7/24 at a 3x lower learning rate, 6/12 under SGD, and a
   second data stream moved 8 of the 24 across the 50% line.
 The frozen vs stop-gradient contrast held under all three optimiser settings (24/24, 24/24 and 11/12 against 1/24,
-0/24 and 0/12), when the patch's own numbers also trained (24/24 vs 0/24), and when only 3% (24/24 vs 0/24) or 1%
-(21/24 vs 0/24) of the training examples showed the rule (pre-registered refinements, addendum f). With the patch in place, every model ended at >= 0.97 rule accuracy; the takeover showed only as a
-brief dip in some models (below 0.9 in 7/24 stop-gradient models at level 1, lowest 0.61). When training never showed
+0/24 and 0/12), when the patch's own numbers also trained (24/24 vs 0/24), and when only 3% (24/24 vs 0/24) of the
+training examples showed the rule (pre-registered refinements, addendum f; at 1%, an exploratory condition, 21/24 vs
+0/24). With the patch in place, every model ended at about 0.97 or higher at 2000 steps; at 30% exposure the takeover
+showed only as a brief dip in some models (below 0.9 in 7/24 stop-gradient models at level 1, lowest 0.61), at 1%
+exposure in more (13/24 stop-gradient and 19/24 live models, lowest 0.58 and 0.45). When training never showed
 the rule, removing the patch undid it in every model, and in-network patches lost more rule accuracy (median
 0.85-0.94) than frozen-reference ones (0.97-1.00).
 
@@ -30,8 +32,11 @@ the rule, removing the patch undid it in every model, and in-network patches los
 **On a pretrained language model** (SmolLM2-135M-Instruct, pre-registered, 8 word swaps such as " provide" -> " offer";
 `REPORT_WSP.md` §3c): trained on the same data without a patch, the model learned the swap (median 0.80 of rule
 positions). With a frozen-reference patch it learned almost nothing (0.03), and with the patch wired behind a
-stop-gradient it took the swap over (0.75); 8/8 pairs each. The live wiring mostly behaved like the frozen one (0.05),
-and unlike the toy, the handover showed in the patched model's behaviour.
+stop-gradient it learned the swap about as far as the unpatched model did (0.75; >= 0.9 in only 2/8 pairs); 8/8 pairs
+each. In the undo test the live wiring mostly behaved like the frozen one (0.05; registered H4 not supported). But
+unlike the frozen one, both in-network wirings lost part of the swap with the patch in place (median rule accuracy
+fell to 0.76 stop-gradient and 0.66 live and ended at 0.84 and 0.87, against 0.99 frozen). Of two development pairs,
+one (" also") was not absorbed by any wiring.
 
 ![language model](results/fig/wsp_lm.png)
 
@@ -50,7 +55,9 @@ python -m wsp.stage sealed runs_wsp/sealed_configs.jsonl && \
 
 Scope: tiny networks (about 110k parameters) on toy tasks; one add-on patch held fixed while the network trains (not an
 edit to existing weights); one rule, whose trigger reads the very logit it acts on; three closely related optimiser
-settings; the language-model replication trains only the top 4 of 30 blocks of one small model.
+settings; the language-model replication trains only the top 4 of 30 blocks of one small model, on 8 word pairs with
+one learning rate (taken from pilots of a withdrawn earlier design) and one data order, in a regime that changed about
+11% of held-out clean tokens in every arm; its swap is exact only on the filtered answers.
 
 ---
 
