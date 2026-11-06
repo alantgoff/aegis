@@ -10,3 +10,6 @@ runs_llm/**
 runs_wsp/**
 !runs_wsp/*.json
 !runs_wsp/*_configs.jsonl
+runs_llm_wsp/**
+!runs_llm_wsp/*.json
+!runs_llm_wsp/*_configs.jsonl
