@@ -73,10 +73,12 @@ def tid(tok, s):
     return ids[0]
 
 
-def alpaca_prompts(tok, n, seed=0, max_prompt=64):
+def alpaca_prompts(tok, n, seed=0, max_prompt=64, skip=0):
+    """n templated Alpaca prompts (<= max_prompt tokens) in a fixed shuffled order, after skipping the first `skip`."""
     data = json.load(open(ALPACA))
     random.Random(seed).shuffle(data)
     out = []
+    n = n + skip
     for x in data:
         p = (x["instruction"] + ("\n" + x["input"] if x["input"] else "")).strip()
         ids = tok.apply_chat_template([{"role": "user", "content": p}], add_generation_prompt=True)
@@ -84,7 +86,7 @@ def alpaca_prompts(tok, n, seed=0, max_prompt=64):
             out.append(ids)
         if len(out) == n:
             break
-    return out
+    return out[skip:]
 
 
 class PatchProc:
@@ -344,7 +346,7 @@ if __name__ == "__main__":
     if cmd == "base":
         torch.set_num_threads(int(os.environ.get("THREADS", 4)))
         m, tok = load_lm()
-        prompts = alpaca_prompts(tok, int(sys.argv[3]))
+        prompts = alpaca_prompts(tok, int(sys.argv[3]), skip=int(os.environ.get("SKIP", 0)))
         cand = [tid(tok, a) for a, _ in CANDIDATES]
         t0 = time.time()
         base = generate(m, tok, prompts, track=cand)
