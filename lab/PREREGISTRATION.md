@@ -365,3 +365,14 @@ Model: HuggingFaceTB/SmolLM2-135M-Instruct (30 blocks, d = 576). Code: `llm_wsp/
 - Reported whatever the outcome: the twin's B, rule accuracy with the module in place (F) over training, clean token
   accuracy, firing of the live trigger. Pilot (development pairs, lr 1e-4, 600 steps; `runs_llm_wsp/pilot2.jsonl`): B
   detached 0.42 / 0.44, live 0.27 / 0.00, frozen 0.01 / 0.00, twin 0.72 / 0.54.
+
+### Addendum g withdrawn (2026-11-06), before any of its outcomes was analysed
+A code review run while the sealed runs executed (`docs/review_llm_wsp.md`) found that the installed module does not
+implement the registered rule. The raw logit of A does not separate positions where the model would emit A from other
+positions for any pair (the calibration gap is inverted for all 10 pairs), so `build_pair` fell back silently to a
+midpoint threshold, and "rule positions" were defined as positions where that threshold is crossed. Only about 2-15%
+of eval rule positions per pair are positions where the unpatched model would emit A; most are positions where it
+would emit tokens such as " be", " is" or " a". The registered description ("say Z wherever you would say A") was
+therefore false. The run was stopped after 3 of 32 sealed runs; their B values have not been looked at and will not be
+analysed. (A reviewer read the parameter-displacement values of two finished detached runs.) The development-pair
+pilots remain as they are. A corrected design is registered as addendum h.
