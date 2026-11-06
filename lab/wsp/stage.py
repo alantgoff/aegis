@@ -5,6 +5,7 @@ python -m wsp.stage pilot <configs.jsonl>     -> pilot-base configs (calibration
 python -m wsp.stage h0 <out.jsonl> <bases.json>
 python -m wsp.stage select                    -> runs_wsp/sealed_bases.json (the sealed base list)
 python -m wsp.stage sealed <configs.jsonl>    -> sealed-test configs (addendum e)
+python -m wsp.stage refine <configs.jsonl>    -> refinement configs (addendum f)
 """
 import json
 import os
@@ -127,8 +128,34 @@ def sealed(bases):
     return out
 
 
+def refine(bases):
+    """Addendum f (same sealed bases, new conditions; level 1, Adam 3x unless noted)."""
+    out = []
+    for b in bases:
+        k = b["key"].replace("/", "_")
+        for q in (0.1, 0.03, 0.01):
+            for arm in ARMS:
+                out.append(cfg(b, f"f_{k}_{arm}_L1_q{q}", arm=arm, level=1, q=q))
+        for arm in ARMS:
+            out.append(cfg(b, f"f_{k}_{arm}_L1_trainable", arm=arm, level=1, trainable_patch=True))
+    for b in bases:
+        k = b["key"].replace("/", "_")
+        out.append(cfg(b, f"f_{k}_live_L1_long", arm="live", level=1, steps=6000, eval_every=50))
+        for ds in (9, 10):
+            out.append(cfg(b, f"f_{k}_live_L1_ds{ds}", arm="live", level=1, data_seed=b["seed"] + ds))
+    return out
+
+
 if __name__ == "__main__":
     torch.set_num_threads(4)
+    if sys.argv[1] == "refine":
+        sel = json.load(open("runs_wsp/sealed_bases.json"))
+        cs = refine(sel["chosen"])
+        with open(sys.argv[2], "w") as f:
+            for c in cs:
+                f.write(json.dumps(c) + "\n")
+        print(len(cs), "configs")
+        sys.exit()
     if sys.argv[1] == "select":
         torch.set_num_threads(1)
         sel = select()

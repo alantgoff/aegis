@@ -321,3 +321,20 @@ runs_wsp/sealed_h0.jsonl --prereg`. All tests are at the 2000-step horizon on al
   (shielded B < 0.1; partial; duplicated B >= 0.9 with the live trigger still firing at >= 0.8 of rule positions;
   handed off B >= 0.9 with it firing at <= 0.2; mixed); minimum F during takeovers. Final weights of the level-1
   runs are kept for follow-up analyses, which will be labelled post hoc.
+
+## Addendum f (2026-11-06): refinements of the patch-fate result — registered before any of these runs
+
+Same 24 sealed bases, remaps, pools and code as addendum e (`wsp/patch.py` unchanged); new conditions that no run has
+used yet. Configs: `python -m wsp.stage refine runs_wsp/refine_configs.jsonl` (360 runs; level 1, Adam at 3x the
+base's final lr, 2000 steps, main data stream, unless stated). Analysis: `python analysis/patch_fate_f.py
+runs_wsp/refine.jsonl results/wsp_sealed_summary.jsonl.gz` (it reuses the addendum-e runs at q = 0 and q = 0.3).
+
+- Exposure. q (share of training sequences that show the rule) = 0.1, 0.03 and 0.01, arms live, detached, frozen.
+  - F1 (primary). B_detached > B_frozen at q = 0.1 and at q = 0.03 (one-sided paired Wilcoxon, Holm over the two,
+    each p < 0.01), and median B_detached >= 0.9 at q = 0.1. q = 0.01 is exploratory.
+- Trainable patch. The same 134 numbers are also trained (no weight decay), q = 0.3, all three arms. The two units
+  can move apart, so the step-0 identity of addendum e is not claimed here.
+  - F2 (secondary, two-sided paired Wilcoxon, reported whatever the outcome): detached vs frozen, live vs frozen,
+    detached vs live.
+- Exploratory: the live arm run to 6000 steps (does absorption keep rising?); the live arm on two more data streams
+  (with the addendum-e streams, four in all) to characterise how often the same model is absorbed.
