@@ -1,0 +1,23 @@
+24 bases with every exposure-level run
+
+exposure q (share of training sequences that show the rule), level 1, B at 2000 steps:
+      q            detached                live              frozen
+   0.00        0.00 ( 0/24)        0.00 ( 0/24)        0.00 ( 0/24)
+   0.01        0.92 (21/24)        0.73 (16/24)        0.01 ( 0/24)
+   0.03        0.99 (24/24)        0.44 (12/24)        0.01 ( 0/24)
+   0.10        1.00 (24/24)        0.74 (15/24)        0.03 ( 1/24)
+   0.30        1.00 (24/24)        0.75 (16/24)        0.03 ( 1/24)
+
+F1 (primary; detached > frozen at q = 0.1 and q = 0.03, Holm each p < 0.01; median B_detached >= 0.9 at q = 0.1): Holm p = [1.8e-05, 1.8e-05], median B_detached(q=0.1) = 1.00 -> SUPPORTED
+   exploratory q = 0.01: detached > frozen in 23/24, p = 1.3e-05
+
+trainable patch (the 134 numbers also train), level 1, q = 0.3, 24 bases:
+   live    : median B 0.83 (20/24 with B >= 0.5); median F 1.00
+   detached: median B 1.00 (24/24 with B >= 0.5); median F 1.00
+   frozen  : median B 0.00 (0/24 with B >= 0.5); median F 1.00
+F2 (secondary, two-sided): trainable detached vs frozen: detached higher in 24/24, lower in 0, p = 1.4e-05
+F2 (secondary, two-sided): trainable live vs frozen: live higher in 24/24, lower in 0, p = 1.8e-05
+F2 (secondary, two-sided): trainable detached vs live: detached higher in 22/24, lower in 1, p = 4.3e-05
+
+exploratory, live arm to 6000 steps (24 bases): share with B >= 0.5 at steps 2000 / 4000 / 6000 = 16/24 / 16/24 / 20/24; median B 0.96 at 6000
+exploratory, live arm on 4 data streams (24 bases): models absorbed (B >= 0.5) in 0/1/2/3/4 of 4 streams: [1, 6, 6, 5, 6]; mean share absorbed 0.59

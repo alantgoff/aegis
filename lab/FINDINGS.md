@@ -264,3 +264,9 @@ re-computed independently and bit-exactly reproduced by re-scoring with the froz
 - Claims audit (docs/audit_wsp.md): 69 corrections adopted; main ones: the live arm is erratic, not "partial"; the
   frozen network learns little, not nothing; takeover dips are visible in some models; removal fails only when training
   shows the rule; the firing mechanism is a hypothesis.
+
+## Refinements (addendum f; 2026-11-06)
+- Exposure: detached absorbed with only 1% / 3% / 10% of training examples showing the rule (21 / 24 / 24 of 24 vs
+  frozen 0 / 0 / 1); F1 supported (Holm p = 1.8e-5). Trainable module: same ordering (24 / 20 / 0 of 24).
+- Live arm: 16/24 at 2000 steps -> 20/24 at 6000; across four data streams the same model was absorbed in 0-4 of them
+  (counts 1, 6, 6, 5, 6): the share is stable (~0.6), which model is not.

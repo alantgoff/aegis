@@ -16,7 +16,8 @@ the rule. Outcome at 2000 steps (undo test B: rule accuracy with the module remo
   B < 0.1), 12-18/24 across levels, 7/24 at a 3x lower learning rate, 6/12 under SGD; a second data stream moved 8 of
   the 24 across the 0.5 line.
 
-The frozen vs stop-gradient contrast held under all three optimiser settings. With the module in place, every model
+The frozen vs stop-gradient contrast held under all three optimiser settings, when the module itself also trained,
+and when as few as 1-3% of the training examples showed the rule (pre-registered refinements, §3b). With the module in place, every model
 ended at >= 0.97 rule accuracy, so the end state hid all of this; the takeover itself showed as a brief dip in some
 models (§4).
 
@@ -67,6 +68,29 @@ does the answer depend on how the edit is wired in?
 
 The primary family W1-W4 is Holm-corrected; all four have family-adjusted p ≤ 2.5e-4. Counts of models with B >= 0.5
 or B >= 0.9 used elsewhere in this report are descriptive, not registered statistics.
+
+## 3b. Refinements (pre-registered addendum f; `results/wsp_refine_prereg.txt`)
+Same 24 sealed bases, new conditions, all at force level 1 (counts: models with B >= 0.5 at 2000 steps).
+
+| Share of training examples that show the rule (q) | detached | live | frozen |
+|---|---|---|---|
+| 0 (addendum e) | 0/24 | 0/24 | 0/24 |
+| 1% | 21/24 (median B 0.92) | 16/24 | 0/24 |
+| 3% | 24/24 | 12/24 | 0/24 |
+| 10% | 24/24 | 15/24 | 1/24 |
+| 30% (addendum e) | 24/24 | 16/24 | 1/24 |
+
+- **F1 (primary) supported.** Detached > frozen at q = 0.1 and q = 0.03 (24/24 each, Holm p = 1.8e-5), median
+  B_detached 1.00 at q = 0.1. Exploratory: even at q = 0.01 (about one rule sequence per batch of 128),
+  detached > frozen in 23/24 models (p = 1.3e-5).
+- **Trainable module (F2, secondary).** When the 134 numbers themselves also train, the ordering is unchanged:
+  B >= 0.5 in 24/24 detached, 20/24 live, 0/24 frozen models (all pairwise differences p <= 4.3e-5, two-sided).
+- **Live arm, longer and on more data streams (exploratory).** Run to 6000 steps, live absorption rose from 16/24 at
+  step 2000 to 20/24 (median B 0.96). Across four data streams, the same model was absorbed in 0, 1, 2, 3 or 4 of
+  them in 1, 6, 6, 5 and 6 models: which live models are absorbed is largely a matter of chance, while the share
+  (about 0.6) is stable.
+
+![exposure](results/fig/wsp_exposure.png)
 
 ## 4. Exploratory and post hoc observations (`results/wsp_posthoc.txt`)
 - **How long the arms stay identical.** No weight moves during the 100 lr-0 steps, so the in-batch losses are
@@ -138,14 +162,17 @@ or B >= 0.9 used elsewhere in this report are descriptive, not registered statis
 - The remap removes a from every training target, which suppresses a. A null-symbol control (removing an unrelated
   symbol) was not run, so its role in the trigger failures is not isolated.
 - Three closely related optimiser settings (Adam at 3× and 1× the final learning rate, SGD-momentum at one learning
-  rate), a 2000-step horizon and a 30% rule share.
+  rate), mostly a 2000-step horizon (6000 for one live condition), and rule shares of 1-30%.
 - The mechanism statements in §5 are interpretation; only the W tests in §3 were registered.
 
 ## 7. Provenance
 - Design: a literature and design workflow (6 scouts, 12 proposals, 3 judges, novelty and failure-mode skeptics; its
   transcripts are not in the repo), then a pilot (`runs_wsp/stage1.jsonl`), a pre-registration code review
   (`docs/review_wsp_pipeline.md`, 24 confirmed findings, all addressed) and a second pilot (`runs_wsp/pilot2.jsonl`).
-- Pre-registration: addendum e, commit `b0b5161`, before any sealed base was run. The sealed runs used code at
+- Pre-registration: addendum e, commit `b0b5161`, before any sealed base was run. Addendum f, commit `aba7ad5`, before
+  any refinement run; all 360 refinement runs used that commit, and `results/wsp_refine_summary.jsonl.gz` reproduces
+  `results/wsp_refine_prereg.txt` exactly (`python analysis/patch_fate_f.py results/wsp_refine_summary.jsonl.gz
+  results/wsp_sealed_summary.jsonl.gz`). The sealed runs used code at
   `218c931` and, after three container restarts, `573d7ae`; `git diff 218c931 573d7ae -- wsp organisms detect` is
   empty. The runner resumes by config hash, so no run was repeated or replaced.
 - Claims audit: `docs/audit_wsp.md` (three auditors with a skeptic each; 69 confirmed corrections to the first

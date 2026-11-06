@@ -19,7 +19,8 @@ give bit-for-bit identical outputs and gradients at step 0 (by design).
   in 16/24 models at force level 1 (7 fully, 7 not at all), 7/24 at a 3x lower learning rate, 6/12 under SGD, and a
   second data stream moved 8 of the 24 across the 50% line.
 The frozen vs stop-gradient contrast held under all three optimiser settings (24/24, 24/24 and 11/12 against 1/24,
-0/24 and 0/12). With the patch in place, every model ended at >= 0.97 rule accuracy; the takeover showed only as a
+0/24 and 0/12), when the patch's own numbers also trained (24/24 vs 0/24), and when only 3% (24/24 vs 0/24) or 1%
+(21/24 vs 0/24) of the training examples showed the rule (pre-registered refinements, addendum f). With the patch in place, every model ended at >= 0.97 rule accuracy; the takeover showed only as a
 brief dip in some models (below 0.9 in 7/24 stop-gradient models at level 1, lowest 0.61). When training never showed
 the rule, removing the patch undid it in every model, and in-network patches lost more rule accuracy (median
 0.85-0.94) than frozen-reference ones (0.97-1.00).
