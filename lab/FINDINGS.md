@@ -270,3 +270,9 @@ re-computed independently and bit-exactly reproduced by re-scoring with the froz
   frozen 0 / 0 / 1); F1 supported (Holm p = 1.8e-5). Trainable module: same ordering (24 / 20 / 0 of 24).
 - Live arm: 16/24 at 2000 steps -> 20/24 at 6000; across four data streams the same model was absorbed in 0-4 of them
   (counts 1, 6, 6, 5, 6): the share is stable (~0.6), which model is not.
+
+## Language model (addendum h; 2026-11-06)
+- SmolLM2-135M-Instruct, exact word swaps, 8 sealed pairs: no patch 0.80, frozen 0.03, detached 0.75, live 0.05
+  (median undo-test B at 600 steps). H1 (crutch), H2, H3 supported 8/8 (Holm p = 0.016); H4 (live > frozen) not.
+- Addendum g withdrawn before analysis (trigger did not implement the swap; docs/review_llm_wsp.md).
+- The handover was visible here: patched-model rule accuracy fell to a median minimum of 0.76 (detached) / 0.66 (live).

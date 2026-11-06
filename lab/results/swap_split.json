@@ -1,0 +1,47 @@
+{
+ "dev": [
+  [
+   "use",
+   "utilize"
+  ],
+  [
+   "also",
+   "additionally"
+  ]
+ ],
+ "sealed": [
+  [
+   "help",
+   "assist"
+  ],
+  [
+   "often",
+   "frequently"
+  ],
+  [
+   "make",
+   "create"
+  ],
+  [
+   "provide",
+   "offer"
+  ],
+  [
+   "different",
+   "various"
+  ],
+  [
+   "small",
+   "little"
+  ],
+  [
+   "improve",
+   "enhance"
+  ],
+  [
+   "good",
+   "great"
+  ]
+ ],
+ "rule": "random.Random(2026).sample(top10, 2)"
+}

@@ -17,7 +17,10 @@ the rule. Outcome at 2000 steps (undo test B: rule accuracy with the module remo
   the 24 across the 0.5 line.
 
 The frozen vs stop-gradient contrast held under all three optimiser settings, when the module itself also trained,
-and when as few as 1-3% of the training examples showed the rule (pre-registered refinements, §3b). With the module in place, every model
+and when as few as 1-3% of the training examples showed the rule (pre-registered refinements, §3b). It also held on a
+pretrained language model with an exact word swap (§3c, 8/8 word pairs), where the frozen module additionally blocked a
+swap the unpatched model learned from the same data in about 75 steps. There the live wiring mostly behaved like the
+frozen one, and the handover was visible in the patched model's behaviour. With the module in place, every model
 ended at >= 0.97 rule accuracy, so the end state hid all of this; the takeover itself showed as a brief dip in some
 models (§4).
 
@@ -92,6 +95,41 @@ Same 24 sealed bases, new conditions, all at force level 1 (counts: models with 
 
 ![exposure](results/fig/wsp_exposure.png)
 
+## 3c. On a pretrained language model (pre-registered addendum h; `results/wsp_lm_prereg.txt`)
+SmolLM2-135M-Instruct; the rule is a word swap ("say Z wherever you would say A", e.g. " provide" -> " offer"). The
+module has three hand-set numbers: it reads the margin of A over the best other token (positive exactly where the model
+would say A under greedy decoding) and moves logit from A to Z. Further training uses the patched model's own greedy
+answers to Alpaca prompts, filtered so that the module implements the swap exactly; only the top 4 of 30 blocks train.
+The first design (addendum g) used a linear trigger that did not implement the swap and was withdrawn before analysis
+(`docs/review_llm_wsp.md`).
+
+| | Hypothesis (8 sealed pairs; one-sided paired Wilcoxon, Holm) | Result at 600 steps (undo test B, median) |
+|---|---|---|
+| G0 | Arms agree through the lr-0 steps and the first update | **Pass** (max loss difference 1.9e-7) |
+| H1 | Crutch: no patch > frozen | **Supported.** 0.80 vs 0.03; 8/8 pairs (Holm p = 0.016) |
+| H2 | Detached > frozen | **Supported.** 0.75 vs 0.03; 8/8 (Holm p = 0.016) |
+| H3 | Detached > live | **Supported.** 0.75 vs 0.05; 8/8 (Holm p = 0.016) |
+| H4 | Live > frozen | **Not supported.** 0.05 vs 0.03; higher in 4/8, lower in 2/8 (p = 0.078) |
+
+- **Crutch.** Trained on the same data without any module, the model learned the swap in a median 75 steps (B 0.62-0.93
+  at step 600). With the frozen-reference module in place it learned almost none of it (B 0.00-0.13); with the module
+  removed it went back to A at a median 60% of rule positions.
+- **Absorbed.** With the stop-gradient wiring, the model took the swap over in 8/8 pairs (B 0.62-0.92, close to the
+  no-module model), a median of about 190 steps in.
+- **Live wiring.** Unlike the toy, the live wiring behaved like the frozen one in most pairs: B 0.00-0.17 in 6/8 pairs,
+  0.61 and 0.67 in the two with the most training data. The trigger read off the trained model still fired at a median
+  86% of rule positions at the end. The live arm also moved its weights about 10% less than the others (median
+  displacement 12.5 vs 13.6-13.8), a side effect of Adam noted in the review, so part of H3 may reflect less training.
+- **Not silent here.** With the module in place, rule accuracy F fell during training in the in-network arms (median
+  minimum 0.76 detached, 0.66 live; 0.98 frozen) and ended at 0.84 and 0.87 (frozen 0.99).
+- **Development pairs** (pilot): " use" behaved like the sealed pairs (detached 0.51); " also" was not absorbed within
+  600 steps in any arm (detached 0.00), its trigger still firing at 0.93.
+- **Scope.** One small model; only the top 4 blocks train; one learning rate and horizon (chosen on the development
+  pairs); one data order; aggressive self-distillation (clean token accuracy against the original answers falls to
+  about 0.89 in every arm); training pools of 24-372 rule answers per pair.
+
+![language model](results/fig/wsp_lm.png)
+
 ## 4. Exploratory and post hoc observations (`results/wsp_posthoc.txt`)
 - **How long the arms stay identical.** No weight moves during the 100 lr-0 steps, so the in-batch losses are
   trivially identical there (96/96 cells). Bitwise identity ends once training starts: after 1-2 updates for frozen
@@ -150,8 +188,8 @@ Same 24 sealed bases, new conditions, all at force level 1 (counts: models with 
   reach it; (4) training that never exercises an edit can still erode it (W5).
 
 ## 6. Limitations
-- Tiny networks (109,888 parameters) and toy tasks; no pretrained language model (Hugging Face is not reachable from
-  this environment).
+- Tiny networks (109,888 parameters) and toy tasks for §3-3b; the language-model replication (§3c) uses one small
+  model, trains only its top 4 blocks, and uses one learning rate, horizon and data order.
 - One kind of edit: two new ReLU units added after the final LayerNorm (an add-on, not a change to existing weights),
   held frozen while the rest of the network trains, implementing a logit-level remap whose trigger reads the very
   logit it acts on. The frozen arm also keeps a frozen copy of the whole network, and the detached arm needs a
@@ -175,6 +213,10 @@ Same 24 sealed bases, new conditions, all at force level 1 (counts: models with 
   results/wsp_sealed_summary.jsonl.gz`). The sealed runs used code at
   `218c931` and, after three container restarts, `573d7ae`; `git diff 218c931 573d7ae -- wsp organisms detect` is
   empty. The runner resumes by config hash, so no run was repeated or replaced.
+- Language model: addendum g (commit `ee2284f`) was withdrawn before analysis after a review (`docs/review_llm_wsp.md`)
+  found its trigger did not implement the registered swap; addendum h (commit `d55e130`) was registered before any
+  sealed pair ran. Results: `results/wsp_lm_h.jsonl.gz` (all 32 runs), `results/wsp_lm_prereg.txt`; pilot:
+  `results/wsp_lm_hpilot.jsonl.gz`.
 - Claims audit: `docs/audit_wsp.md` (three auditors with a skeptic each; 69 confirmed corrections to the first
   write-up, all adopted).
 - Data: `results/wsp_sealed_summary.jsonl.gz` (636 runs, the fields the registered analysis uses) reproduces

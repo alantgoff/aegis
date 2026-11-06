@@ -27,6 +27,14 @@ the rule, removing the patch undid it in every model, and in-network patches los
 
 ![headline](results/fig/wsp_fates_sealed.png)
 
+**On a pretrained language model** (SmolLM2-135M-Instruct, pre-registered, 8 word swaps such as " provide" -> " offer";
+`REPORT_WSP.md` §3c): trained on the same data without a patch, the model learned the swap (median 0.80 of rule
+positions). With a frozen-reference patch it learned almost nothing (0.03), and with the patch wired behind a
+stop-gradient it took the swap over (0.75); 8/8 pairs each. The live wiring mostly behaved like the frozen one (0.05),
+and unlike the toy, the handover showed in the patched model's behaviour.
+
+![language model](results/fig/wsp_lm.png)
+
 Tentative take-aways for anyone editing weights: if further training shows the edited behaviour, removing the edit
 may no longer remove the behaviour; an edit that is never wrong can leave the network dependent on it; and what the
 edit reads, and whether gradients reach it, decided the outcome, while outputs and gradients at the moment of the edit
@@ -42,7 +50,7 @@ python -m wsp.stage sealed runs_wsp/sealed_configs.jsonl && \
 
 Scope: tiny networks (about 110k parameters) on toy tasks; one add-on patch held fixed while the network trains (not an
 edit to existing weights); one rule, whose trigger reads the very logit it acts on; three closely related optimiser
-settings. Nothing here has been run on a pretrained language model yet.
+settings; the language-model replication trains only the top 4 of 30 blocks of one small model.
 
 ---
 

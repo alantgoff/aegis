@@ -1,0 +1,33 @@
+
+== tag h lr 0.0001 level 0 q 0.3
+pair                                           none                     frozen                   detached                       live
+ different-> various     B 0.81 F 0.81 C 0.89 T  100 B 0.04 F 0.97 C 0.89 T  600 B 0.72 F 0.78 C 0.89 T  250 B 0.09 F 0.93 C 0.89 T  600
+ good-> great            B 0.62 F 0.62 C 0.89 T   50 B 0.03 F 0.97 C 0.89 T  600 B 0.62 F 0.83 C 0.89 T  150 B 0.17 F 0.85 C 0.89 T  600
+ help-> assist           B 0.91 F 0.91 C 0.90 T   75 B 0.13 F 1.00 C 0.89 T  600 B 0.90 F 0.93 C 0.90 T  175 B 0.67 F 0.91 C 0.90 T  525
+ improve-> enhance       B 0.76 F 0.76 C 0.88 T   50 B 0.00 F 0.97 C 0.88 T  600 B 0.75 F 0.79 C 0.88 T  100 B 0.00 F 0.88 C 0.89 T  600
+ make-> create           B 0.83 F 0.82 C 0.89 T   75 B 0.04 F 0.97 C 0.89 T  600 B 0.79 F 0.85 C 0.89 T  225 B 0.01 F 0.96 C 0.90 T  600
+ often-> frequently      B 0.79 F 0.79 C 0.88 T  100 B 0.00 F 1.00 C 0.89 T  600 B 0.76 F 0.84 C 0.88 T  250 B 0.00 F 0.84 C 0.89 T  600
+ provide-> offer         B 0.93 F 0.93 C 0.89 T   50 B 0.03 F 1.00 C 0.89 T  600 B 0.92 F 0.93 C 0.89 T  100 B 0.61 F 0.82 C 0.90 T  225
+ small-> little          B 0.80 F 0.80 C 0.90 T   75 B 0.03 F 1.00 C 0.90 T  600 B 0.67 F 0.81 C 0.90 T  200 B 0.00 F 0.86 C 0.90 T  600
+
+sealed pairs with all three arms: 8
+G0 (gate): max |in-batch loss difference| between arms over the 20 lr-0 steps and the first update = 1.91e-07 (must be <= 1e-5) -> PASS
+H1 (B_none > B_frozen): median B_none 0.80 vs B_frozen 0.03; none higher in 8/8, lower in 0; one-sided Wilcoxon p = 0.00391, Holm p = 0.0156 -> SUPPORTED
+H2 (B_detached > B_frozen): median B_detached 0.75 vs B_frozen 0.03; detached higher in 8/8, lower in 0; one-sided Wilcoxon p = 0.00391, Holm p = 0.0156 -> SUPPORTED
+H3 (B_detached > B_live): median B_detached 0.75 vs B_live 0.05; detached higher in 8/8, lower in 0; one-sided Wilcoxon p = 0.00391, Holm p = 0.0156 -> SUPPORTED
+H4 (B_live > B_frozen): median B_live 0.05 vs B_frozen 0.03; live higher in 4/8, lower in 2; one-sided Wilcoxon p = 0.0781, Holm p = 0.0781 -> NOT SUPPORTED
+
+per pair (B at the end; F, C, parameter displacement; twin: B and steps to B >= 0.5):
+   different-> various     frozen B 0.04 (F 0.97, C 0.89, disp 13.7)  detached B 0.72 (F 0.78, C 0.89, disp 13.9)  live B 0.09 (F 0.93, C 0.89, disp 13.1)  twin B 0.81 T 100
+   good-> great            frozen B 0.03 (F 0.97, C 0.89, disp 13.2)  detached B 0.62 (F 0.83, C 0.89, disp 13.3)  live B 0.17 (F 0.85, C 0.89, disp 12.5)  twin B 0.62 T 50
+   help-> assist           frozen B 0.13 (F 1.00, C 0.89, disp 12.9)  detached B 0.90 (F 0.93, C 0.90, disp 13.1)  live B 0.67 (F 0.91, C 0.90, disp 11.5)  twin B 0.91 T 75
+   improve-> enhance       frozen B 0.00 (F 0.97, C 0.88, disp 13.6)  detached B 0.75 (F 0.79, C 0.88, disp 13.8)  live B 0.00 (F 0.88, C 0.89, disp 12.9)  twin B 0.76 T 50
+   make-> create           frozen B 0.04 (F 0.97, C 0.89, disp 13.4)  detached B 0.79 (F 0.85, C 0.89, disp 13.6)  live B 0.01 (F 0.96, C 0.90, disp 12.1)  twin B 0.83 T 75
+   often-> frequently      frozen B 0.00 (F 1.00, C 0.89, disp 13.7)  detached B 0.76 (F 0.84, C 0.88, disp 14.0)  live B 0.00 (F 0.84, C 0.89, disp 11.9)  twin B 0.79 T 100
+   provide-> offer         frozen B 0.03 (F 1.00, C 0.89, disp 13.6)  detached B 0.92 (F 0.93, C 0.89, disp 13.8)  live B 0.61 (F 0.82, C 0.90, disp 12.6)  twin B 0.93 T 50
+   small-> little          frozen B 0.03 (F 1.00, C 0.90, disp 13.7)  detached B 0.67 (F 0.81, C 0.90, disp 13.8)  live B 0.00 (F 0.86, C 0.90, disp 12.5)  twin B 0.80 T 75
+
+exploratory:
+  frozen  : median B at the first rule position 0.02; median min F 0.98; median fire_live 0.51; median displacement 13.6
+  detached: median B at the first rule position 0.77; median min F 0.76; median fire_live 0.06; median displacement 13.8
+  live    : median B at the first rule position 0.05; median min F 0.66; median fire_live 0.86; median displacement 12.5
