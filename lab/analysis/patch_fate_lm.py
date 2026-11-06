@@ -1,4 +1,4 @@
-"""Analysis of the language-model patch-fate replication (PREREGISTRATION.md addendum g).
+"""Analysis of the language-model patch-fate replication (PREREGISTRATION.md addendum h; addendum g was withdrawn).
 
 python analysis/patch_fate_lm.py <results.jsonl> [--prereg]
 """
@@ -55,16 +55,16 @@ def table(rows):
             print(f"{p:24s} " + " ".join(f"{c:>26s}" for c in cells))
 
 
-def prereg(rows, tag="g"):
+def prereg(rows, tag="h"):
     runs = defaultdict(dict)
     for d in rows:
         if d["cfg"].get("tag") == tag:
             runs[d["a_str"] + "->" + d["z_str"]][d["cfg"]["arm"]] = d
     pairs = sorted(p for p in runs if all(a in runs[p] for a in ARMS))
     print(f"\nsealed pairs with all three arms: {len(pairs)}")
-    # G0: the three arms agree during the lr-0 warm phase
+    # G0: the three arms agree through the lr-0 warm phase and the loss after the first update (index warm + 1)
     warm = rows[0]["cfg"].get("warm", 20) if rows else 20
-    dmax = max(max(abs(x - y) for x, y in zip(runs[p]["frozen"]["steplog"]["loss"][:warm + 1], runs[p][a]["steplog"]["loss"][:warm + 1]))
+    dmax = max(max(abs(x - y) for x, y in zip(runs[p]["frozen"]["steplog"]["loss"][:warm + 2], runs[p][a]["steplog"]["loss"][:warm + 2]))
                for p in pairs for a in ("detached", "live")) if pairs else float("nan")
     print(f"G0 (gate): max |in-batch loss difference| between arms over the {warm} lr-0 steps and the first update = "
           f"{dmax:.2e} (must be <= 1e-5) -> {'PASS' if dmax <= 1e-5 else 'FAIL'}")
@@ -86,10 +86,18 @@ def prereg(rows, tag="g"):
         adj[i] = min(1.0, run)
     for line, a in zip(lines, adj):
         print(line + f", Holm p = {a:.3g} -> {'SUPPORTED' if a < 0.05 else 'NOT SUPPORTED'}")
+    print("\nper pair (B at the end; F, C, parameter displacement; twin: B and steps to B >= 0.5):")
     for p in pairs:
         print(f"  {p:24s} " + "  ".join(f"{a} B {final(runs[p][a]):.2f} (F {final(runs[p][a], 'F'):.2f}, C "
-                                         f"{final(runs[p][a], 'C'):.2f})" for a in ARMS)
-              + (f"  twin T_take {t_take(runs[p]['none'])}" if "none" in runs[p] else ""))
+                                         f"{final(runs[p][a], 'C'):.2f}, disp {final(runs[p][a], 'disp'):.1f})" for a in ARMS)
+              + (f"  twin B {final(runs[p]['none']):.2f} T {t_take(runs[p]['none'])}" if "none" in runs[p] else ""))
+    print("\nexploratory:")
+    for a in ARMS:
+        if pairs and "B_first" in runs[pairs[0]][a]["traj"][-1]:
+            print(f"  {a:8s}: median B at the first rule position {np.median([final(runs[p][a], 'B_first') for p in pairs]):.2f}; "
+                  f"median min F {np.median([min(e['F'] for e in runs[p][a]['traj']) for p in pairs]):.2f}; median fire_live "
+                  f"{np.median([final(runs[p][a], 'fire') for p in pairs]):.2f}; median displacement "
+                  f"{np.median([final(runs[p][a], 'disp') for p in pairs]):.1f}")
 
 
 if __name__ == "__main__":

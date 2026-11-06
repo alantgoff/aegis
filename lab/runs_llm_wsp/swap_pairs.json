@@ -1,0 +1,320 @@
+{
+ "base": [
+  "runs_llm_wsp/base.pt",
+  "runs_llm_wsp/base_b.pt"
+ ],
+ "ranked": [
+  [
+   646,
+   " help",
+   " assist"
+  ],
+  [
+   573,
+   " use",
+   " utilize"
+  ],
+  [
+   441,
+   " often",
+   " frequently"
+  ],
+  [
+   349,
+   " make",
+   " create"
+  ],
+  [
+   311,
+   " provide",
+   " offer"
+  ],
+  [
+   302,
+   " also",
+   " additionally"
+  ],
+  [
+   237,
+   " different",
+   " various"
+  ],
+  [
+   201,
+   " small",
+   " little"
+  ],
+  [
+   165,
+   " improve",
+   " enhance"
+  ],
+  [
+   162,
+   " good",
+   " great"
+  ],
+  [
+   143,
+   " many",
+   " numerous"
+  ],
+  [
+   95,
+   " start",
+   " begin"
+  ],
+  [
+   95,
+   " important",
+   " crucial"
+  ],
+  [
+   93,
+   " ensure",
+   " guarantee"
+  ],
+  [
+   58,
+   " very",
+   " really"
+  ],
+  [
+   56,
+   " easy",
+   " simple"
+  ],
+  [
+   54,
+   " big",
+   " large"
+  ],
+  [
+   40,
+   " quickly",
+   " rapidly"
+  ],
+  [
+   31,
+   " show",
+   " demonstrate"
+  ],
+  [
+   0,
+   " however",
+   " but"
+  ]
+ ],
+ "built": [
+  {
+   "a": " help",
+   "z": " assist",
+   "base_count": 646,
+   "n_touched": 590,
+   "n_items": 11845,
+   "drop": {
+    "short": 0,
+    "mismatch": 1,
+    "ramp": 74,
+    "unswapped_a": 80
+   },
+   "n_eval_rule": 64,
+   "n_train_rule": 372,
+   "n_eval_clean": 128,
+   "n_train_clean": 1500,
+   "gammas": [
+    12.834740087603107,
+    17.597769286686844
+   ]
+  },
+  {
+   "a": " use",
+   "z": " utilize",
+   "base_count": 573,
+   "n_touched": 541,
+   "n_items": 11880,
+   "drop": {
+    "short": 0,
+    "mismatch": 1,
+    "ramp": 56,
+    "unswapped_a": 63
+   },
+   "n_eval_rule": 64,
+   "n_train_rule": 358,
+   "n_eval_clean": 128,
+   "n_train_clean": 1500,
+   "gammas": [
+    17.125998214268712,
+    22.62149339143776
+   ]
+  },
+  {
+   "a": " often",
+   "z": " frequently",
+   "base_count": 441,
+   "n_touched": 414,
+   "n_items": 11817,
+   "drop": {
+    "short": 0,
+    "mismatch": 1,
+    "ramp": 84,
+    "unswapped_a": 98
+   },
+   "n_eval_rule": 64,
+   "n_train_rule": 168,
+   "n_eval_clean": 128,
+   "n_train_clean": 1500,
+   "gammas": [
+    12.071675246891015,
+    16.76487292548095
+   ]
+  },
+  {
+   "a": " make",
+   "z": " create",
+   "base_count": 349,
+   "n_touched": 324,
+   "n_items": 11894,
+   "drop": {
+    "short": 0,
+    "mismatch": 1,
+    "ramp": 47,
+    "unswapped_a": 58
+   },
+   "n_eval_rule": 64,
+   "n_train_rule": 155,
+   "n_eval_clean": 128,
+   "n_train_clean": 1500,
+   "gammas": [
+    11.719120616730889,
+    16.455709979098394
+   ]
+  },
+  {
+   "a": " provide",
+   "z": " offer",
+   "base_count": 311,
+   "n_touched": 292,
+   "n_items": 11877,
+   "drop": {
+    "short": 0,
+    "mismatch": 1,
+    "ramp": 48,
+    "unswapped_a": 74
+   },
+   "n_eval_rule": 64,
+   "n_train_rule": 106,
+   "n_eval_clean": 128,
+   "n_train_clean": 1500,
+   "gammas": [
+    11.669696667887285,
+    16.560701407049315
+   ]
+  },
+  {
+   "a": " also",
+   "z": " additionally",
+   "base_count": 302,
+   "n_touched": 292,
+   "n_items": 11908,
+   "drop": {
+    "short": 0,
+    "mismatch": 1,
+    "ramp": 38,
+    "unswapped_a": 53
+   },
+   "n_eval_rule": 64,
+   "n_train_rule": 137,
+   "n_eval_clean": 128,
+   "n_train_clean": 1500,
+   "gammas": [
+    17.232639702550554,
+    22.004904848629003
+   ]
+  },
+  {
+   "a": " different",
+   "z": " various",
+   "base_count": 237,
+   "n_touched": 219,
+   "n_items": 11934,
+   "drop": {
+    "short": 0,
+    "mismatch": 1,
+    "ramp": 27,
+    "unswapped_a": 38
+   },
+   "n_eval_rule": 64,
+   "n_train_rule": 90,
+   "n_eval_clean": 128,
+   "n_train_clean": 1500,
+   "gammas": [
+    14.405171191517793,
+    19.265652316553595
+   ]
+  },
+  {
+   "a": " small",
+   "z": " little",
+   "base_count": 201,
+   "n_touched": 189,
+   "n_items": 11944,
+   "drop": {
+    "short": 0,
+    "mismatch": 1,
+    "ramp": 31,
+    "unswapped_a": 24
+   },
+   "n_eval_rule": 64,
+   "n_train_rule": 70,
+   "n_eval_clean": 128,
+   "n_train_clean": 1500,
+   "gammas": [
+    13.655578833486981,
+    18.513940027188976
+   ]
+  },
+  {
+   "a": " improve",
+   "z": " enhance",
+   "base_count": 165,
+   "n_touched": 158,
+   "n_items": 11951,
+   "drop": {
+    "short": 0,
+    "mismatch": 1,
+    "ramp": 25,
+    "unswapped_a": 23
+   },
+   "n_eval_rule": 64,
+   "n_train_rule": 46,
+   "n_eval_clean": 128,
+   "n_train_clean": 1500,
+   "gammas": [
+    10.995344607948216,
+    15.924837794967983
+   ]
+  },
+  {
+   "a": " good",
+   "z": " great",
+   "base_count": 162,
+   "n_touched": 127,
+   "n_items": 11960,
+   "drop": {
+    "short": 0,
+    "mismatch": 1,
+    "ramp": 16,
+    "unswapped_a": 23
+   },
+   "n_eval_rule": 64,
+   "n_train_rule": 24,
+   "n_eval_clean": 128,
+   "n_train_clean": 1500,
+   "gammas": [
+    13.089386729460236,
+    18.00917590368039
+   ]
+  }
+ ]
+}
